@@ -55,5 +55,10 @@ namespace TechGearShop_V1.Services
         {
             return await _productRepository.GetProductsByCategoryIdAsync(categoryId);
         }
+
+        public async Task<IEnumerable<Product>> FilterProductsAsync(int? categoryId, string? keyword, string? sortOrder)
+        {
+            return await _productRepository.FilterProductsAsync(categoryId, keyword, sortOrder);
+        }
     }
 }

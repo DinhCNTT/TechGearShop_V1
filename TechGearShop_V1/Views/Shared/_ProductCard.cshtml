@@ -43,7 +43,7 @@
             @if (Model.Stock > 0)
             {
                 <!-- Form Add to Cart -->
-                <form asp-controller="Cart" asp-action="Add" asp-route-productId="@Model.Id" method="post" class="d-grid gap-2">
+                <form asp-controller="Cart" asp-action="Add" asp-route-productId="@Model.Id" method="post" class="d-grid gap-2 ajax-add-to-cart">
                     <button type="submit" class="btn btn-outline-primary btn-hover-zoom">
                         <i class="bi bi-cart-plus"></i> Thêm giỏ hàng
                     </button>

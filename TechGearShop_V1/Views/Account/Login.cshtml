@@ -1,0 +1,82 @@
+@model TechGearShop_V1.Models.ViewModels.LoginViewModel
+@{
+    ViewData["Title"] = "Đăng nhập";
+}
+
+<div class="row justify-content-center my-5">
+    <div class="col-md-5">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <!-- Card Header with Gradient -->
+            <div class="card-header py-4 text-white text-center" style="background: linear-gradient(135deg, #0d6efd, #0dcaf0);">
+                <h3 class="fw-bold mb-1"><i class="bi bi-cpu me-2"></i>TechGear</h3>
+                <p class="mb-0 opacity-75 small">Đăng nhập để tiếp tục mua sắm</p>
+            </div>
+
+            <div class="card-body p-4 p-md-5">
+                <form asp-action="Login" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="ReturnUrl" />
+
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small" role="alert"></div>
+
+                    <div class="mb-4">
+                        <label asp-for="Username" class="form-label fw-semibold">Tên đăng nhập</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-person text-muted"></i></span>
+                            <input asp-for="Username" class="form-control border-start-0 bg-light" placeholder="Nhập tên tài khoản" autofocus />
+                        </div>
+                        <span asp-validation-for="Username" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between">
+                            <label asp-for="Password" class="form-label fw-semibold">Mật khẩu</label>
+                            <a href="#" class="small text-primary text-decoration-none">Quên mật khẩu?</a>
+                        </div>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
+                            <input asp-for="Password" class="form-control border-start-0 bg-light" placeholder="••••••••" id="pwdField" />
+                            <button class="btn btn-outline-secondary border-start-0" type="button" onclick="togglePwd('pwdField', this)">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-4 form-check">
+                        <input asp-for="RememberMe" class="form-check-input" type="checkbox" id="rememberMe">
+                        <label class="form-check-label" for="rememberMe">Ghi nhớ đăng nhập 30 ngày</label>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold py-2">
+                            ĐĂNG NHẬP <i class="bi bi-arrow-right-circle ms-1"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card-footer bg-white text-center py-4 border-top">
+                <span class="text-muted">Chưa có tài khoản?</span>
+                <a asp-action="Register" class="fw-bold text-primary ms-1 text-decoration-none">Đăng ký ngay</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        function togglePwd(fieldId, btn) {
+            const field = document.getElementById(fieldId);
+            const icon = btn.querySelector('i');
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.className = 'bi bi-eye-slash';
+            } else {
+                field.type = 'password';
+                icon.className = 'bi bi-eye';
+            }
+        }
+    </script>
+}

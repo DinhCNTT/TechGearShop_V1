@@ -11,5 +11,6 @@ namespace TechGearShop_V1.Services.Interfaces
         Task DeleteProductAsync(int id);
         Task<IEnumerable<Product>> GetFeaturedProductsAsync(int count);
         Task<IEnumerable<Product>> GetProductsByCategoryAsync(int categoryId);
+        Task<IEnumerable<Product>> FilterProductsAsync(int? categoryId, string? keyword, string? sortOrder);
     }
 }

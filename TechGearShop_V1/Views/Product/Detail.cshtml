@@ -1,0 +1,129 @@
+@model TechGearShop_V1.Models.Entities.Product
+@{
+    ViewData["Title"] = Model.Name;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var relatedProducts = ViewBag.RelatedProducts as List<TechGearShop_V1.Models.Entities.Product> ?? new List<TechGearShop_V1.Models.Entities.Product>();
+}
+
+<div class="bg-white rounded-4 shadow-sm p-4 p-md-5 mb-5 mt-3">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="/" class="text-decoration-none"><i class="bi bi-house-door"></i> Trang chủ</a></li>
+            <li class="breadcrumb-item"><a href="/Product" class="text-decoration-none">Sản phẩm</a></li>
+            <li class="breadcrumb-item"><a href="/Product?categoryId=@Model.CategoryId" class="text-decoration-none">@Model.Category?.Name</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@Model.Name</li>
+        </ol>
+    </nav>
+
+    <div class="row gx-5">
+        <!-- Ảnh Sản Phẩm -->
+        <div class="col-md-6 mb-4 mb-md-0 position-relative text-center">
+            @if (Model.PromotionalPrice.HasValue && Model.PromotionalPrice < Model.Price)
+            {
+                decimal discountPercent = ((Model.Price - Model.PromotionalPrice.Value) / Model.Price) * 100;
+                <span class="position-absolute top-0 start-0 badge bg-danger fs-6 py-2 px-3 z-3 rounded-pill" style="margin: 15px;">
+                    <i class="bi bi-lightning-charge-fill text-warning"></i> Giảm @discountPercent.ToString("N0")%
+                </span>
+            }
+
+            <img src="@(string.IsNullOrEmpty(Model.ImagePath) ? "/images/placeholder.jpg" : Model.ImagePath)" 
+                 class="img-fluid rounded-4 object-fit-contain p-2 shadow-sm border w-100" 
+                 style="max-height: 500px;" 
+                 alt="@Model.Name" />
+        </div>
+
+        <!-- Thông Tin Chi Tiết -->
+        <div class="col-md-6">
+            <span class="badge bg-light text-dark border px-3 py-2 mb-3 fw-bold">@Model.Brand</span>
+            
+            <h2 class="fw-bold mb-3">@Model.Name</h2>
+            
+            <!-- Trạng thái Kho & Đánh giá (Demo) -->
+            <div class="d-flex align-items-center gap-4 mb-3 text-muted small pb-3 border-bottom">
+                <div>
+                    @if(Model.Stock > 0) {
+                        <span class="badge bg-success-subtle text-success py-1 px-2 border"><i class="bi bi-check2-circle"></i> Còn @Model.Stock máy</span>
+                    } else {
+                        <span class="badge bg-danger-subtle text-danger py-1 px-2 border"><i class="bi bi-x-circle"></i> Tạm hết hàng</span>
+                    }
+                </div>
+                <div><i class="bi bi-star-fill text-warning"></i> 4.9 (128 Đánh giá)</div>
+                <div><i class="bi bi-box-seam text-primary"></i> Đã bán 350+</div>
+            </div>
+
+            <!-- Box Giá Tiền -->
+            <div class="bg-light p-4 rounded-4 mb-4">
+                @if (Model.PromotionalPrice.HasValue && Model.PromotionalPrice < Model.Price)
+                {
+                    <h1 class="text-danger fw-bold display-5 mb-1">@Model.PromotionalPrice.Value.ToString("N0") ₫</h1>
+                    <div class="text-muted text-decoration-line-through fs-5">@Model.Price.ToString("N0") ₫</div>
+                }
+                else
+                {
+                    <h1 class="text-danger fw-bold display-5 mb-0">@Model.Price.ToString("N0") ₫</h1>
+                }
+            </div>
+
+            <!-- Hành động Mua hàng -->
+            <div class="d-flex gap-3 mb-4">
+                @if (Model.Stock > 0)
+                {
+                    // Lên giỏ nhưng cho nhảy Ajax
+                    <form asp-controller="Cart" asp-action="Add" asp-route-productId="@Model.Id" method="post" class="flex-grow-1 ajax-add-to-cart">
+                        <button type="submit" class="btn btn-outline-danger btn-lg w-100 fw-bold py-3 rounded-pill btn-hover-zoom">
+                            <i class="bi bi-cart-plus fs-5 me-2"></i> THÊM GIỎ HÀNG
+                        </button>
+                    </form>
+                    // Nút mua ngay sang Checkout (Phase sau)
+                    <form asp-controller="Cart" asp-action="Add" asp-route-productId="@Model.Id" method="post" class="flex-grow-1">
+                        <button type="submit" class="btn btn-danger btn-lg w-100 fw-bold py-3 rounded-pill shadow-sm btn-hover-zoom">
+                            MUA NGAY <i class="bi bi-bag-check ms-2"></i>
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <button class="btn btn-secondary btn-lg w-100 fw-bold py-3 rounded-pill disabled"><i class="bi bi-bell-fill me-2"></i> NHẬN THÔNG BÁO KHI CÓ HÀNG</button>
+                }
+            </div>
+
+            <!-- Thông tin bổ sung cam kết -->
+            <ul class="list-unstyled mb-0 bg-light-subtle rounded-3 p-3 border">
+                <li class="mb-2"><i class="bi bi-shield-check text-success fs-5 me-2 align-middle"></i>Bảo hành chính hãng 24 tháng.</li>
+                <li class="mb-2"><i class="bi bi-arrow-repeat text-primary fs-5 me-2 align-middle"></i>Đổi mới trong 7 ngày nếu có lỗi NSX.</li>
+                <li><i class="bi bi-truck text-dark fs-5 me-2 align-middle"></i>Miễn phí giao hàng toàn quốc.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Phần mô tả sản phẩm -->
+<div class="card border-0 shadow-sm rounded-4 mb-5">
+    <div class="card-header bg-white pt-4 pb-3">
+        <h4 class="fw-bold m-0 text-dark border-start border-4 border-primary ps-3">Đặc điểm nổi bật</h4>
+    </div>
+    <div class="card-body p-4 p-md-5">
+        <div class="lh-lg" style="font-size: 1.05rem;">
+            @Html.Raw(Model.Description?.Replace("\n", "<br/>") ?? "<p class='text-muted'>Chưa có bài viết mô tả cho sản phẩm này.</p>")
+        </div>
+    </div>
+</div>
+
+<!-- Sản phẩm liên quan -->
+@if (relatedProducts.Any())
+{
+    <div class="mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="fw-bold m-0 border-start border-4 border-danger ps-3">Gợi ý cho bạn</h3>
+        </div>
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-4">
+            @foreach (var prod in relatedProducts)
+            {
+                <div class="col">
+                    <partial name="_ProductCard" model="prod" />
+                </div>
+            }
+        </div>
+    </div>
+}

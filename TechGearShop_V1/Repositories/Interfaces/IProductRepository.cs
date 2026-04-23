@@ -7,5 +7,6 @@ namespace TechGearShop_V1.Repositories.Interfaces
         Task<IEnumerable<Product>> GetProductsByCategoryIdAsync(int categoryId);
         Task<IEnumerable<Product>> GetFeaturedProductsAsync(int count);
         Task<Product?> GetProductWithCategoryAsync(int id);
+        Task<IEnumerable<Product>> FilterProductsAsync(int? categoryId, string? keyword, string? sortOrder);
     }
 }

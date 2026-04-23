@@ -1,0 +1,116 @@
+@model TechGearShop_V1.Models.ViewModels.ProductListViewModel
+
+@{
+    ViewData["Title"] = "Tất cả sản phẩm";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row">
+    <!-- Sidebar Bộ lọc -->
+    <div class="col-md-3 mb-4">
+        <div class="card border-0 shadow-sm rounded-4 sticky-top" style="top: 2rem;">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-2">
+                <h5 class="fw-bold mb-0"><i class="bi bi-funnel-fill text-primary"></i> Bộ Lọc Tìm Kiếm</h5>
+            </div>
+            <div class="card-body">
+                <form asp-controller="Product" asp-action="Index" method="get" id="filterForm">
+                    
+                    <!-- Search Keyword -->
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Tên sản phẩm</label>
+                        <div class="input-group">
+                            <input type="text" name="keyword" class="form-control bg-light" value="@Model.CurrentKeyword" placeholder="VD: Laptop, Chuột...">
+                            <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Category Filter -->
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Danh mục</label>
+                        <div class="d-flex flex-column gap-2">
+                            <div class="form-check custom-radio">
+                                <input class="form-check-input" type="radio" name="categoryId" id="catAll" value="" @(Model.CurrentCategoryId == null ? "checked" : "") onchange="this.form.submit()">
+                                <label class="form-check-label" for="catAll">Tất cả sản phẩm</label>
+                            </div>
+                            @foreach (var cat in Model.Categories)
+                            {
+                                <div class="form-check custom-radio">
+                                    <input class="form-check-input" type="radio" name="categoryId" id="cat_@cat.Id" value="@cat.Id" @(Model.CurrentCategoryId == cat.Id ? "checked" : "") onchange="this.form.submit()">
+                                    <label class="form-check-label" for="cat_@cat.Id">@cat.Name</label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-outline-dark w-100 fw-bold d-md-none">Áp dụng lọc</button>
+                    <!-- Lưu luôn state sort nếu user đang chọn sort để không bị reset khi chọn Category -->
+                    <input type="hidden" name="sortOrder" id="hiddenSort" value="@Model.CurrentSortOrder" />
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Danh sách hiển thị -->
+    <div class="col-md-9">
+        <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded-4 shadow-sm border-0">
+            <h5 class="mb-0 fw-bold">
+                @if(!string.IsNullOrEmpty(Model.CurrentKeyword))
+                {
+                    <span>Kết quả tìm kiếm cho: <span class="text-primary">"@Model.CurrentKeyword"</span></span>
+                }
+                else if (Model.CurrentCategoryId.HasValue)
+                {
+                    <span>Danh mục: <span class="text-primary">@Model.Categories.FirstOrDefault(c => c.Id == Model.CurrentCategoryId)?.Name</span></span>
+                }
+                else
+                {
+                    <span>Tất cả sản phẩm</span>
+                }
+                <small class="text-muted fs-6 ms-2">(@Model.Products.Count() sản phẩm)</small>
+            </h5>
+            
+            <div class="d-flex align-items-center">
+                <span class="me-2 fw-semibold text-muted text-nowrap">Sắp xếp:</span>
+                <select class="form-select bg-light border-0 fw-semibold" style="width: 170px; cursor: pointer;" id="sortSelect" onchange="applySort(this.value)">
+                    <option value="" selected="@(string.IsNullOrEmpty(Model.CurrentSortOrder))">Mới nhất</option>
+                    <option value="price_asc" selected="@(Model.CurrentSortOrder == "price_asc")">Giá thấp đến cao</option>
+                    <option value="price_desc" selected="@(Model.CurrentSortOrder == "price_desc")">Giá cao đến thấp</option>
+                    <option value="name_asc" selected="@(Model.CurrentSortOrder == "name_asc")">Tên A-Z</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
+            @if (!Model.Products.Any())
+            {
+                <div class="col-12 text-center py-5">
+                    <img src="https://cdni.iconscout.com/illustration/premium/thumb/empty-state-2130362-1800926.png" width="200" alt="Not found">
+                    <h4 class="mt-3 text-secondary">Rất tiếc, không tìm thấy sản phẩm nào!</h4>
+                    <p class="text-muted">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm nhé.</p>
+                </div>
+            }
+            else
+            {
+                @foreach (var product in Model.Products)
+                {
+                    <div class="col">
+                        <partial name="_ProductCard" model="product" />
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function applySort(sortValue) {
+            // Lấy form filter bên trái
+            const form = document.getElementById("filterForm");
+            // Gán lại giá trị sort vào input hidden
+            document.getElementById("hiddenSort").value = sortValue;
+            // Submit tổng hợp 1 lần (giữ cả keyword, category, sort)
+            form.submit();
+        }
+    </script>
+}

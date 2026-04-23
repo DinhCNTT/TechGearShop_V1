@@ -5,13 +5,16 @@ namespace TechGearShop_V1.Models.ViewModels
     public class ProductListViewModel
     {
         public IEnumerable<Product> Products { get; set; } = new List<Product>();
-        public int CurrentPage { get; set; }
-        public int TotalPages { get; set; }
-        public int PageSize { get; set; }
+        public IEnumerable<Category> Categories { get; set; } = new List<Category>();
+        
+        // Trạng thái Filter đang chọn để binding lại lên View
+        public int? CurrentCategoryId { get; set; }
+        public string? CurrentKeyword { get; set; }
+        public string? CurrentSortOrder { get; set; }
+        // Pagination cho Admin
+        public int CurrentPage { get; set; } = 1;
+        public int PageSize { get; set; } = 10;
         public int TotalItems { get; set; }
-
-        // Parameters for preserving filters in pagination links
-        public string? SearchBrand { get; set; }
-        public int? SearchCategoryId { get; set; }
+        public int TotalPages { get; set; }
     }
 }

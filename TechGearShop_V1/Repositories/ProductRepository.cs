@@ -33,5 +33,32 @@ namespace TechGearShop_V1.Repositories
                 .Include(p => p.Category)
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
+
+        public async Task<IEnumerable<Product>> FilterProductsAsync(int? categoryId, string? keyword, string? sortOrder)
+        {
+            var query = _dbSet.Where(p => p.IsActive).AsQueryable();
+
+            if (categoryId.HasValue && categoryId.Value > 0)
+            {
+                query = query.Where(p => p.CategoryId == categoryId.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                var lowerKeyword = keyword.ToLower();
+                query = query.Where(p => p.Name.ToLower().Contains(lowerKeyword) || (p.Brand != null && p.Brand.ToLower().Contains(lowerKeyword)));
+            }
+
+            query = sortOrder switch
+            {
+                "price_asc" => query.OrderBy(p => p.Price),
+                "price_desc" => query.OrderByDescending(p => p.Price),
+                "name_asc" => query.OrderBy(p => p.Name),
+                "name_desc" => query.OrderByDescending(p => p.Name),
+                _ => query.OrderByDescending(p => p.CreatedAt) // Mặc định là Mới nhất
+            };
+
+            return await query.ToListAsync();
+        }
     }
 }

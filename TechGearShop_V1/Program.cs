@@ -6,6 +6,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // === MVC ===
 builder.Services.AddControllersWithViews();
+// Cho phép View truy cập HttpContext (để lấy Session cho giỏ hàng)
+builder.Services.AddHttpContextAccessor();
 
 // === Database — Entity Framework Core ===
 builder.Services.AddDbContext<AppDbContext>(options =>
