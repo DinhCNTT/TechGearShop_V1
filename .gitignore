@@ -43,3 +43,6 @@ Logs/
 ## IDE
 .idea/
 *.DotSettings.user
+
+## Ignore Markdown Docs
+*.md
