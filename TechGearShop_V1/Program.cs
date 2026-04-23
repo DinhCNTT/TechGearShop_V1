@@ -34,7 +34,22 @@ builder.Services.AddSession(options =>
 // === Cache (dùng cho danh mục, banner, popup) ===
 builder.Services.AddMemoryCache();
 
-// TODO: Đăng ký Repository và Service ở đây khi làm đến Ngày 2
+// === Dependency Injection (Repositories & Services) ===
+// Repositories
+builder.Services.AddScoped(typeof(TechGearShop_V1.Repositories.Interfaces.IGenericRepository<>), typeof(TechGearShop_V1.Repositories.GenericRepository<>));
+builder.Services.AddScoped<TechGearShop_V1.Repositories.Interfaces.IProductRepository, TechGearShop_V1.Repositories.ProductRepository>();
+builder.Services.AddScoped<TechGearShop_V1.Repositories.Interfaces.ICategoryRepository, TechGearShop_V1.Repositories.CategoryRepository>();
+builder.Services.AddScoped<TechGearShop_V1.Repositories.Interfaces.IOrderRepository, TechGearShop_V1.Repositories.OrderRepository>();
+builder.Services.AddScoped<TechGearShop_V1.Repositories.Interfaces.IUserRepository, TechGearShop_V1.Repositories.UserRepository>();
+builder.Services.AddScoped<TechGearShop_V1.Repositories.Interfaces.ICouponRepository, TechGearShop_V1.Repositories.CouponRepository>();
+
+// Services
+builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.IProductService, TechGearShop_V1.Services.ProductService>();
+builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.ICategoryService, TechGearShop_V1.Services.CategoryService>();
+builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.IOrderService, TechGearShop_V1.Services.OrderService>();
+builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.IUserService, TechGearShop_V1.Services.UserService>();
+builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.ICouponService, TechGearShop_V1.Services.CouponService>();
+builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.IImageService, TechGearShop_V1.Services.ImageService>();
 
 var app = builder.Build();
 
@@ -56,9 +71,8 @@ app.UseSession(); // Phải đứng sau UseRouting
 app.MapStaticAssets();
 
 app.MapControllerRoute(
-    name: "admin",
-    pattern: "Admin/{controller=Dashboard}/{action=Index}/{id?}",
-    defaults: new { area = "" })
+    name: "areas",
+    pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}")
     .WithStaticAssets();
 
 app.MapControllerRoute(

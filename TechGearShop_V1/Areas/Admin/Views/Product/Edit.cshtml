@@ -1,0 +1,101 @@
+@model TechGearShop_V1.Models.ViewModels.ProductCreateViewModel
+
+@{
+    ViewData["Title"] = "Cập nhật Sản phẩm";
+}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Cập nhật Sản phẩm</h1>
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Quay lại</a>
+</div>
+
+<form asp-action="Edit" method="post" enctype="multipart/form-data">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="ExistingImagePath" />
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label fw-bold"></label>
+                        <input asp-for="Name" class="form-control" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label asp-for="Price" class="form-label fw-bold"></label>
+                            <input asp-for="Price" type="number" class="form-control" />
+                            <span asp-validation-for="Price" class="text-danger"></span>
+                        </div>
+                        <div class="col-6">
+                            <label asp-for="PromotionalPrice" class="form-label fw-bold"></label>
+                            <input asp-for="PromotionalPrice" type="number" class="form-control" />
+                            <span asp-validation-for="PromotionalPrice" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label fw-bold"></label>
+                        <textarea asp-for="Description" class="form-control" rows="5"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label asp-for="CategoryId" class="form-label fw-bold"></label>
+                        <select asp-for="CategoryId" class="form-select" asp-items="@(new SelectList(Model.Categories, "Id", "Name"))">
+                            <option value="">Chọn danh mục...</option>
+                        </select>
+                        <span asp-validation-for="CategoryId" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Brand" class="form-label fw-bold"></label>
+                        <input asp-for="Brand" class="form-control" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Stock" class="form-label fw-bold"></label>
+                        <input asp-for="Stock" type="number" class="form-control" />
+                        <span asp-validation-for="Stock" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="ImageFile" class="form-label fw-bold"></label>
+                        
+                        @if (!string.IsNullOrEmpty(Model.ExistingImagePath))
+                        {
+                            <div class="mb-2">
+                                <img src="@Model.ExistingImagePath" alt="Current Image" class="img-thumbnail" style="max-height: 150px" />
+                            </div>
+                        }
+
+                        <input asp-for="ImageFile" type="file" class="form-control" accept="image/*" />
+                        <small class="text-muted">Để trống nếu không muốn đổi ảnh.</small>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input asp-for="IsActive" class="form-check-input" />
+                        <label asp-for="IsActive" class="form-check-label"></label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-success btn-lg"><i class="bi bi-check-circle"></i> Cập nhật thay đổi</button>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

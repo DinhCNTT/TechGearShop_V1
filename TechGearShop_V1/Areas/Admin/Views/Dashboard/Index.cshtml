@@ -1,0 +1,47 @@
+@{
+    ViewData["Title"] = "Tổng quan";
+}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Thống kê chung (Dashboard)</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-primary h-100">
+            <div class="card-body">
+                <h5 class="card-title">Đơn hàng mới</h5>
+                <h2 class="display-5">0</h2>
+                <a href="/Admin/Order" class="text-white">Xem chi tiết &rarr;</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-success h-100">
+            <div class="card-body">
+                <h5 class="card-title">Doanh thu tháng</h5>
+                <h2 class="display-5">0đ</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-dark bg-warning h-100">
+            <div class="card-body">
+                <h5 class="card-title">Sản phẩm sắp hết</h5>
+                <h2 class="display-5">0</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-danger h-100">
+            <div class="card-body">
+                <h5 class="card-title">Người dùng mới</h5>
+                <h2 class="display-5">0</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="alert alert-info">
+    <i class="bi bi-info-circle me-2"></i> Các chỉ số sẽ được nạp từ Database trong Giai đoạn Báo Cáo.
+</div>
