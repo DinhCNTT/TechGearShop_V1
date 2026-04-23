@@ -1,0 +1,45 @@
+## .NET / ASP.NET Core
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.userprefs
+.vs/
+
+## Published files
+publish/
+**/publish/
+
+## Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+
+## NuGet Packages (không cần commit, chỉ cần .csproj là đủ restore lại)
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+
+## ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+## Logs & Temp
+*.log
+*.tmp
+Logs/
+
+## Sensitive config (KHÔNG commit file này nếu có password/secret)
+# appsettings.Production.json
+
+## IDE
+.idea/
+*.DotSettings.user
