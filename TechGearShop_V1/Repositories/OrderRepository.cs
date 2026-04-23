@@ -55,5 +55,13 @@ namespace TechGearShop_V1.Repositories
                 _transaction = null;
             }
         }
+
+        public async Task<IEnumerable<Order>> GetAllOrdersWithUsersAsync()
+        {
+            return await _dbSet
+                .Include(o => o.User)
+                .OrderByDescending(o => o.OrderDate)
+                .ToListAsync();
+        }
     }
 }

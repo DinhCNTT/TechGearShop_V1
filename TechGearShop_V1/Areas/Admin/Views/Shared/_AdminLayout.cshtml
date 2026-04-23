@@ -3,77 +3,250 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Admin TechGear</title>
-    <!-- Use Bootstrap 5 -->
+    <title>@ViewData["Title"] — TechGear Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --sidebar-bg: #0f172a;
+            --sidebar-secondary: #1e293b;
+            --sidebar-accent: #3b82f6;
+            --sidebar-text: #94a3b8;
+            --sidebar-text-active: #f1f5f9;
+            --content-bg: #f8fafc;
+        }
+
+        * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: var(--content-bg); margin: 0; }
+
+        /* ── Sidebar ── */
         .admin-sidebar {
+            position: fixed; top: 0; left: 0;
+            width: 240px; height: 100vh;
+            background: var(--sidebar-bg);
+            display: flex; flex-direction: column;
+            padding: 0; z-index: 100;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.3);
+            overflow-y: auto;
+        }
+
+        .sidebar-brand {
+            padding: 24px 20px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .sidebar-brand h4 {
+            color: #fff; font-weight: 700; font-size: 1.1rem; margin: 0;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .sidebar-brand .brand-icon {
+            width: 36px; height: 36px; background: var(--sidebar-accent);
+            border-radius: 10px; display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; color: #fff;
+        }
+
+        .sidebar-section {
+            padding: 16px 12px 8px;
+        }
+        .sidebar-section .section-label {
+            font-size: 0.65rem; font-weight: 600; letter-spacing: 0.1em;
+            color: #475569; text-transform: uppercase; padding: 0 8px; margin-bottom: 4px;
+        }
+        .sidebar-nav-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px; border-radius: 10px;
+            color: var(--sidebar-text); text-decoration: none;
+            font-size: 0.875rem; font-weight: 500;
+            transition: all 0.2s ease; margin-bottom: 2px;
+        }
+        .sidebar-nav-item i { font-size: 1.05rem; width: 20px; text-align: center; }
+        .sidebar-nav-item:hover {
+            background: rgba(59,130,246,0.12);
+            color: var(--sidebar-text-active);
+        }
+        .sidebar-nav-item.active {
+            background: var(--sidebar-accent);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(59,130,246,0.4);
+        }
+        .sidebar-nav-item.danger { color: #f87171; }
+        .sidebar-nav-item.danger:hover { background: rgba(248,113,113,0.12); }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 12px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+
+        /* ── Main Content ── */
+        .admin-content {
+            margin-left: 240px;
+            padding: 28px 32px;
             min-height: 100vh;
-            background: #212529;
-            color: #fff;
         }
-        .admin-sidebar a {
-            color: #adb5bd;
-            text-decoration: none;
-            padding: 10px 15px;
-            display: block;
-            border-radius: 5px;
-            margin-bottom: 5px;
+
+        /* ── Page Header ── */
+        .page-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 28px;
         }
-        .admin-sidebar a:hover, .admin-sidebar a.active {
-            background: #0d6efd;
-            color: #fff;
+        .page-header h1 {
+            font-size: 1.5rem; font-weight: 700; color: #0f172a; margin: 0;
         }
+
+        /* ── Stat Cards ── */
+        .stat-card {
+            border: none; border-radius: 16px;
+            padding: 24px; position: relative; overflow: hidden;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            cursor: default;
+        }
+        .stat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.15) !important; }
+        .stat-card .icon-badge {
+            width: 48px; height: 48px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; margin-bottom: 16px;
+            background: rgba(255,255,255,0.2);
+        }
+        .stat-card .stat-value { font-size: 2rem; font-weight: 700; color: #fff; line-height: 1; }
+        .stat-card .stat-label { font-size: 0.8rem; font-weight: 500; color: rgba(255,255,255,0.8); margin-top: 4px; }
+        .stat-card .deco {
+            position: absolute; right: -20px; top: -20px;
+            width: 100px; height: 100px; border-radius: 50%;
+            background: rgba(255,255,255,0.08);
+        }
+        .stat-blue  { background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 8px 24px rgba(59,130,246,0.35); }
+        .stat-green { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 8px 24px rgba(16,185,129,0.35); }
+        .stat-amber { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 8px 24px rgba(245,158,11,0.35); }
+        .stat-rose  { background: linear-gradient(135deg, #f43f5e, #e11d48); box-shadow: 0 8px 24px rgba(244,63,94,0.35); }
+
+        /* ── Tables ── */
+        .admin-table-wrap { background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+        .admin-table thead th {
+            background: var(--sidebar-bg); color: #94a3b8;
+            font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em;
+            padding: 14px 16px; font-weight: 600; border: none;
+        }
+        .admin-table tbody td { padding: 14px 16px; vertical-align: middle; border-color: #f1f5f9; font-size: 0.875rem; }
+        .admin-table tbody tr { transition: background 0.15s; }
+        .admin-table tbody tr:hover { background: #f8faff; }
+        .admin-table tbody tr:last-child td { border-bottom: none; }
+
+        /* ── Buttons ── */
+        .btn-admin-primary {
+            background: var(--sidebar-accent); color: #fff;
+            border: none; border-radius: 10px; padding: 8px 18px;
+            font-size: 0.85rem; font-weight: 600;
+            transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(59,130,246,0.3);
+        }
+        .btn-admin-primary:hover { background: #2563eb; transform: translateY(-1px); color: #fff; box-shadow: 0 6px 16px rgba(59,130,246,0.4); }
+        .btn-icon {
+            width: 32px; height: 32px; border-radius: 8px; border: none;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 0.85rem; transition: all 0.15s; cursor: pointer;
+        }
+        .btn-icon-edit { background: #fef3c7; color: #d97706; }
+        .btn-icon-edit:hover { background: #f59e0b; color: #fff; }
+        .btn-icon-delete { background: #fee2e2; color: #ef4444; }
+        .btn-icon-delete:hover { background: #ef4444; color: #fff; }
+        .btn-icon-view { background: #e0f2fe; color: #0284c7; }
+        .btn-icon-view:hover { background: #0284c7; color: #fff; }
+
+        /* ── Alerts ── */
+        .alert-admin-success {
+            background: #f0fdf4; border: 1px solid #86efac; color: #166534;
+            border-radius: 12px; padding: 14px 18px;
+            display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s ease;
+        }
+        .alert-admin-error {
+            background: #fff1f2; border: 1px solid #fda4af; color: #9f1239;
+            border-radius: 12px; padding: 14px 18px;
+            display: flex; align-items: center; gap: 10px;
+        }
+
+        /* ── Pagination ── */
+        .pagination .page-link {
+            border-radius: 8px !important; margin: 0 2px; border: none;
+            color: #475569; font-size: 0.875rem; font-weight: 500;
+            padding: 6px 12px;
+        }
+        .pagination .page-item.active .page-link { background: var(--sidebar-accent); color: #fff; }
+        .pagination .page-item.disabled .page-link { opacity: 0.4; }
+
+        /* ── Animations ── */
+        @@keyframes slideIn { from { opacity:0; transform: translateY(-8px); } to { opacity:1; transform: translateY(0); } }
+        .fade-in { animation: slideIn 0.35s ease both; }
+
+        /* badge */
+        .badge-status { border-radius: 6px; font-size: 0.72rem; font-weight: 600; padding: 4px 10px; }
     </style>
 </head>
 <body>
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <nav class="col-md-2 d-none d-md-block admin-sidebar p-3">
-                <h4 class="text-center mb-4 text-white">⚙️ TechGear Admin</h4>
-                <a href="/Admin/Dashboard" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Dashboard" ? "active" : "")">
-                    <i class="bi bi-speedometer2 me-2"></i> Dashboard
-                </a>
-                <a href="/Admin/Category" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Category" ? "active" : "")">
-                    <i class="bi bi-tags me-2"></i> QL Danh mục
-                </a>
-                <a href="/Admin/Product" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Product" ? "active" : "")">
-                    <i class="bi bi-box-seam me-2"></i> QL Sản phẩm
-                </a>
-                <a href="/Admin/Order" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Order" ? "active" : "")">
-                    <i class="bi bi-cart-check me-2"></i> QL Đơn hàng
-                </a>
-                <hr class="text-secondary" />
-                <a href="/" target="_blank"><i class="bi bi-shop me-2"></i> Xem Website</a>
-                <a href="/Account/Logout" class="text-danger"><i class="bi bi-box-arrow-left me-2"></i> Đăng xuất</a>
-            </nav>
 
-            <!-- Main content -->
-            <main class="col-md-10 ms-sm-auto px-md-4 py-4">
-                @if (TempData["SuccessMessage"] != null)
-                {
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                }
-                @if (TempData["ErrorMessage"] != null)
-                {
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                }
-
-                @RenderBody()
-            </main>
-        </div>
+<div class="admin-sidebar">
+    <!-- Brand -->
+    <div class="sidebar-brand">
+        <h4>
+            <div class="brand-icon"><i class="bi bi-cpu-fill"></i></div>
+            TechGear Admin
+        </h4>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    @await RenderSectionAsync("Scripts", required: false)
+    <!-- Main Nav -->
+    <div class="sidebar-section">
+        <div class="section-label">Tổng quan</div>
+        <a href="/Admin/Dashboard" class="sidebar-nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Dashboard" ? "active" : "")">
+            <i class="bi bi-grid-1x2-fill"></i> Dashboard
+        </a>
+    </div>
+
+    <div class="sidebar-section">
+        <div class="section-label">Quản lý</div>
+        <a href="/Admin/Product" class="sidebar-nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Product" ? "active" : "")">
+            <i class="bi bi-box-seam-fill"></i> Sản phẩm
+        </a>
+        <a href="/Admin/Category" class="sidebar-nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Category" ? "active" : "")">
+            <i class="bi bi-tags-fill"></i> Danh mục
+        </a>
+        <a href="/Admin/Order" class="sidebar-nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Order" ? "active" : "")">
+            <i class="bi bi-bag-check-fill"></i> Đơn hàng
+        </a>
+    </div>
+
+    <div class="sidebar-footer">
+        <a href="/" target="_blank" class="sidebar-nav-item">
+            <i class="bi bi-shop"></i> Xem Website
+        </a>
+        <form asp-area="" asp-controller="Account" asp-action="Logout" method="post">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="sidebar-nav-item danger w-100 text-start" style="background:none; border:none; cursor:pointer;">
+                <i class="bi bi-box-arrow-left"></i> Đăng xuất
+            </button>
+        </form>
+    </div>
+</div>
+
+<main class="admin-content fade-in">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert-admin-success mb-4">
+            <i class="bi bi-check-circle-fill fs-5"></i>
+            <span>@TempData["SuccessMessage"]</span>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert-admin-error mb-4">
+            <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+            <span>@TempData["ErrorMessage"]</span>
+        </div>
+    }
+
+    @RenderBody()
+</main>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+@await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

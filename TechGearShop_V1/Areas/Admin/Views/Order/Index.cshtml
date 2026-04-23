@@ -1,0 +1,72 @@
+@model IEnumerable<TechGearShop_V1.Models.Entities.Order>
+@{
+    ViewData["Title"] = "Quản lý Đơn hàng";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold m-0"><i class="bi bi-box-seam me-2 text-primary"></i>Quản lý Đơn hàng</h2>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Mã Đơn</th>
+                        <th>Ngày Đặt</th>
+                        <th>Khách Hàng</th>
+                        <th>Tổng Tiền</th>
+                        <th>Trạng Thái</th>
+                        <th class="text-end pe-4">Hành Động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var o in Model)
+                    {
+                        <tr>
+                            <td class="ps-4 fw-bold">#@o.Id</td>
+                            <td>@o.OrderDate.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>
+                                <div>@o.User?.Username</div>
+                                <small class="text-muted">@o.User?.Email</small>
+                            </td>
+                            <td class="text-danger fw-bold">@o.TotalAmount.ToString("N0") ₫</td>
+                            <td>
+                                @switch (o.Status)
+                                {
+                                    case TechGearShop_V1.Models.Entities.OrderStatus.Pending:
+                                        <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i> Chờ xử lý</span>
+                                        break;
+                                    case TechGearShop_V1.Models.Entities.OrderStatus.Processing:
+                                        <span class="badge bg-info text-dark"><i class="bi bi-arrow-repeat me-1"></i> Đang chuẩn bị</span>
+                                        break;
+                                    case TechGearShop_V1.Models.Entities.OrderStatus.Shipping:
+                                        <span class="badge bg-primary"><i class="bi bi-truck me-1"></i> Đang giao hàng</span>
+                                        break;
+                                    case TechGearShop_V1.Models.Entities.OrderStatus.Completed:
+                                        <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i> Hoàn thành</span>
+                                        break;
+                                    case TechGearShop_V1.Models.Entities.OrderStatus.Cancelled:
+                                        <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i> Đã hủy</span>
+                                        break;
+                                }
+                            </td>
+                            <td class="text-end pe-4">
+                                <a asp-action="Detail" asp-route-id="@o.Id" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                    Chi tiết <i class="bi bi-arrow-right-short"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">Không có đơn hàng nào.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

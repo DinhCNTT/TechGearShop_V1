@@ -1,47 +1,57 @@
 @{
-    ViewData["Title"] = "Tổng quan";
+    ViewData["Title"] = "Dashboard";
 }
 
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Thống kê chung (Dashboard)</h1>
+<div class="page-header">
+    <div>
+        <h1><i class="bi bi-grid-1x2-fill me-2 text-primary"></i>Dashboard</h1>
+        <p class="text-muted small mb-0">Chào mừng trở lại! Đây là tổng quan hệ thống hôm nay.</p>
+    </div>
+    <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill fw-semibold">
+        <i class="bi bi-circle-fill text-success me-1" style="font-size:0.5rem"></i>
+        Live · @DateTime.Now.ToString("HH:mm dd/MM/yyyy")
+    </span>
 </div>
 
-<div class="row">
-    <div class="col-md-3 mb-4">
-        <div class="card text-white bg-primary h-100">
-            <div class="card-body">
-                <h5 class="card-title">Đơn hàng mới</h5>
-                <h2 class="display-5">0</h2>
-                <a href="/Admin/Order" class="text-white">Xem chi tiết &rarr;</a>
-            </div>
+<!-- Stat Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card stat-blue shadow">
+            <div class="deco"></div>
+            <div class="icon-badge"><i class="bi bi-bag-check-fill"></i></div>
+            <div class="stat-value">0</div>
+            <div class="stat-label">Đơn hàng mới hôm nay</div>
+            <a href="/Admin/Order" class="text-white small mt-3 d-block opacity-75">Xem chi tiết <i class="bi bi-arrow-right"></i></a>
         </div>
     </div>
-    <div class="col-md-3 mb-4">
-        <div class="card text-white bg-success h-100">
-            <div class="card-body">
-                <h5 class="card-title">Doanh thu tháng</h5>
-                <h2 class="display-5">0đ</h2>
-            </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card stat-green shadow">
+            <div class="deco"></div>
+            <div class="icon-badge"><i class="bi bi-cash-coin"></i></div>
+            <div class="stat-value">0đ</div>
+            <div class="stat-label">Doanh thu tháng này</div>
         </div>
     </div>
-    <div class="col-md-3 mb-4">
-        <div class="card text-dark bg-warning h-100">
-            <div class="card-body">
-                <h5 class="card-title">Sản phẩm sắp hết</h5>
-                <h2 class="display-5">0</h2>
-            </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card stat-amber shadow">
+            <div class="deco"></div>
+            <div class="icon-badge"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            <div class="stat-value">0</div>
+            <div class="stat-label">Sản phẩm sắp hết hàng</div>
         </div>
     </div>
-    <div class="col-md-3 mb-4">
-        <div class="card text-white bg-danger h-100">
-            <div class="card-body">
-                <h5 class="card-title">Người dùng mới</h5>
-                <h2 class="display-5">0</h2>
-            </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card stat-rose shadow">
+            <div class="deco"></div>
+            <div class="icon-badge"><i class="bi bi-people-fill"></i></div>
+            <div class="stat-value">0</div>
+            <div class="stat-label">Người dùng mới</div>
         </div>
     </div>
 </div>
 
-<div class="alert alert-info">
-    <i class="bi bi-info-circle me-2"></i> Các chỉ số sẽ được nạp từ Database trong Giai đoạn Báo Cáo.
+<!-- Info placeholder -->
+<div class="p-4 rounded-4 border border-dashed text-center" style="background:#f8fafc; border-color:#cbd5e1 !important;">
+    <i class="bi bi-bar-chart-line fs-1 text-muted opacity-50"></i>
+    <p class="text-muted mt-2 mb-0">Biểu đồ doanh thu sẽ được tích hợp ở Ngày 11 (Chart.js).</p>
 </div>

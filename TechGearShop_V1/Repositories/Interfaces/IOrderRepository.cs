@@ -10,5 +10,6 @@ namespace TechGearShop_V1.Repositories.Interfaces
         Task BeginTransactionAsync();
         Task CommitTransactionAsync();
         Task RollbackTransactionAsync();
+        Task<IEnumerable<Order>> GetAllOrdersWithUsersAsync();
     }
 }

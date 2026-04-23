@@ -76,5 +76,15 @@ namespace TechGearShop_V1.Services
                 }
             }
         }
+
+        public async Task<IEnumerable<Order>> GetAllOrdersWithUsersAsync()
+        {
+            return await _orderRepository.GetAllOrdersWithUsersAsync();
+        }
+
+        public async Task<Order?> GetOrderWithDetailsAsync(int orderId)
+        {
+            return await _orderRepository.GetOrderWithDetailsAsync(orderId);
+        }
     }
 }
