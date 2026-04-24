@@ -25,15 +25,13 @@ public class HomeController : Controller
         var vm = new HomeViewModel();
 
         // 1. Quét danh mục sản phẩm (sửa dụng Cache sau này)
-        vm.Categories = await _categoryService.GetAllCategoriesAsync();
+        vm.Categories = await _categoryService.GetActiveCategoriesAsync();
 
         // 2. Sản phẩm nổi bật (Lọc 8 sản phẩm Featured)
         vm.FeaturedProducts = await _productService.GetFeaturedProductsAsync(8);
 
-        // 3. Sản phẩm mới (Quét toàn bộ rồi OrderByDescending lấy 4-8 cái mới nhất)
-        // Cách nhanh: dùng GetAll, sau này nếu database lớn nên viết riêng method ở Repository
-        var allProducts = await _productService.GetAllProductsAsync();
-        vm.NewProducts = allProducts.OrderByDescending(p => p.CreatedAt).Take(8);
+        // 3. Sản phẩm mới (chỉ lấy từ danh mục đang hoạt động)
+        vm.NewProducts = await _productService.GetNewProductsAsync(8);
 
         return View(vm);
     }

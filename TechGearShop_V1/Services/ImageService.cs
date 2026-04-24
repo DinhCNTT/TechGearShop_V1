@@ -1,20 +1,23 @@
-using Microsoft.AspNetCore.Hosting;
+using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
 using Microsoft.AspNetCore.Http;
-using SixLabors.Fonts;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Drawing.Processing;
-using SixLabors.ImageSharp.Processing;
+using Microsoft.Extensions.Configuration;
 using TechGearShop_V1.Services.Interfaces;
 
 namespace TechGearShop_V1.Services
 {
     public class ImageService : IImageService
     {
-        private readonly IWebHostEnvironment _env;
+        private readonly Cloudinary _cloudinary;
 
-        public ImageService(IWebHostEnvironment env)
+        public ImageService(IConfiguration config)
         {
-            _env = env;
+            var acc = new Account(
+                config["Cloudinary:CloudName"],
+                config["Cloudinary:ApiKey"],
+                config["Cloudinary:ApiSecret"]
+            );
+            _cloudinary = new Cloudinary(acc);
         }
 
         public async Task<string> UploadImageWithWatermarkAsync(IFormFile file, string subFolder = "products")
@@ -22,47 +25,72 @@ namespace TechGearShop_V1.Services
             if (file == null || file.Length == 0)
                 throw new ArgumentException("File không hợp lệ.");
 
-            // 1. Setup đường dẫn lưu file
-            string uploadsFolder = Path.Combine(_env.WebRootPath, "images", subFolder);
-            if (!Directory.Exists(uploadsFolder))
+            using var stream = file.OpenReadStream();
+            var uploadParams = new ImageUploadParams
             {
-                Directory.CreateDirectory(uploadsFolder);
+                File = new FileDescription(file.FileName, stream),
+                Folder = "TechGearShop/" + subFolder,
+                
+                // Cloudinary tích hợp resize & watermark text cực xịn xò
+                Transformation = new Transformation()
+                    .Width(800).Height(800).Crop("limit") // Đảm bảo hình ảnh ko bị quá khủng
+                    .Chain()
+                    .Overlay(new Layer().PublicId("text:Arial_40_bold:TechGear%20Shop"))
+                    .Color("white").Opacity(50).Gravity("south_east").X(20).Y(20)
+            };
+
+            var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+            
+            if (uploadResult.Error != null)
+            {
+                throw new Exception("Lỗi Cloudinary: " + uploadResult.Error.Message);
             }
 
-            string uniqueFileName = Guid.NewGuid().ToString() + "_" + file.FileName;
-            string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+            return uploadResult.SecureUrl.ToString();
+        }
 
-            // 2. Dùng ImageSharp đóng watermark
-            using (var image = await Image.LoadAsync(file.OpenReadStream()))
+        public async Task<List<MediaUploadResult>> UploadMultipleImagesAsync(List<IFormFile> files, string subFolder = "products")
+        {
+            var results = new List<MediaUploadResult>();
+            if (files == null || files.Count == 0) return results;
+
+            var uploadTasks = files.Select(async file =>
             {
-                // Thay đổi kích thước (Resize ảnh) cho chuẩn hóa
-                image.Mutate(x => x.Resize(new ResizeOptions
+                using var stream = file.OpenReadStream();
+                var uploadParams = new ImageUploadParams
                 {
-                    Size = new Size(800, 800),
-                    Mode = ResizeMode.Max
-                }));
-
-                // Đóng Watermark bằng Text (hoặc lấy file logo)
-                var font = SystemFonts.CreateFont("Arial", 40);
-                var textOptions = new RichTextOptions(font)
-                {
-                    Origin = new PointF(image.Width - 400, image.Height - 100),
-                    HorizontalAlignment = HorizontalAlignment.Right,
-                    VerticalAlignment = VerticalAlignment.Bottom
+                    File = new FileDescription(file.FileName, stream),
+                    Folder = "TechGearShop/" + subFolder,
+                    Transformation = new Transformation()
+                        .Width(800).Height(800).Crop("limit")
+                        .Chain()
+                        .Overlay(new Layer().PublicId("text:Arial_40_bold:TechGear%20Shop"))
+                        .Color("white").Opacity(50).Gravity("south_east").X(20).Y(20)
                 };
 
-                // Vẽ text "TechGear Shop Mới" mờ 50%
-                image.Mutate(x => x.DrawText(
-                    textOptions, 
-                    "TechGear Shop", 
-                    Color.White.WithAlpha(0.5f))
-                );
+                var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+                if (uploadResult.Error != null)
+                {
+                    throw new Exception("Lỗi Cloudinary: " + uploadResult.Error.Message);
+                }
+                return new MediaUploadResult 
+                { 
+                    Url = uploadResult.SecureUrl.ToString(), 
+                    PublicId = uploadResult.PublicId 
+                };
+            });
 
-                // Lưu ảnh ra
-                await image.SaveAsync(filePath);
-            }
+            var uploadedResults = await Task.WhenAll(uploadTasks);
+            results.AddRange(uploadedResults);
+            
+            return results;
+        }
 
-            return $"/images/{subFolder}/{uniqueFileName}";
+        public async Task DeleteImageByPublicIdAsync(string publicId)
+        {
+            if (string.IsNullOrEmpty(publicId)) return;
+            var deleteParams = new DeletionParams(publicId) { ResourceType = ResourceType.Image };
+            await _cloudinary.DestroyAsync(deleteParams);
         }
     }
 }

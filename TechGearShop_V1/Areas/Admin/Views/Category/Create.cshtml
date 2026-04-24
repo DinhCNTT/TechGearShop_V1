@@ -1,38 +1,71 @@
 @model TechGearShop_V1.Models.ViewModels.CategoryViewModel
 
 @{
-    ViewData["Title"] = "Thêm Danh mục";
+    ViewData["Title"] = "Thêm Danh Mục Mới";
 }
 
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Thêm Danh mục mới</h1>
-    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Quay lại</a>
+<div class="page-header mb-4">
+    <div>
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary rounded-pill px-3 mb-2">
+            <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
+        <h1 class="h3 fw-bold mb-0 text-dark"><i class="bi bi-tags-fill me-2 text-primary"></i>Thêm Danh Mục Mới</h1>
+    </div>
 </div>
 
-<div class="row">
-    <div class="col-md-6">
-        <form asp-action="Create" method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            
-            <div class="mb-3">
-                <label asp-for="Name" class="form-label fw-bold"></label>
-                <input asp-for="Name" class="form-control" placeholder="Nhập tên danh mục..." />
-                <span asp-validation-for="Name" class="text-danger"></span>
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="admin-table-wrap p-4 shadow-sm fade-in">
+            <div class="text-center mb-4">
+                <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10 mb-3" style="width: 60px; height: 60px;">
+                    <i class="bi bi-bookmark-star-fill text-primary fs-3"></i>
+                </div>
+                <h5 class="fw-bold">Thông tin danh mục</h5>
+                <p class="text-muted small">Tạo danh mục để phân loại sản phẩm dễ dàng hơn</p>
             </div>
 
-            <div class="mb-3">
-                <label asp-for="Description" class="form-label fw-bold"></label>
-                <textarea asp-for="Description" class="form-control" rows="3" placeholder="Mô tả danh mục..."></textarea>
-                <span asp-validation-for="Description" class="text-danger"></span>
-            </div>
+            <form asp-action="Create">
+                <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
 
-            <div class="mb-3 form-check">
-                <input asp-for="IsActive" class="form-check-input" />
-                <label asp-for="IsActive" class="form-check-label"></label>
-            </div>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label asp-for="Name" class="form-label fw-semibold text-muted small mb-1">Tên danh mục <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-0 text-muted"><i class="bi bi-type"></i></span>
+                            <input asp-for="Name" class="form-control bg-light border-0" placeholder="VD: Laptop Gaming, Bàn phím cơ..." />
+                        </div>
+                        <span asp-validation-for="Name" class="text-danger small"></span>
+                    </div>
 
-            <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Lưu dữ liệu</button>
-        </form>
+                    <div class="col-12">
+                        <label asp-for="Description" class="form-label fw-semibold text-muted small mb-1">Mô tả danh mục</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-0 text-muted align-items-start pt-2"><i class="bi bi-text-paragraph"></i></span>
+                            <textarea asp-for="Description" class="form-control bg-light border-0" rows="3" placeholder="Nhập một chút mô tả ngắn về danh mục này..."></textarea>
+                        </div>
+                        <span asp-validation-for="Description" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-12 mt-3">
+                        <div class="p-3 bg-light rounded-3 d-flex align-items-center border border-white shadow-sm">
+                            <div class="form-check form-switch m-0 d-flex align-items-center">
+                                <input class="form-check-input m-0" type="checkbox" asp-for="IsActive" checked style="width: 2.5rem; height: 1.25rem; cursor:pointer;" />
+                                <label class="form-check-label ms-3 fw-semibold text-dark" asp-for="IsActive">
+                                    Kích hoạt hiển thị
+                                    <small class="d-block fw-normal text-muted mt-1" style="font-size: 0.8rem;">Cho phép danh mục này xuất hiện trên menu khách hàng.</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 mt-4 text-end border-top pt-3">
+                        <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm">
+                            <i class="bi bi-check2-circle me-1"></i> Lưu Danh Mục
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 

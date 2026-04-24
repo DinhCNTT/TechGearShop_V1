@@ -7,10 +7,12 @@ namespace TechGearShop_V1.Services
     public class ProductService : IProductService
     {
         private readonly IProductRepository _productRepository;
+        private readonly IImageService _imageService;
 
-        public ProductService(IProductRepository productRepository)
+        public ProductService(IProductRepository productRepository, IImageService imageService)
         {
             _productRepository = productRepository;
+            _imageService = imageService;
         }
 
         public async Task<IEnumerable<Product>> GetAllProductsAsync()
@@ -46,9 +48,29 @@ namespace TechGearShop_V1.Services
             }
         }
 
+        public async Task DeleteProductImageAsync(int imageId)
+        {
+            // Lấy thông tin ảnh trước khi xóa
+            var image = await _productRepository.GetProductImageByIdAsync(imageId);
+            
+            // Xóa ảnh trên mây (Hard delete)
+            if (image != null && !string.IsNullOrEmpty(image.PublicId))
+            {
+                await _imageService.DeleteImageByPublicIdAsync(image.PublicId);
+            }
+            
+            // Xóa ảnh trong DB
+            await _productRepository.DeleteProductImageAsync(imageId);
+        }
+
         public async Task<IEnumerable<Product>> GetFeaturedProductsAsync(int count)
         {
             return await _productRepository.GetFeaturedProductsAsync(count);
+        }
+
+        public async Task<IEnumerable<Product>> GetNewProductsAsync(int count)
+        {
+            return await _productRepository.GetNewProductsAsync(count);
         }
 
         public async Task<IEnumerable<Product>> GetProductsByCategoryAsync(int categoryId)

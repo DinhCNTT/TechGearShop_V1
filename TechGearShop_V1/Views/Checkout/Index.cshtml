@@ -88,27 +88,36 @@
     <!-- Tóm tắt Đơn hàng (Phải) -->
     <div class="col-lg-5">
         <div class="card border-0 shadow-sm rounded-4 bg-light p-4 sticky-top" style="top: 2rem;">
-            <h5 class="fw-bold mb-4 border-bottom pb-2">Đơn hàng của bạn (@Model.CartItems.Sum(c => c.Quantity) món)</h5>
+            <h5 class="fw-bold mb-4 border-bottom pb-2">Đơn hàng của bạn (@Model.CartItems.Count sản phẩm)</h5>
             
-            <div class="mb-4" style="max-height: 300px; overflow-y: auto;">
+            <div class="mb-4 pt-2 pe-3" style="max-height: 340px; overflow-y: auto; overflow-x: hidden;">
                 @foreach(var item in Model.CartItems)
                 {
-                    <div class="d-flex align-items-center mb-3">
+                    <div class="d-flex align-items-center mb-4">
                         <div class="position-relative me-3">
-                            @if (!string.IsNullOrEmpty(item.ImagePath))
-                            {
-                                <img src="@item.ImagePath" class="rounded object-fit-cover border" width="60" height="60" />
-                            }
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary text-white border border-white">
-                                @item.Quantity
-                            </span>
+                            <a href="@Url.Action("Detail", "Product", new { id = item.ProductId })">
+                                @if (!string.IsNullOrEmpty(item.ImagePath))
+                                {
+                                    <img src="@item.ImagePath" class="rounded object-fit-cover border bg-white" width="65" height="65" />
+                                }
+                            </a>
                         </div>
-                        <div class="flex-grow-1">
-                            <div class="fw-semibold text-truncate" style="max-width: 200px;" title="@item.ProductName">@item.ProductName</div>
-                            <div class="text-muted small">@item.Price.ToString("N0")₫</div>
+                        <div class="flex-grow-1 ms-1">
+                            <div class="fw-semibold text-truncate mb-1" style="max-width: 200px;" title="@item.ProductName">
+                                <a href="@Url.Action("Detail", "Product", new { id = item.ProductId })" class="text-dark text-decoration-none">@item.ProductName</a>
+                            </div>
+                            <form asp-controller="Checkout" asp-action="UpdateQuantity" method="post">
+                                <input type="hidden" name="productId" value="@item.ProductId" />
+                                <div class="input-group input-group-sm border rounded" style="width: 100px;">
+                                    <button class="btn btn-light border-0 px-2 text-secondary" type="button" onclick="this.parentNode.querySelector('input[type=number]').stepDown(); this.form.submit();"><i class="bi bi-dash"></i></button>
+                                    <input type="number" name="quantity" class="form-control border-0 text-center px-0 bg-white" value="@item.Quantity" min="1" max="99" readonly>
+                                    <button class="btn btn-light border-0 px-2 text-secondary" type="button" onclick="this.parentNode.querySelector('input[type=number]').stepUp(); this.form.submit();"><i class="bi bi-plus"></i></button>
+                                </div>
+                            </form>
                         </div>
-                        <div class="fw-bold ms-auto">
-                            @((item.Price * item.Quantity).ToString("N0"))₫
+                        <div class="text-end">
+                            <div class="fw-bold text-danger">@((item.Price * item.Quantity).ToString("N0"))₫</div>
+                            <div class="text-muted small">@item.Price.ToString("N0")₫ / cái</div>
                         </div>
                     </div>
                 }
@@ -154,6 +163,20 @@
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
     <script>
+        // Hiển thị cảnh báo nếu quá Stock
+        @if (TempData["StockWarning"] != null)
+        {
+            <text>
+            Swal.fire({
+                icon: 'warning',
+                title: 'Quá giới hạn tồn kho!',
+                text: '@Html.Raw(TempData["StockWarning"])',
+                confirmButtonColor: '#dc3545',
+                confirmButtonText: 'Đã hiểu'
+            });
+            </text>
+        }
+
         // Javascript cho Validate Coupon API (Sử dụng kiến trúc Fetch API hiện đại)
         async function applyCoupon() {
             var code = document.getElementById("couponInput").value.trim();

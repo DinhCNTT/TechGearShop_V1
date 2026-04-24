@@ -35,14 +35,64 @@ namespace TechGearShop_V1.Controllers
                 return RedirectToAction("Index", "Cart");
             }
 
+            // Lọc theo danh sách đã chọn từ Cart (nếu có)
+            var selectedIds = HttpContext.Session.Get<List<int>>(CartController.SELECTED_KEY);
+            var checkoutItems = (selectedIds != null && selectedIds.Any())
+                ? cart.Where(c => selectedIds.Contains(c.ProductId)).ToList()
+                : cart;
+
+            if (!checkoutItems.Any())
+            {
+                TempData["UserError"] = "Không tìm thấy sản phẩm đã chọn. Vui lòng thử lại.";
+                return RedirectToAction("Index", "Cart");
+            }
+
             var model = new CheckoutViewModel
             {
-                CartItems = cart,
-                // Giả lập logic tính phí ship cơ bản (VD: Cố định 30k)
+                CartItems = checkoutItems,
                 ShippingFee = 30000
             };
 
             return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateQuantity(int productId, int quantity)
+        {
+            var cart = GetCartItems();
+            var item = cart.FirstOrDefault(c => c.ProductId == productId);
+            
+            if (item != null)
+            {
+                if (quantity <= 0)
+                {
+                    cart.Remove(item);
+                    var selectedIds = HttpContext.Session.Get<List<int>>(CartController.SELECTED_KEY);
+                    if (selectedIds != null)
+                    {
+                        selectedIds.Remove(productId);
+                        HttpContext.Session.Set(CartController.SELECTED_KEY, selectedIds);
+                    }
+                }
+                else
+                {
+                    var product = await _productService.GetProductByIdAsync(productId);
+                    if (product != null)
+                    {
+                        if (quantity > product.Stock)
+                        {
+                            TempData["StockWarning"] = $"Khối lượng trong kho chỉ còn tối đa {product.Stock} sản phẩm.";
+                            item.Quantity = product.Stock;
+                        }
+                        else
+                        {
+                            item.Quantity = quantity;
+                        }
+                    }
+                }
+                HttpContext.Session.Set(CartController.CART_KEY, cart);
+            }
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: /Checkout/ApplyCoupon?code=XXX
@@ -139,6 +189,7 @@ namespace TechGearShop_V1.Controllers
                     Province = model.Province,
                     PaymentMethod = model.PaymentMethod,
                     CouponCode = model.CouponCode,
+                    Note = model.Note,
                     ShippingFee = model.ShippingFee,
                     DiscountAmount = model.DiscountAmount,
                     TotalAmount = model.SubTotal,

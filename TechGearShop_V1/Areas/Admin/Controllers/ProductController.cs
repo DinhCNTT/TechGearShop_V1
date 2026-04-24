@@ -79,6 +79,21 @@ namespace TechGearShop_V1.Areas.Admin.Controllers
                     ImagePath = imagePath
                 };
 
+                // Xử lý Gallery Files
+                if (model.GalleryFiles != null && model.GalleryFiles.Any())
+                {
+                    var uploadResults = await _imageService.UploadMultipleImagesAsync(model.GalleryFiles, "products");
+                    foreach (var result in uploadResults)
+                    {
+                        product.ProductImages.Add(new ProductImage
+                        {
+                            ImageUrl = result.Url,
+                            PublicId = result.PublicId,
+                            SortOrder = product.ProductImages.Count
+                        });
+                    }
+                }
+
                 await _productService.CreateProductAsync(product);
                 TempData["SuccessMessage"] = "Thêm sản phẩm thành công!";
                 return RedirectToAction(nameof(Index));
@@ -106,6 +121,7 @@ namespace TechGearShop_V1.Areas.Admin.Controllers
                 Description = product.Description,
                 IsActive = product.IsActive,
                 ExistingImagePath = product.ImagePath,
+                ExistingGallery = product.ProductImages?.OrderBy(p => p.SortOrder).ToList() ?? new List<ProductImage>(),
                 Categories = await _categoryService.GetAllCategoriesAsync()
             };
             return View(model);
@@ -135,6 +151,20 @@ namespace TechGearShop_V1.Areas.Admin.Controllers
                 product.Description = model.Description;
                 product.IsActive = model.IsActive;
 
+                if (model.GalleryFiles != null && model.GalleryFiles.Any())
+                {
+                    var uploadResults = await _imageService.UploadMultipleImagesAsync(model.GalleryFiles, "products");
+                    foreach (var result in uploadResults)
+                    {
+                        product.ProductImages.Add(new ProductImage
+                        {
+                            ImageUrl = result.Url,
+                            PublicId = result.PublicId,
+                            SortOrder = product.ProductImages.Count
+                        });
+                    }
+                }
+
                 await _productService.UpdateProductAsync(product);
                 TempData["SuccessMessage"] = "Cập nhật sản phẩm thành công!";
                 return RedirectToAction(nameof(Index));
@@ -151,6 +181,13 @@ namespace TechGearShop_V1.Areas.Admin.Controllers
             await _productService.DeleteProductAsync(id);
             TempData["SuccessMessage"] = "Sản phẩm đã chuyển sang trạng thái Ngừng kinh doanh (Soft Delete).";
             return RedirectToAction(nameof(Index));
+        }
+
+        public async Task<IActionResult> DeleteGalleryImage(int imageId, int productId)
+        {
+            await _productService.DeleteProductImageAsync(imageId);
+            TempData["SuccessMessage"] = "Đã xóa ảnh khỏi thư viện.";
+            return RedirectToAction(nameof(Edit), new { id = productId });
         }
     }
 }

@@ -46,6 +46,9 @@ namespace TechGearShop_V1.Models.Entities
         [MaxLength(100)]
         public string? Province { get; set; }
 
+        [MaxLength(1000)]
+        public string? Note { get; set; }
+
         // Navigation properties
         public User? User { get; set; }
         public ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();

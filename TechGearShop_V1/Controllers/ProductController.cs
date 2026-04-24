@@ -19,7 +19,7 @@ namespace TechGearShop_V1.Controllers
         public async Task<IActionResult> Index(int? categoryId, string? keyword, string? sortOrder)
         {
             var products = await _productService.FilterProductsAsync(categoryId, keyword, sortOrder);
-            var categories = await _categoryService.GetAllCategoriesAsync();
+            var categories = await _categoryService.GetActiveCategoriesAsync();
 
             var model = new ProductListViewModel
             {
@@ -37,7 +37,7 @@ namespace TechGearShop_V1.Controllers
         public async Task<IActionResult> Detail(int id)
         {
             var product = await _productService.GetProductByIdAsync(id);
-            if (product == null || !product.IsActive)
+            if (product == null || !product.IsActive || (product.Category != null && !product.Category.IsActive))
             {
                 // Thay vì quăng lỗi trang trắng, trả về NotFound thân thiện
                 TempData["UserError"] = "Sản phẩm này không tồn tại hoặc đã ngừng kinh doanh.";

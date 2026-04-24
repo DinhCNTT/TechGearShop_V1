@@ -2,14 +2,15 @@
 
 @{
     ViewData["Title"] = "Giỏ hàng của bạn";
-    decimal totalCartPrice = Model.Sum(item => item.Price * item.Quantity);
+    // Tạm tính ban đầu = 0 vì chưa có item nào được check
+    decimal totalCartPrice = 0;
 }
 
 <div class="row">
     <div class="col-md-8 mb-4">
         <div class="card shadow-sm">
             <div class="card-header bg-white py-3">
-                <h5 class="mb-0 fw-bold"><i class="bi bi-cart3"></i> Giỏ hàng (@Model.Sum(x => x.Quantity) sản phẩm)</h5>
+                <h5 class="mb-0 fw-bold"><i class="bi bi-cart3"></i> Giỏ hàng (@Model.Count sản phẩm)</h5>
             </div>
             <div class="card-body">
                 @if (!Model.Any())
@@ -24,9 +25,12 @@
                 else
                 {
                     <div class="table-responsive">
-                        <table class="table align-middle">
+                        <table class="table align-middle" id="cartTable">
                             <thead class="table-light">
                                 <tr>
+                                    <th style="width: 40px;">
+                                        <input class="form-check-input" type="checkbox" id="selectAll" checked>
+                                    </th>
                                     <th>Sản phẩm</th>
                                     <th>Đơn giá</th>
                                     <th style="width: 150px;">Số lượng</th>
@@ -40,24 +44,29 @@
                                     decimal totalItemPrice = item.Price * item.Quantity;
                                     <tr>
                                         <td>
-                                            <div class="d-flex align-items-center">
+                                            <input class="form-check-input item-check" type="checkbox" name="selectedItems" value="@item.ProductId" data-price="@item.Price" data-quantity="@item.Quantity" checked form="checkoutForm">
+                                        </td>
+                                        <td>
+                                            <a href="@Url.Action("Detail", "Product", new { id = item.ProductId })" class="d-flex align-items-center text-dark text-decoration-none">
                                                 @if (!string.IsNullOrEmpty(item.ImagePath))
                                                 {
                                                     <img src="@item.ImagePath" class="rounded me-3 object-fit-cover" width="60" height="60" alt="@item.ProductName" />
                                                 }
-                                                <div>
-                                                    <a href="/Product/Detail/@item.ProductId" class="text-dark text-decoration-none fw-semibold">@item.ProductName</a>
-                                                </div>
-                                            </div>
+                                                <span class="fw-semibold">@item.ProductName</span>
+                                            </a>
                                         </td>
                                         <td class="text-danger fw-bold">@item.Price.ToString("N0")₫</td>
                                         <td>
-                                            <form asp-controller="Cart" asp-action="UpdateQuantity" method="post" class="d-flex align-items-center">
+                                            <form asp-controller="Cart" asp-action="UpdateQuantity" method="post">
                                                 <input type="hidden" name="productId" value="@item.ProductId" />
-                                                <input type="number" name="quantity" class="form-control form-control-sm text-center me-2" value="@item.Quantity" min="1" max="99" onchange="this.form.submit()" />
+                                                <div class="input-group border rounded" style="width: 120px; margin: 0 auto;">
+                                                    <button class="btn btn-light border-0 px-2 text-secondary" type="button" onclick="this.parentNode.querySelector('input[type=number]').stepDown(); this.form.submit();"><i class="bi bi-dash"></i></button>
+                                                    <input type="number" name="quantity" class="form-control border-0 text-center px-0 bg-white fw-bold" value="@item.Quantity" min="1" max="99" readonly>
+                                                    <button class="btn btn-light border-0 px-2 text-secondary" type="button" onclick="this.parentNode.querySelector('input[type=number]').stepUp(); this.form.submit();"><i class="bi bi-plus"></i></button>
+                                                </div>
                                             </form>
                                         </td>
-                                        <td class="fw-bold">@totalItemPrice.ToString("N0")₫</td>
+                                        <td class="fw-bold item-total-price">@totalItemPrice.ToString("N0")₫</td>
                                         <td class="text-end">
                                             <form asp-controller="Cart" asp-action="Remove" method="post">
                                                 <input type="hidden" name="productId" value="@item.ProductId" />
@@ -89,7 +98,7 @@
                 <h5 class="fw-bold mb-4">Tóm tắt đơn hàng</h5>
                 <div class="d-flex justify-content-between mb-3">
                     <span class="text-muted">Tạm tính:</span>
-                    <span class="fw-bold">@totalCartPrice.ToString("N0") đ</span>
+                    <span class="fw-bold" id="subtotalDisplay">0 đ</span>
                 </div>
                 <div class="d-flex justify-content-between mb-3">
                     <span class="text-muted">Phí Giao Hàng:</span>
@@ -98,14 +107,19 @@
                 <hr>
                 <div class="d-flex justify-content-between mb-4">
                     <span class="fw-bold fs-5">Tổng tiền:</span>
-                    <span class="fw-bold fs-4 text-danger">@totalCartPrice.ToString("N0") đ</span>
+                    <span class="fw-bold fs-4 text-danger" id="cartTotalDisplay">@totalCartPrice.ToString("N0") đ</span>
                 </div>
                 
                 @if (Model.Any())
                 {
-                    <a href="/Checkout" class="btn btn-danger btn-lg w-100 fw-bold shadow-sm">
-                        TIẾN HÀNH THANH TOÁN <i class="bi bi-arrow-right-circle ms-2"></i>
-                    </a>
+                    <form id="checkoutForm" asp-controller="Cart" asp-action="Checkout" method="post">
+                        @Html.AntiForgeryToken()
+                        <!-- Hidden inputs được tạo bằng JS khi submit -->
+                        <div id="selectedInputsContainer"></div>
+                        <button type="submit" id="btnCheckout" class="btn btn-danger btn-lg w-100 fw-bold shadow-sm">
+                            TIẾN HÀNH THANH TOÁN <i class="bi bi-arrow-right-circle ms-2"></i>
+                        </button>
+                    </form>
                 }
                 else
                 {
@@ -124,3 +138,108 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Hiển thị cảnh báo từ Server nếu UpdateQuantity vượt quá giới hạn Stock
+            @if (TempData["StockWarning"] != null)
+            {
+                <text>
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Gián đoạn thao tác',
+                    text: '@Html.Raw(TempData["StockWarning"])',
+                    confirmButtonColor: '#dc3545',
+                    confirmButtonText: 'Đã hiểu'
+                });
+                </text>
+            }
+
+            // Logic tính tổng tiền giỏ hàng theo Select
+            const selectAll = document.getElementById('selectAll');
+            const itemCheckboxes = document.querySelectorAll('.item-check');
+            const totalDisplay = document.getElementById('cartTotalDisplay');
+            const subtotalDisplay = document.querySelector('.card-body .fw-bold:nth-child(2)'); // Tạm tính element
+            const btnCheckout = document.getElementById('btnCheckout');
+
+            function calculateTotal() {
+                let total = 0;
+                let checkedCount = 0;
+                
+                itemCheckboxes.forEach(cb => {
+                    if (cb.checked) {
+                        const price = parseFloat(cb.getAttribute('data-price'));
+                        const quantity = parseInt(cb.getAttribute('data-quantity'));
+                        total += price * quantity;
+                        checkedCount++;
+                    }
+                });
+
+                // Cập nhật Tạm tính & Tổng tiền
+                const formattedTotal = new Intl.NumberFormat('vi-VN').format(total) + ' đ';
+                if (totalDisplay) totalDisplay.textContent = formattedTotal;
+                const subtotalEl = document.getElementById('subtotalDisplay');
+                if (subtotalEl) subtotalEl.textContent = formattedTotal;
+
+                // Đồng bộ SelectAll
+                if (selectAll) {
+                    selectAll.checked = (checkedCount === itemCheckboxes.length && itemCheckboxes.length > 0);
+                }
+
+                // Vô hiệu hóa nút Thanh toán nếu không chọn sp nào (<a> tag dùng CSS)
+                if (btnCheckout) {
+                    if (checkedCount === 0) {
+                        btnCheckout.classList.add('disabled');
+                        btnCheckout.setAttribute('aria-disabled', 'true');
+                    } else {
+                        btnCheckout.classList.remove('disabled');
+                        btnCheckout.removeAttribute('aria-disabled');
+                    }
+                }
+            }
+
+            // Gắn event
+            if (selectAll) {
+                selectAll.addEventListener('change', function() {
+                    itemCheckboxes.forEach(cb => cb.checked = selectAll.checked);
+                    calculateTotal();
+                });
+            }
+
+            itemCheckboxes.forEach(cb => {
+                cb.addEventListener('change', calculateTotal);
+            });
+
+            // Tính toán lần đầu (mặc định checked hết khi tải trang)
+            calculateTotal();
+
+            // Trước khi submit form Checkout: Build hidden inputs từ checkboxes được tick
+            const checkoutForm = document.getElementById('checkoutForm');
+            if (checkoutForm) {
+                checkoutForm.addEventListener('submit', function(e) {
+                    const selectedIds = Array.from(itemCheckboxes)
+                        .filter(cb => cb.checked)
+                        .map(cb => cb.value);
+
+                    if (selectedIds.length === 0) {
+                        e.preventDefault();
+                        alert('Vui lòng chọn ít nhất 1 sản phẩm!');
+                        return;
+                    }
+
+                    // Build dynamic hidden inputs
+                    const container = document.getElementById('selectedInputsContainer');
+                    container.innerHTML = '';
+                    selectedIds.forEach(id => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'selectedItems';
+                        input.value = id;
+                        container.appendChild(input);
+                    });
+                });
+            }
+        });
+    </script>
+}

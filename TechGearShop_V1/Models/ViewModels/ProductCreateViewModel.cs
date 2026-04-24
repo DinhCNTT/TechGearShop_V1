@@ -34,10 +34,15 @@ namespace TechGearShop_V1.Models.ViewModels
         [Range(0, 100000, ErrorMessage = "Số lượng không hợp lệ")]
         public int Stock { get; set; }
 
-        [Display(Name = "Hình ảnh sản phẩm")]
+        [Display(Name = "Hình ảnh sản phẩm (Ảnh đại diện)")]
         public IFormFile? ImageFile { get; set; }
 
+        [Display(Name = "Thư viện ảnh gốc (Nhiều ảnh)")]
+        public List<IFormFile>? GalleryFiles { get; set; }
+
         public string? ExistingImagePath { get; set; }
+
+        public List<ProductImage> ExistingGallery { get; set; } = new List<ProductImage>();
 
         [Display(Name = "Mô tả sản phẩm")]
         public string? Description { get; set; }

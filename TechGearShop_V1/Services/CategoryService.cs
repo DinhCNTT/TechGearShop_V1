@@ -18,6 +18,11 @@ namespace TechGearShop_V1.Services
             return await _categoryRepository.GetAllAsync();
         }
 
+        public async Task<IEnumerable<Category>> GetActiveCategoriesAsync()
+        {
+            return await _categoryRepository.GetActiveCategoriesAsync();
+        }
+
         public async Task<Category?> GetCategoryByIdAsync(int id)
         {
             return await _categoryRepository.GetByIdAsync(id);

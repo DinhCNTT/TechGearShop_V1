@@ -27,10 +27,27 @@
                 </span>
             }
 
-            <img src="@(string.IsNullOrEmpty(Model.ImagePath) ? "/images/placeholder.jpg" : Model.ImagePath)" 
-                 class="img-fluid rounded-4 object-fit-contain p-2 shadow-sm border w-100" 
+            <img id="mainProductImage" src="@(string.IsNullOrEmpty(Model.ImagePath) ? "/images/placeholder.jpg" : Model.ImagePath)" 
+                 class="img-fluid rounded-4 object-fit-contain p-2 shadow-sm border w-100 mb-3" 
                  style="max-height: 500px;" 
                  alt="@Model.Name" />
+
+            @if (Model.ProductImages != null && Model.ProductImages.Any())
+            {
+                <div class="d-flex flex-wrap gap-2 justify-content-center">
+                    <!-- Ảnh đại diện -->
+                    <div class="gallery-thumb" onclick="changeMainImage('@Model.ImagePath', this)" style="width: 80px; height: 80px; cursor: pointer; transition: all 0.2s;">
+                        <img src="@Model.ImagePath" class="img-fluid rounded border w-100 h-100 object-fit-cover" alt="Thumbnail" />
+                    </div>
+                    <!-- Các ảnh phụ -->
+                    @foreach (var img in Model.ProductImages.OrderBy(p => p.SortOrder))
+                    {
+                        <div class="gallery-thumb" onclick="changeMainImage('@img.ImageUrl', this)" style="width: 80px; height: 80px; cursor: pointer; transition: all 0.2s;">
+                            <img src="@img.ImageUrl" class="img-fluid rounded border w-100 h-100 object-fit-cover" alt="Gallery" />
+                        </div>
+                    }
+                </div>
+            }
         </div>
 
         <!-- Thông Tin Chi Tiết -->
@@ -65,18 +82,34 @@
                 }
             </div>
 
+            <!-- Chọn số lượng -->
+            @if (Model.Stock > 0)
+            {
+                <div class="d-flex align-items-center mb-4">
+                    <label class="fw-bold me-3">Số lượng:</label>
+                    <div class="input-group border rounded" style="width: 130px;">
+                        <button class="btn btn-light border-0 text-secondary" type="button" onclick="decreaseQuantity()"><i class="bi bi-dash"></i></button>
+                        <input type="number" id="productQuantity" class="form-control border-0 text-center fw-semibold bg-white" value="1" min="1" max="@Model.Stock" onchange="syncQuantity()" readonly>
+                        <button class="btn btn-light border-0 text-secondary" type="button" onclick="increaseQuantity()"><i class="bi bi-plus"></i></button>
+                    </div>
+                    <span class="text-muted ms-3 small">(@Model.Stock sản phẩm có sẵn)</span>
+                </div>
+            }
+
             <!-- Hành động Mua hàng -->
             <div class="d-flex gap-3 mb-4">
                 @if (Model.Stock > 0)
                 {
                     // Lên giỏ nhưng cho nhảy Ajax
                     <form asp-controller="Cart" asp-action="Add" asp-route-productId="@Model.Id" method="post" class="flex-grow-1 ajax-add-to-cart">
+                        <input type="hidden" name="quantity" id="hiddenQtyAdd" value="1" />
                         <button type="submit" class="btn btn-outline-danger btn-lg w-100 fw-bold py-3 rounded-pill btn-hover-zoom">
                             <i class="bi bi-cart-plus fs-5 me-2"></i> THÊM GIỎ HÀNG
                         </button>
                     </form>
-                    // Nút mua ngay sang Checkout (Phase sau)
-                    <form asp-controller="Cart" asp-action="Add" asp-route-productId="@Model.Id" method="post" class="flex-grow-1">
+                    // Nút mua ngay sang Checkout
+                    <form asp-controller="Cart" asp-action="BuyNow" asp-route-productId="@Model.Id" method="post" class="flex-grow-1">
+                        <input type="hidden" name="quantity" id="hiddenQtyBuy" value="1" />
                         <button type="submit" class="btn btn-danger btn-lg w-100 fw-bold py-3 rounded-pill shadow-sm btn-hover-zoom">
                             MUA NGAY <i class="bi bi-bag-check ms-2"></i>
                         </button>
@@ -126,4 +159,73 @@
             }
         </div>
     </div>
+}
+
+@section Scripts {
+    <script>
+        function changeMainImage(url, element) {
+            // Đổi ảnh lớn
+            const mainImg = document.getElementById('mainProductImage');
+            mainImg.style.opacity = '0.5';
+            setTimeout(() => {
+                mainImg.src = url;
+                mainImg.style.opacity = '1';
+            }, 100);
+            
+            // Đổi style viền cho ảnh đang được chọn
+            document.querySelectorAll('.gallery-thumb img').forEach(img => {
+                img.classList.remove('border-danger', 'border-2', 'shadow-sm');
+                img.style.opacity = '0.6';
+            });
+            
+            const selectedImg = element.querySelector('img');
+            selectedImg.classList.add('border-danger', 'border-2', 'shadow-sm');
+            selectedImg.style.opacity = '1';
+        }
+
+        // Khởi tạo active cho thumbnail đầu tiên
+        document.addEventListener("DOMContentLoaded", function() {
+            var firstThumb = document.querySelector('.gallery-thumb img');
+            if (firstThumb) {
+                firstThumb.classList.add('border-danger', 'border-2', 'shadow-sm');
+                document.querySelectorAll('.gallery-thumb img').forEach((img, index) => {
+                    if (index > 0) img.style.opacity = '0.6';
+                });
+            }
+        });
+
+        function syncQuantity() {
+            var qty = document.getElementById('productQuantity').value;
+            // Update hidden inputs for both forms
+            var hdAdd = document.getElementById('hiddenQtyAdd');
+            var hdBuy = document.getElementById('hiddenQtyBuy');
+            if (hdAdd) hdAdd.value = qty;
+            if (hdBuy) hdBuy.value = qty;
+        }
+
+        function increaseQuantity() {
+            var input = document.getElementById('productQuantity');
+            var max = parseInt(input.getAttribute('max'));
+            var current = parseInt(input.value);
+            
+            if (current >= max) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Giới hạn tồn kho!',
+                    text: 'Sản phẩm này trong kho chỉ còn tối đa ' + max + ' cái.',
+                    confirmButtonColor: '#dc3545',
+                    confirmButtonText: 'Đã hiểu'
+                });
+            } else {
+                input.stepUp();
+                syncQuantity();
+            }
+        }
+
+        function decreaseQuantity() {
+            var input = document.getElementById('productQuantity');
+            input.stepDown();
+            syncQuantity();
+        }
+    </script>
 }

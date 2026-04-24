@@ -28,23 +28,17 @@
                 <tr>
                     <td><span class="text-muted small fw-semibold">#@item.Id</span></td>
                     <td>
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="rounded-2 d-flex align-items-center justify-content-center"
-                                 style="width:32px;height:32px;background:#eff6ff;">
-                                <i class="bi bi-tag-fill text-primary" style="font-size:0.8rem;"></i>
-                            </div>
-                            <span class="fw-semibold text-dark">@item.Name</span>
-                        </div>
+                        <span class="fw-semibold text-dark">@item.Name</span>
                     </td>
                     <td><span class="text-muted small">@(item.Description ?? "—")</span></td>
                     <td>
                         @if (item.IsActive)
                         {
-                            <span class="badge-status" style="background:#f0fdf4;color:#16a34a;"><i class="bi bi-circle-fill me-1" style="font-size:0.45rem;vertical-align:middle;"></i>Hoạt động</span>
+                            <span class="badge-status" style="background:#f0fdf4;color:#16a34a; white-space:nowrap;"><i class="bi bi-circle-fill me-1" style="font-size:0.45rem;vertical-align:middle;"></i>Hoạt động</span>
                         }
                         else
                         {
-                            <span class="badge-status" style="background:#fff1f2;color:#e11d48;"><i class="bi bi-circle-fill me-1" style="font-size:0.45rem;vertical-align:middle;"></i>Đã ẩn</span>
+                            <span class="badge-status" style="background:#fff1f2;color:#e11d48; white-space:nowrap;"><i class="bi bi-circle-fill me-1" style="font-size:0.45rem;vertical-align:middle;"></i>Đã ẩn</span>
                         }
                     </td>
                     <td class="text-end pe-3">

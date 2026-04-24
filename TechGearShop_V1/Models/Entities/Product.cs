@@ -36,5 +36,6 @@ namespace TechGearShop_V1.Models.Entities
         // Navigation properties
         public Category? Category { get; set; }
         public ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
+        public ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
     }
 }

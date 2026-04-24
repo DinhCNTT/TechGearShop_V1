@@ -6,7 +6,10 @@ namespace TechGearShop_V1.Repositories.Interfaces
     {
         Task<IEnumerable<Product>> GetProductsByCategoryIdAsync(int categoryId);
         Task<IEnumerable<Product>> GetFeaturedProductsAsync(int count);
+        Task<IEnumerable<Product>> GetNewProductsAsync(int count);
         Task<Product?> GetProductWithCategoryAsync(int id);
+        Task<ProductImage?> GetProductImageByIdAsync(int imageId);
+        Task DeleteProductImageAsync(int imageId);
         Task<IEnumerable<Product>> FilterProductsAsync(int? categoryId, string? keyword, string? sortOrder);
     }
 }

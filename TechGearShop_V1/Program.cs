@@ -52,6 +52,7 @@ builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.IOrderService, Te
 builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.IUserService, TechGearShop_V1.Services.UserService>();
 builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.ICouponService, TechGearShop_V1.Services.CouponService>();
 builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.IImageService, TechGearShop_V1.Services.ImageService>();
+builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.IDashboardService, TechGearShop_V1.Services.DashboardService>();
 
 var app = builder.Build();
 

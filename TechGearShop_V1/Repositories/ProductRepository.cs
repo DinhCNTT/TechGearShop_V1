@@ -14,8 +14,19 @@ namespace TechGearShop_V1.Repositories
         public async Task<IEnumerable<Product>> GetFeaturedProductsAsync(int count)
         {
             return await _dbSet
-                .Where(p => p.IsActive)
-                .OrderByDescending(p => p.CreatedAt) // Ví dụ: lấy sản phẩm mới nhất làm featured
+                .Include(p => p.Category)
+                .Where(p => p.IsActive && p.Category.IsActive)
+                .OrderByDescending(p => p.CreatedAt)
+                .Take(count)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Product>> GetNewProductsAsync(int count)
+        {
+            return await _dbSet
+                .Include(p => p.Category)
+                .Where(p => p.IsActive && p.Category.IsActive)
+                .OrderByDescending(p => p.CreatedAt)
                 .Take(count)
                 .ToListAsync();
         }
@@ -23,7 +34,8 @@ namespace TechGearShop_V1.Repositories
         public async Task<IEnumerable<Product>> GetProductsByCategoryIdAsync(int categoryId)
         {
             return await _dbSet
-                .Where(p => p.CategoryId == categoryId && p.IsActive)
+                .Include(p => p.Category)
+                .Where(p => p.CategoryId == categoryId && p.IsActive && p.Category.IsActive)
                 .ToListAsync();
         }
 
@@ -31,12 +43,28 @@ namespace TechGearShop_V1.Repositories
         {
             return await _dbSet
                 .Include(p => p.Category)
+                .Include(p => p.ProductImages)
                 .FirstOrDefaultAsync(p => p.Id == id);
+        }
+
+        public async Task<ProductImage?> GetProductImageByIdAsync(int imageId)
+        {
+            return await _context.ProductImages.FindAsync(imageId);
+        }
+
+        public async Task DeleteProductImageAsync(int imageId)
+        {
+            var image = await _context.ProductImages.FindAsync(imageId);
+            if (image != null)
+            {
+                _context.ProductImages.Remove(image);
+                await _context.SaveChangesAsync();
+            }
         }
 
         public async Task<IEnumerable<Product>> FilterProductsAsync(int? categoryId, string? keyword, string? sortOrder)
         {
-            var query = _dbSet.Where(p => p.IsActive).AsQueryable();
+            var query = _dbSet.Include(p => p.Category).Where(p => p.IsActive && p.Category.IsActive).AsQueryable();
 
             if (categoryId.HasValue && categoryId.Value > 0)
             {

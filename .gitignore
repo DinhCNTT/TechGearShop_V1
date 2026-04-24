@@ -38,7 +38,9 @@ ScaffoldingReadMe.txt
 Logs/
 
 ## Sensitive config (KHÔNG commit file này nếu có password/secret)
-# appsettings.Production.json
+appsettings.Production.json
+appsettings.Development.json
+appsettings.*.json
 
 ## IDE
 .idea/

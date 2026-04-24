@@ -30,7 +30,7 @@
 
 @{
     var cartItems = HttpContextAccessor.HttpContext?.Session.Get<List<CartItem>>("shopping_cart") ?? new List<CartItem>();
-    int cartCount = cartItems.Sum(c => c.Quantity);
+    int cartCount = cartItems.Count;
 }
 <ul class="navbar-nav">
     <li class="nav-item me-2">
