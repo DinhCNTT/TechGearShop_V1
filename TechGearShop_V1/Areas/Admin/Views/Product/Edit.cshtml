@@ -101,12 +101,24 @@
                     </div>
 
                     <!-- Trạng thái -->
-                    <div class="col-12 mt-2 p-2 bg-light rounded-3 d-flex align-items-center">
-                        <div class="form-check form-switch m-0 p-0 d-flex align-items-center">
-                            <input class="form-check-input ms-0 me-2" type="checkbox" asp-for="IsActive" style="width: 2.5rem; height: 1.25rem; cursor:pointer;" />
-                            <label class="form-check-label fw-semibold" asp-for="IsActive" style="font-size:0.9rem;">
-                                Kích hoạt kinh doanh <span class="text-muted fw-normal">(ẩn nếu không muốn hiển thị trên web)</span>
-                            </label>
+                    <div class="col-12 mt-2 p-3 bg-light rounded-3">
+                        <div class="row">
+                            <div class="col-md-6 d-flex align-items-center">
+                                <div class="form-check form-switch m-0 p-0 d-flex align-items-center">
+                                    <input class="form-check-input ms-0 me-2" type="checkbox" asp-for="IsActive" style="width: 2.5rem; height: 1.25rem; cursor:pointer;" />
+                                    <label class="form-check-label fw-semibold" asp-for="IsActive" style="font-size:0.9rem;">
+                                        Kích hoạt kinh doanh
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 d-flex align-items-center">
+                                <div class="form-check form-switch m-0 p-0 d-flex align-items-center">
+                                    <input class="form-check-input ms-0 me-2" type="checkbox" asp-for="IsFeatured" style="width: 2.5rem; height: 1.25rem; cursor:pointer;" />
+                                    <label class="form-check-label fw-semibold text-warning" asp-for="IsFeatured" style="font-size:0.9rem;">
+                                        <i class="bi bi-star-fill me-1"></i>Sản phẩm nổi bật (Ghim lên top)
+                                    </label>
+                                </div>
+                            </div>
                         </div>
                     </div>
 

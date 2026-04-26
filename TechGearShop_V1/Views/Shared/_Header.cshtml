@@ -20,8 +20,8 @@
             </ul>
 
             <form class="d-flex me-3" role="search" asp-controller="Home" asp-action="Index" method="get">
-                <input class="form-control me-2 rounded-pill" type="search" name="keyword" placeholder="Tìm kiếm linh kiện..." aria-label="Search">
-                <button class="btn btn-outline-light rounded-pill px-4" type="submit"><i class="bi bi-search"></i></button>
+                <input class="form-control me-2 rounded-pill border-0 shadow-sm px-4" type="search" name="keyword" placeholder="Tìm kiếm linh kiện..." aria-label="Search">
+                <button class="btn btn-warning rounded-pill px-3 shadow-sm text-dark fw-bold" type="submit"><i class="bi bi-search"></i></button>
             </form>
 
             @using TechGearShop_V1.Extensions
@@ -32,7 +32,29 @@
     var cartItems = HttpContextAccessor.HttpContext?.Session.Get<List<CartItem>>("shopping_cart") ?? new List<CartItem>();
     int cartCount = cartItems.Count;
 }
-<ul class="navbar-nav">
+<ul class="navbar-nav d-flex align-items-center">
+    <!-- Custom Language Switcher (hides the ugly Google widget off-screen) -->
+    <li class="nav-item dropdown me-2" id="lang-switcher">
+        <a class="nav-link dropdown-toggle text-white d-flex align-items-center gap-1" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <span id="active-lang-flag">🇻🇳</span>
+            <span id="active-lang-text" class="fw-semibold small">VI</span>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 py-2" style="min-width:130px;">
+            <li>
+                <button class="dropdown-item d-flex align-items-center gap-2 rounded-2 py-2" onclick="switchLang('vi','🇻🇳','VI')">
+                    <span>🇻🇳</span> Tiếng Việt
+                </button>
+            </li>
+            <li>
+                <button class="dropdown-item d-flex align-items-center gap-2 rounded-2 py-2" onclick="switchLang('en','🇬🇧','EN')">
+                    <span>🇬🇧</span> English
+                </button>
+            </li>
+        </ul>
+    </li>
+    <!-- Hidden Google Translate mount point (off-screen) -->
+    <div id="google_translate_element" style="position:absolute;top:-9999px;left:-9999px;"></div>
+
     <li class="nav-item me-2">
         <a class="nav-link text-white position-relative" asp-area="" asp-controller="Cart" asp-action="Index">
             <i class="bi bi-cart3 fs-5"></i>

@@ -44,6 +44,19 @@ namespace TechGearShop_V1.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            // Non-blocking ViewCount: ghi vào bộ nhớ, background service flush vào DB mỗi 5 phút
+            var viewedList = HttpContext.Session.GetString("ViewedProducts");
+            var viewedIds = string.IsNullOrEmpty(viewedList)
+                ? new List<int>()
+                : viewedList.Split(',').Select(int.Parse).ToList();
+
+            if (!viewedIds.Contains(id))
+            {
+                Services.ViewCountFlushService.PendingViews.AddOrUpdate(id, 1, (_, existing) => existing + 1);
+                viewedIds.Add(id);
+                HttpContext.Session.SetString("ViewedProducts", string.Join(",", viewedIds));
+            }
+
             // Gợi ý sản phẩm cùng danh mục (loại trừ chính nó)
             var related = await _productService.GetProductsByCategoryAsync(product.CategoryId);
             ViewBag.RelatedProducts = related.Where(p => p.Id != product.Id).Take(4).ToList();

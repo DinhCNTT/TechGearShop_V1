@@ -20,7 +20,7 @@ body {
 
 .product-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
 }
 
 .product-card img {
@@ -40,13 +40,191 @@ body {
 .price-text {
     font-size: 1.1rem;
     font-weight: bold;
-    color: #dc3545; /* Bootstrap danger red */
+    color: #dc3545;
+    /* Bootstrap danger red */
 }
 
 /* Hover effects for utility buttons */
 .btn-hover-zoom {
     transition: transform 0.1s;
 }
+
 .btn-hover-zoom:hover {
     transform: scale(1.05);
+}
+
+/* Animations cho Popup quảng cáo */
+@keyframes bounce-subtle {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.gift-bounce {
+    animation: bounce-subtle 2s ease-in-out infinite;
+}
+
+.copy-promo-btn {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.copy-promo-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(255, 193, 7, 0.4) !important;
+}
+
+/* Overrides cho Google Translate Widget ẩn nút G-Translate dư thừa */
+
+.goog-logo-link {
+    display: none !important;
+}
+
+.goog-te-gadget {
+    color: transparent !important;
+    font-size: 0;
+}
+
+.goog-te-gadget .goog-te-combo {
+    color: #333 !important;
+    background: #fff;
+    border: none;
+    border-radius: 20px;
+    padding: 4px 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* ========================================
+   Floating Contact Widget — Premium Edition
+   ======================================== */
+.floating-contact {
+    position: fixed;
+    bottom: 30px;
+    right: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    z-index: 1050;
+    align-items: flex-end;
+}
+
+/* Bounce-in entrance animation */
+.float-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    color: #fff;
+    text-decoration: none;
+    font-size: 22px;
+    position: relative;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    animation: bounceIn 0.6s ease-out both;
+}
+
+.float-btn:nth-child(1) {
+    animation-delay: 0.3s;
+}
+
+.float-btn:nth-child(2) {
+    animation-delay: 0.5s;
+}
+
+@keyframes bounceIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.3) translateY(40px);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.05) translateY(-5px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.float-btn:hover {
+    transform: scale(1.12);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
+    color: #fff;
+}
+
+/* Slide-in Label Tooltip */
+.float-label {
+    position: absolute;
+    right: 68px;
+    white-space: nowrap;
+    background: #1e293b;
+    color: #f1f5f9;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    transform: translateX(10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+}
+
+.float-label::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -6px;
+    transform: translateY(-50%);
+    border: 6px solid transparent;
+    border-left-color: #1e293b;
+}
+
+.float-btn:hover .float-label {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Zalo Button */
+.zalo-btn {
+    background: linear-gradient(135deg, #0068ff, #0052cc);
+}
+
+.zalo-btn svg {
+    width: 30px;
+    height: 30px;
+}
+
+/* Hotline Button */
+.hotline-btn {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    animation: bounceIn 0.6s ease-out 0.5s both, pulse-ring 2s infinite 1.2s;
+}
+
+@keyframes pulse-ring {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6);
+    }
+
+    70% {
+        box-shadow: 0 0 0 18px rgba(239, 68, 68, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
 }

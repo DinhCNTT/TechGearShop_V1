@@ -85,10 +85,16 @@
                     </div>
 
                     <!-- Trạng thái -->
-                    <div class="col-12 mt-2 d-flex align-items-center">
+                    <div class="col-md-6 mt-2 d-flex align-items-center">
                         <div class="form-check form-switch m-0 d-flex align-items-center">
                             <input class="form-check-input m-0" type="checkbox" asp-for="IsActive" checked style="width: 2.5rem; height: 1.25rem; cursor:pointer;" />
                             <label class="form-check-label ms-2 fw-semibold" asp-for="IsActive">Hiện sản phẩm</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mt-2 d-flex align-items-center">
+                        <div class="form-check form-switch m-0 d-flex align-items-center">
+                            <input class="form-check-input m-0" type="checkbox" asp-for="IsFeatured" style="width: 2.5rem; height: 1.25rem; cursor:pointer;" />
+                            <label class="form-check-label ms-2 fw-semibold text-warning" asp-for="IsFeatured"><i class="bi bi-star-fill me-1"></i>Sản phẩm nổi bật</label>
                         </div>
                     </div>
 

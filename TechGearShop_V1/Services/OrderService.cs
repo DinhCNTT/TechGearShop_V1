@@ -60,19 +60,31 @@ namespace TechGearShop_V1.Services
 
         public async Task UpdateOrderStatusAsync(int orderId, OrderStatus status)
         {
-            var order = await _orderRepository.GetByIdAsync(orderId);
+            var order = await _orderRepository.GetOrderWithDetailsAsync(orderId);
             if (order != null)
             {
                 order.Status = status;
                 _orderRepository.Update(order);
                 await _orderRepository.SaveChangesAsync();
 
-                // Bonus logic: Nếu đơn hàng hoàn thành -> cộng điểm thưởng cho User
+                // Bonus logic: Nếu đơn hàng hoàn thành -> cộng điểm thưởng cho User và tăng lượt bán
                 if (status == OrderStatus.Completed)
                 {
                     // Cộng điểm (VD: 1 điểm cho mỗi 100,000 VND)
                     int pointsEarned = (int)(order.FinalAmount / 100000);
                     await _userService.UpdateUserPointsAsync(order.UserId, pointsEarned);
+
+                    // Tăng số lượng đã bán (SoldCount) cho từng sản phẩm
+                    foreach (var detail in order.OrderDetails)
+                    {
+                        var product = await _productRepository.GetByIdAsync(detail.ProductId);
+                        if (product != null)
+                        {
+                            product.SoldCount += detail.Quantity;
+                            _productRepository.Update(product);
+                        }
+                    }
+                    await _productRepository.SaveChangesAsync();
                 }
             }
         }

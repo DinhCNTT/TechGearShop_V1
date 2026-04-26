@@ -16,7 +16,9 @@ namespace TechGearShop_V1.Repositories
             return await _dbSet
                 .Include(p => p.Category)
                 .Where(p => p.IsActive && p.Category.IsActive)
-                .OrderByDescending(p => p.CreatedAt)
+                .OrderByDescending(p => p.IsFeatured)
+                .ThenByDescending(p => p.SoldCount)
+                .ThenByDescending(p => p.ViewCount)
                 .Take(count)
                 .ToListAsync();
         }

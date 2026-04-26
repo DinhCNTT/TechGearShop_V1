@@ -76,6 +76,7 @@ namespace TechGearShop_V1.Areas.Admin.Controllers
                     Stock = model.Stock,
                     Description = model.Description,
                     IsActive = model.IsActive,
+                    IsFeatured = model.IsFeatured,
                     ImagePath = imagePath
                 };
 
@@ -120,6 +121,7 @@ namespace TechGearShop_V1.Areas.Admin.Controllers
                 Stock = product.Stock,
                 Description = product.Description,
                 IsActive = product.IsActive,
+                IsFeatured = product.IsFeatured,
                 ExistingImagePath = product.ImagePath,
                 ExistingGallery = product.ProductImages?.OrderBy(p => p.SortOrder).ToList() ?? new List<ProductImage>(),
                 Categories = await _categoryService.GetAllCategoriesAsync()
@@ -150,6 +152,7 @@ namespace TechGearShop_V1.Areas.Admin.Controllers
                 product.Stock = model.Stock;
                 product.Description = model.Description;
                 product.IsActive = model.IsActive;
+                product.IsFeatured = model.IsFeatured;
 
                 if (model.GalleryFiles != null && model.GalleryFiles.Any())
                 {

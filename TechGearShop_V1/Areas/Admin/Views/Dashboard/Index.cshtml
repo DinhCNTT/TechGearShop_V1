@@ -21,42 +21,71 @@
     </span>
 </div>
 
+<style>
+    .kpi-link {
+        text-decoration: none;
+        display: block;
+        transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease;
+    }
+    .kpi-link:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15) !important;
+    }
+</style>
+
 <!-- ── KPI Cards ── -->
 <div class="row g-4 mb-5">
     <div class="col-sm-6 col-xl-3">
-        <div class="stat-card stat-blue shadow">
-            <div class="deco"></div>
-            <div class="icon-badge"><i class="bi bi-bag-check-fill"></i></div>
-            <div class="stat-value">@Model.TodayNewOrders</div>
-            <div class="stat-label">Đơn hàng mới hôm nay</div>
-            <a href="/Admin/Order" class="text-white small mt-3 d-block" style="opacity:0.8;">
-                Xem danh sách <i class="bi bi-arrow-right"></i>
-            </a>
-        </div>
+        <a href="/Admin/Order" class="kpi-link rounded-4">
+            <div class="stat-card stat-blue shadow h-100">
+                <div class="deco"></div>
+                <div class="icon-badge"><i class="bi bi-bag-check-fill"></i></div>
+                <div class="stat-value">@Model.TodayNewOrders</div>
+                <div class="stat-label">Đơn hàng mới hôm nay</div>
+                <div class="text-white small mt-3 d-flex align-items-center" style="opacity:0.8;">
+                    Xem danh sách <i class="bi bi-arrow-right ms-1"></i>
+                </div>
+            </div>
+        </a>
     </div>
     <div class="col-sm-6 col-xl-3">
-        <div class="stat-card stat-green shadow">
-            <div class="deco"></div>
-            <div class="icon-badge"><i class="bi bi-cash-coin"></i></div>
-            <div class="stat-value" style="font-size:1.5rem;">@Model.MonthlyRevenue.ToString("N0")đ</div>
-            <div class="stat-label">Doanh thu tháng (Hoàn thành)</div>
-        </div>
+        <a href="/Admin/Order" class="kpi-link rounded-4">
+            <div class="stat-card stat-green shadow h-100">
+                <div class="deco"></div>
+                <div class="icon-badge"><i class="bi bi-cash-coin"></i></div>
+                <div class="stat-value" style="font-size:1.5rem;">@Model.MonthlyRevenue.ToString("N0")đ</div>
+                <div class="stat-label">Doanh thu tháng (Hoàn thành)</div>
+                <div class="text-white small mt-3 d-flex align-items-center" style="opacity:0.8;">
+                    Kế toán đơn hàng <i class="bi bi-arrow-right ms-1"></i>
+                </div>
+            </div>
+        </a>
     </div>
     <div class="col-sm-6 col-xl-3">
-        <div class="stat-card stat-amber shadow">
-            <div class="deco"></div>
-            <div class="icon-badge"><i class="bi bi-exclamation-triangle-fill"></i></div>
-            <div class="stat-value">@Model.LowStockProductCount</div>
-            <div class="stat-label">Sản phẩm sắp hết hàng (≤5)</div>
-        </div>
+        <a href="/Admin/Product" class="kpi-link rounded-4">
+            <div class="stat-card stat-amber shadow h-100">
+                <div class="deco"></div>
+                <div class="icon-badge"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                <div class="stat-value">@Model.LowStockProductCount</div>
+                <div class="stat-label">Sản phẩm sắp hết hàng (≤5)</div>
+                <div class="text-white small mt-3 d-flex align-items-center" style="opacity:0.8;">
+                    Nhập kho ngay <i class="bi bi-arrow-right ms-1"></i>
+                </div>
+            </div>
+        </a>
     </div>
     <div class="col-sm-6 col-xl-3">
-        <div class="stat-card stat-rose shadow">
-            <div class="deco"></div>
-            <div class="icon-badge"><i class="bi bi-hourglass-split"></i></div>
-            <div class="stat-value">@Model.PendingOrders</div>
-            <div class="stat-label">Đơn hàng chờ xử lý</div>
-        </div>
+        <a href="/Admin/Order" class="kpi-link rounded-4">
+            <div class="stat-card stat-rose shadow h-100">
+                <div class="deco"></div>
+                <div class="icon-badge"><i class="bi bi-hourglass-split"></i></div>
+                <div class="stat-value">@Model.PendingOrders</div>
+                <div class="stat-label">Đơn hàng chờ xử lý</div>
+                <div class="text-white small mt-3 d-flex align-items-center" style="opacity:0.8;">
+                    Duyệt đơn <i class="bi bi-arrow-right ms-1"></i>
+                </div>
+            </div>
+        </a>
     </div>
 </div>
 

@@ -27,23 +27,37 @@
                 </span>
             }
 
-            <img id="mainProductImage" src="@(string.IsNullOrEmpty(Model.ImagePath) ? "/images/placeholder.jpg" : Model.ImagePath)" 
-                 class="img-fluid rounded-4 object-fit-contain p-2 shadow-sm border w-100 mb-3" 
-                 style="max-height: 500px;" 
-                 alt="@Model.Name" />
+            <div class="main-image-container position-relative d-flex align-items-center justify-content-center bg-white rounded-4 border shadow-sm mb-3" style="height: 450px; overflow: hidden;">
+                <!-- Mũi tên Trái -->
+                <button class="btn btn-light position-absolute start-0 top-50 translate-middle-y ms-2 rounded-circle shadow-sm z-3" style="width: 40px; height: 40px;" onclick="prevImage()" aria-label="Previous image">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+
+                <img id="mainProductImage" src="@(string.IsNullOrEmpty(Model.ImagePath) ? "/images/placeholder.jpg" : Model.ImagePath)" 
+                     class="img-fluid object-fit-contain p-3 w-100 h-100" 
+                     style="cursor: zoom-in;" onclick="openLightbox()"
+                     alt="@Model.Name" />
+
+                <!-- Mũi tên Phải -->
+                <button class="btn btn-light position-absolute end-0 top-50 translate-middle-y me-2 rounded-circle shadow-sm z-3" style="width: 40px; height: 40px;" onclick="nextImage()" aria-label="Next image">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+            </div>
 
             @if (Model.ProductImages != null && Model.ProductImages.Any())
             {
-                <div class="d-flex flex-wrap gap-2 justify-content-center">
+                <div class="d-flex flex-wrap gap-2 justify-content-center" id="galleryThumbs">
                     <!-- Ảnh đại diện -->
-                    <div class="gallery-thumb" onclick="changeMainImage('@Model.ImagePath', this)" style="width: 80px; height: 80px; cursor: pointer; transition: all 0.2s;">
-                        <img src="@Model.ImagePath" class="img-fluid rounded border w-100 h-100 object-fit-cover" alt="Thumbnail" />
+                    <div class="gallery-thumb" onclick="changeImageByIndex(0)" style="width: 80px; height: 80px; cursor: pointer; transition: all 0.2s;">
+                        <img src="@Model.ImagePath" class="img-fluid rounded border w-100 h-100 object-fit-cover border-danger border-2 shadow-sm" alt="Thumbnail" />
                     </div>
                     <!-- Các ảnh phụ -->
+                    @{ int imgIndex = 1; }
                     @foreach (var img in Model.ProductImages.OrderBy(p => p.SortOrder))
                     {
-                        <div class="gallery-thumb" onclick="changeMainImage('@img.ImageUrl', this)" style="width: 80px; height: 80px; cursor: pointer; transition: all 0.2s;">
-                            <img src="@img.ImageUrl" class="img-fluid rounded border w-100 h-100 object-fit-cover" alt="Gallery" />
+                        var currentIndex = imgIndex++;
+                        <div class="gallery-thumb" onclick="changeImageByIndex(@currentIndex)" style="width: 80px; height: 80px; cursor: pointer; transition: all 0.2s;">
+                            <img src="@img.ImageUrl" class="img-fluid rounded border w-100 h-100 object-fit-cover" style="opacity: 0.6;" alt="Gallery" />
                         </div>
                     }
                 </div>
@@ -161,38 +175,100 @@
     </div>
 }
 
+<!-- Lightbox Modal (Fullscreen Dark Theme) -->
+<div class="modal fade" id="imageLightboxModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content bg-dark border-0">
+            <div class="modal-header border-0 pb-0 pe-4 pt-4 z-3 position-absolute end-0 top-0 w-100 d-flex justify-content-end">
+                <button type="button" class="btn-close btn-close-white fs-4" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body d-flex justify-content-center align-items-center position-relative p-0 h-100">
+                <!-- Nút Trái Modal -->
+                <button class="btn btn-outline-light position-absolute start-0 top-50 translate-middle-y ms-3 ms-md-5 rounded-circle" style="width:50px;height:50px;" onclick="prevImage()" aria-label="Previous">
+                    <i class="bi bi-chevron-left fs-4"></i>
+                </button>
+                
+                <!-- Ảnh Modal -->
+                <img id="lightboxImage" src="" class="img-fluid object-fit-contain" style="max-height: 90vh; max-width: 90vw;" alt="Zoomed Product" />
+                
+                <!-- Nút Phải Modal -->
+                <button class="btn btn-outline-light position-absolute end-0 top-50 translate-middle-y me-3 me-md-5 rounded-circle" style="width:50px;height:50px;" onclick="nextImage()" aria-label="Next">
+                    <i class="bi bi-chevron-right fs-4"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
-        function changeMainImage(url, element) {
-            // Đổi ảnh lớn
+        // Data Array chứa danh sách các URL ảnh
+        const galleryImages = [
+            '@Html.Raw(Model.ImagePath)'
+            @foreach(var img in Model.ProductImages.OrderBy(p => p.SortOrder)) {
+                <text>,'@Html.Raw(img.ImageUrl)'</text>
+            }
+        ];
+        
+        let currentImageIndex = 0;
+
+        function changeImageByIndex(index) {
+            if (index < 0 || index >= galleryImages.length) return;
+            currentImageIndex = index;
+            
+            // Cập nhật ảnh chính
             const mainImg = document.getElementById('mainProductImage');
             mainImg.style.opacity = '0.5';
             setTimeout(() => {
-                mainImg.src = url;
+                mainImg.src = galleryImages[currentImageIndex];
                 mainImg.style.opacity = '1';
-            }, 100);
+            }, 150);
             
-            // Đổi style viền cho ảnh đang được chọn
-            document.querySelectorAll('.gallery-thumb img').forEach(img => {
-                img.classList.remove('border-danger', 'border-2', 'shadow-sm');
-                img.style.opacity = '0.6';
+            // Cập nhật trạng thái Thumbnail
+            const thumbs = document.querySelectorAll('.gallery-thumb img');
+            thumbs.forEach((img, idx) => {
+                if (idx === currentImageIndex) {
+                    img.classList.add('border-danger', 'border-2', 'shadow-sm');
+                    img.style.opacity = '1';
+                } else {
+                    img.classList.remove('border-danger', 'border-2', 'shadow-sm');
+                    img.style.opacity = '0.6';
+                }
             });
-            
-            const selectedImg = element.querySelector('img');
-            selectedImg.classList.add('border-danger', 'border-2', 'shadow-sm');
-            selectedImg.style.opacity = '1';
+
+            // Nếu Lightbox đang mở, cập nhật luôn ảnh trong Lightbox
+            const lightboxImg = document.getElementById('lightboxImage');
+            if (lightboxImg) {
+                lightboxImg.style.opacity = '0.5';
+                setTimeout(() => {
+                    lightboxImg.src = galleryImages[currentImageIndex];
+                    lightboxImg.style.opacity = '1';
+                }, 150);
+            }
         }
 
-        // Khởi tạo active cho thumbnail đầu tiên
-        document.addEventListener("DOMContentLoaded", function() {
-            var firstThumb = document.querySelector('.gallery-thumb img');
-            if (firstThumb) {
-                firstThumb.classList.add('border-danger', 'border-2', 'shadow-sm');
-                document.querySelectorAll('.gallery-thumb img').forEach((img, index) => {
-                    if (index > 0) img.style.opacity = '0.6';
-                });
-            }
-        });
+        function openLightbox() {
+            // Hiển thị Modal Bootstrap
+            var myModal = new bootstrap.Modal(document.getElementById('imageLightboxModal'), {
+                keyboard: true
+            });
+            // Set ảnh hiện tại trước khi show
+            document.getElementById('lightboxImage').src = galleryImages[currentImageIndex];
+            myModal.show();
+        }
+
+        function nextImage() {
+            let nextIdx = currentImageIndex + 1;
+            if (nextIdx >= galleryImages.length) nextIdx = 0; // Quay vòng
+            changeImageByIndex(nextIdx);
+        }
+
+        function prevImage() {
+            let prevIdx = currentImageIndex - 1;
+            if (prevIdx < 0) prevIdx = galleryImages.length - 1; // Móc ngược
+            changeImageByIndex(prevIdx);
+        }
+
 
         function syncQuantity() {
             var qty = document.getElementById('productQuantity').value;

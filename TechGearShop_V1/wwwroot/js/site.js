@@ -2,7 +2,7 @@
 
 document.addEventListener("DOMContentLoaded", function () {
     // 1. Setup Toast notification style using SweetAlert2
-    const Toast = Swal.mixin({
+    window.Toast = Swal.mixin({
         toast: true,
         position: 'bottom-end',
         showConfirmButton: false,
@@ -13,6 +13,18 @@ document.addEventListener("DOMContentLoaded", function () {
             toast.addEventListener('mouseleave', Swal.resumeTimer)
         }
     });
+
+    // Hiện Promo Popup Quảng cáo 1 lần duy nhất mỗi session
+    if (!sessionStorage.getItem('promoShown')) {
+        setTimeout(() => {
+            const promoEl = document.getElementById('promoModal');
+            if (promoEl) {
+                const promoModal = new bootstrap.Modal(promoEl);
+                promoModal.show();
+                sessionStorage.setItem('promoShown', 'true');
+            }
+        }, 2000);
+    }
 
     // 2. Intercept "Add to Cart" forms to process via AJAX
     document.querySelectorAll('.ajax-add-to-cart').forEach(form => {
@@ -43,7 +55,22 @@ document.addEventListener("DOMContentLoaded", function () {
                     // Update header badge live
                     updateCartBadge(result.cartCount);
                 } else {
-                    Toast.fire({ icon: 'error', title: result.message });
+                    if (result.requireLogin) {
+                        Swal.fire({
+                            title: 'Chưa đăng nhập!',
+                            text: 'Sếp vui lòng đăng nhập để thêm đồ vào giỏ hàng nhé.',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Đăng nhập ngay',
+                            cancelButtonText: 'Đóng'
+                        }).then((dialog) => {
+                            if (dialog.isConfirmed) {
+                                window.location.href = '/Account/Login?ReturnUrl=' + encodeURIComponent(window.location.pathname + window.location.search);
+                            }
+                        });
+                    } else {
+                        Toast.fire({ icon: 'error', title: result.message });
+                    }
                 }
             } catch (err) {
                 console.error(err);
@@ -70,5 +97,39 @@ document.addEventListener("DOMContentLoaded", function () {
                 badge.remove();
             }
         }
-    }
+    }   // end updateCartBadge
 });
+
+
+/**
+ * Custom Language Switcher — Dùng cookie `googtrans` chuẩn của Google.
+ * Đây là cách đáng tin cậy 100%: set cookie rồi reload.
+ */
+function switchLang(langCode, flagEmoji, label) {
+    const domain = location.hostname;
+    const expire = new Date(Date.now() + 365 * 24 * 3600 * 1000).toUTCString();
+
+    if (langCode === 'vi') {
+        // Xóa cookie để về ngôn ngữ gốc
+        document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${domain}`;
+        document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${domain}`;
+    } else {
+        const val = `/vi/${langCode}`;
+        document.cookie = `googtrans=${val}; expires=${expire}; path=/;`;
+        document.cookie = `googtrans=${val}; expires=${expire}; path=/; domain=${domain}`;
+        document.cookie = `googtrans=${val}; expires=${expire}; path=/; domain=.${domain}`;
+    }
+    location.reload();
+}
+
+// Đọc cookie hiện tại để cập nhật UI nút cho đúng khi page load
+(function syncLangButton() {
+    const match = document.cookie.match(/googtrans=\/vi\/(\w+)/);
+    if (match && match[1] === 'en') {
+        const flagEl = document.getElementById('active-lang-flag');
+        const textEl = document.getElementById('active-lang-text');
+        if (flagEl) flagEl.textContent = '🇬🇧';
+        if (textEl) textEl.textContent = 'EN';
+    }
+})();

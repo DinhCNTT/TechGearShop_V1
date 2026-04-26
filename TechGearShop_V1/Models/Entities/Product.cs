@@ -31,6 +31,11 @@ namespace TechGearShop_V1.Models.Entities
 
         public bool IsActive { get; set; } = true;
 
+        // Denormalized fields for performance
+        public bool IsFeatured { get; set; } = false;
+        public int SoldCount { get; set; } = 0;
+        public int ViewCount { get; set; } = 0;
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation properties

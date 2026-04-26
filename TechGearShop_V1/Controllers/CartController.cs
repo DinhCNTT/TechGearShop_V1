@@ -35,6 +35,11 @@ namespace TechGearShop_V1.Controllers
         [HttpPost]
         public async Task<IActionResult> Add(int productId, int quantity = 1)
         {
+            if (User.Identity == null || !User.Identity.IsAuthenticated)
+            {
+                return Json(new { success = false, requireLogin = true });
+            }
+
             var product = await _productService.GetProductByIdAsync(productId);
             if (product == null || !product.IsActive)
             {
@@ -81,6 +86,12 @@ namespace TechGearShop_V1.Controllers
         [HttpPost]
         public async Task<IActionResult> BuyNow(int productId, int quantity = 1)
         {
+            if (User.Identity == null || !User.Identity.IsAuthenticated)
+            {
+                TempData["UserError"] = "Sếp vui lòng đăng nhập để Mua Ngay nhé.";
+                return Redirect($"/Account/Login?ReturnUrl=/Product/Detail/{productId}");
+            }
+
             var product = await _productService.GetProductByIdAsync(productId);
             if (product == null || !product.IsActive)
                 return RedirectToAction("Index", "Home");

@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
     <!-- Custom Site CSS -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
 </head>
 <body class="d-flex flex-column min-vh-100 bg-light">
     <header>
@@ -39,13 +40,99 @@
         @await Html.PartialAsync("_Footer")
     </footer>
 
+    <!-- Promo Popup Modal -->
+    <div class="modal fade" id="promoModal" tabindex="-1" aria-labelledby="promoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden position-relative">
+                <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3 z-3 shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="row g-0">
+                    <div class="col-12 text-center text-white p-5 d-flex flex-column justify-content-center" style="background: linear-gradient(135deg, #0f172a, #3b82f6);">
+                        <i class="bi bi-gift-fill fs-1 text-warning mb-2 gift-bounce"></i>
+                        <h3 class="fw-bold fs-2 mb-2 text-uppercase">Quà Tặng Mới!</h3>
+                        <p class="mb-4 text-white-50">Nhập mã ưu đãi bên dưới ở bước thanh toán để nhận ngay quà trị giá 50.000đ.</p>
+                        <div class="d-inline-block bg-white text-primary fw-bold fs-3 py-2 px-4 rounded-3 shadow-sm mb-4" style="letter-spacing: 2px; border: 2px dashed #3b82f6;">
+                            NEW50K
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-warning fw-bold px-4 py-2 rounded-pill text-dark shadow-sm copy-promo-btn" data-bs-dismiss="modal">
+                                <i class="bi bi-files me-1"></i> Sao Chép Mã
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap JS + Popper.js -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <!-- SweetAlert2 for modern Toast notifications -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Google Translate Script -->
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'vi',
+                autoDisplay: false,
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+            }, 'google_translate_element');
+        }
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
     <!-- Custom Scripts -->
     <script src="~/js/site.js" asp-append-version="true"></script>
     
+    <!-- Nút Nổi Liên Hệ (Zalo, Hotline) -->
+    <div class="floating-contact">
+        <a href="https://zalo.me/0842070552" target="_blank" class="float-btn zalo-btn" aria-label="Zalo" style="background: none; padding: 0;">
+            <span class="float-label">Chat Zalo</span>
+            <img src="https://freepnglogo.com/images/all_img/zalo-icon-4635.png" alt="Zalo" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; box-shadow: 0 4px 15px rgba(0,0,0,0.25);" />
+        </a>
+        <a href="tel:0842070552" onclick="return handleSmartHotline(event, '0842070552')" class="float-btn hotline-btn" aria-label="Hotline">
+            <span class="float-label">0842 070 552</span>
+            <i class="bi bi-telephone-fill"></i>
+        </a>
+    </div>
+
+    <!-- Smart Hotline Script -->
+    <script>
+        function handleSmartHotline(e, phoneNumber) {
+            // Regex cơ bản nhận diện thiết bị Mobile/Tablet
+            var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            // Nếu người dùng đang dùng Máy tính (Desktop/Laptop)
+            if (!isMobile) {
+                e.preventDefault(); // Chặn việc hiện cửa sổ đòi gọi app của máy tính
+                
+                // Copy số điện thoại vào khay nhớ (Clipboard)
+                navigator.clipboard.writeText(phoneNumber).then(function() {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            toast: true,
+                            position: 'bottom-end',
+                            icon: 'success',
+                            title: 'Đã copy số điện thoại!',
+                            text: 'Sẵn sàng dán (Ctrl+V) để gọi nhen sếp.',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        });
+                    } else {
+                        alert('Đã copy số điện thoại: ' + phoneNumber);
+                    }
+                }).catch(function(err) {
+                    console.error("Lỗi khi copy: ", err);
+                });
+                
+                return false;
+            }
+            // Nếu là thiết bị di động, tự động bung App Gọi Điện thả số vào
+            return true;
+        }
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

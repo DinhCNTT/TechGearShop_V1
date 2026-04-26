@@ -1,0 +1,216 @@
+@{
+    ViewData["Title"] = "404 - Không tìm thấy trang";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    /* === DARK HERO BACKGROUND === */
+    .error-hero {
+        min-height: 75vh;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* === FLOATING CIRCUIT PARTICLES === */
+    .error-hero::before,
+    .error-hero::after {
+        content: '';
+        position: absolute;
+        border-radius: 50%;
+        opacity: 0.08;
+        animation: float 6s ease-in-out infinite;
+    }
+    .error-hero::before {
+        width: 300px; height: 300px;
+        background: radial-gradient(circle, #3b82f6, transparent 70%);
+        top: -50px; left: -50px;
+        animation-delay: 0s;
+    }
+    .error-hero::after {
+        width: 400px; height: 400px;
+        background: radial-gradient(circle, #ef4444, transparent 70%);
+        bottom: -100px; right: -100px;
+        animation-delay: 3s;
+    }
+
+    @@keyframes float {
+        0%, 100% { transform: translateY(0) scale(1); }
+        50% { transform: translateY(-30px) scale(1.05); }
+    }
+
+    /* === GLITCH TEXT 404 === */
+    .glitch-wrapper {
+        position: relative;
+        display: inline-block;
+    }
+    .glitch-text {
+        font-size: 12rem;
+        font-weight: 900;
+        color: #e2e8f0;
+        letter-spacing: 10px;
+        position: relative;
+        animation: fadeInUp 0.8s ease-out;
+    }
+    .glitch-text::before,
+    .glitch-text::after {
+        content: '404';
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+    }
+    .glitch-text::before {
+        color: #3b82f6;
+        z-index: -1;
+        animation: glitch-1 2.5s infinite;
+    }
+    .glitch-text::after {
+        color: #ef4444;
+        z-index: -2;
+        animation: glitch-2 2.5s infinite;
+    }
+
+    @@keyframes glitch-1 {
+        0%, 100% { clip-path: inset(0 0 80% 0); transform: translate(-4px, -2px); }
+        20% { clip-path: inset(20% 0 60% 0); transform: translate(4px, 2px); }
+        40% { clip-path: inset(40% 0 40% 0); transform: translate(-2px, 4px); }
+        60% { clip-path: inset(60% 0 20% 0); transform: translate(2px, -4px); }
+        80% { clip-path: inset(80% 0 0 0); transform: translate(4px, 2px); }
+    }
+    @@keyframes glitch-2 {
+        0%, 100% { clip-path: inset(80% 0 0 0); transform: translate(4px, 2px); }
+        20% { clip-path: inset(60% 0 20% 0); transform: translate(-4px, -2px); }
+        40% { clip-path: inset(40% 0 40% 0); transform: translate(2px, -4px); }
+        60% { clip-path: inset(20% 0 60% 0); transform: translate(-2px, 4px); }
+        80% { clip-path: inset(0 0 80% 0); transform: translate(-4px, 2px); }
+    }
+
+    /* === SCAN LINE === */
+    .scanline {
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 2px,
+            rgba(255, 255, 255, 0.015) 2px,
+            rgba(255, 255, 255, 0.015) 4px
+        );
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    /* === STAGGER FADE-IN ANIMATIONS === */
+    @@keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-1 { animation: fadeInUp 0.6s ease-out 0.2s both; }
+    .fade-2 { animation: fadeInUp 0.6s ease-out 0.4s both; }
+    .fade-3 { animation: fadeInUp 0.6s ease-out 0.6s both; }
+    .fade-4 { animation: fadeInUp 0.6s ease-out 0.8s both; }
+
+    /* === LINE DECORATION === */
+    .tech-line {
+        width: 80px; height: 4px;
+        background: linear-gradient(90deg, #3b82f6, #ef4444);
+        border-radius: 4px;
+        margin: 0 auto;
+    }
+
+    /* === BUTTON EFFECTS === */
+    .btn-glow {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        border: none;
+        color: #fff;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .btn-glow:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
+        color: #fff;
+    }
+    .btn-glow::after {
+        content: '';
+        position: absolute;
+        top: -50%; left: -50%;
+        width: 200%; height: 200%;
+        background: linear-gradient(transparent, rgba(255,255,255,0.1), transparent);
+        transform: rotate(45deg);
+        animation: shine 3s infinite;
+    }
+    @@keyframes shine {
+        0% { transform: translateX(-100%) rotate(45deg); }
+        100% { transform: translateX(100%) rotate(45deg); }
+    }
+
+    .btn-outline-glow {
+        border: 2px solid rgba(255,255,255,0.3);
+        color: #e2e8f0;
+        transition: all 0.3s ease;
+    }
+    .btn-outline-glow:hover {
+        border-color: #3b82f6;
+        color: #3b82f6;
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(59, 130, 246, 0.15);
+    }
+
+    /* === STATUS BAR === */
+    .status-bar {
+        font-family: 'Courier New', monospace;
+        font-size: 0.85rem;
+        color: #64748b;
+        letter-spacing: 2px;
+    }
+    .status-bar .dot {
+        display: inline-block;
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        background: #ef4444;
+        margin-right: 8px;
+        animation: blink 1.5s infinite;
+    }
+    @@keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.3; }
+    }
+</style>
+
+<div class="error-hero d-flex flex-column justify-content-center align-items-center text-center px-3">
+    <!-- Scan Lines Overlay -->
+    <div class="scanline"></div>
+
+    <!-- Status Bar -->
+    <div class="status-bar fade-1 mb-4 z-2">
+        <span class="dot"></span> ERROR_CODE: 404 &nbsp;|&nbsp; STATUS: PAGE_NOT_FOUND
+    </div>
+
+    <!-- 404 Glitch -->
+    <div class="glitch-wrapper z-2">
+        <h1 class="glitch-text mb-0">404</h1>
+    </div>
+
+    <!-- Gradient Line -->
+    <div class="tech-line fade-2 my-4 z-2"></div>
+
+    <!-- Message -->
+    <h3 class="fw-bold text-white fade-2 z-2 mb-3" style="letter-spacing: 1px;">Lỗi Kết Nối — Mạch Điện Bị Đứt</h3>
+    <p class="fade-3 z-2 mb-5" style="color: #94a3b8; max-width: 550px; line-height: 1.8;">
+        Hệ thống không tìm thấy trang bạn yêu cầu. Đường dẫn có thể đã thay đổi, 
+        linh kiện đã ngừng kinh doanh, hoặc máy chủ đã mất tín hiệu.
+    </p>
+
+    <!-- Action Buttons -->
+    <div class="d-flex gap-3 fade-4 z-2">
+        <a href="/" class="btn btn-glow btn-lg rounded-pill px-5 fw-bold">
+            <i class="bi bi-house-door-fill me-2"></i> Trở Về Trang Chủ
+        </a>
+        <a href="/Product" class="btn btn-outline-glow btn-lg rounded-pill px-5 fw-bold">
+            Khám Phá Linh Kiện <i class="bi bi-arrow-right ms-2"></i>
+        </a>
+    </div>
+</div>

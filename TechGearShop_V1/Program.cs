@@ -54,9 +54,14 @@ builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.ICouponService, T
 builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.IImageService, TechGearShop_V1.Services.ImageService>();
 builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.IDashboardService, TechGearShop_V1.Services.DashboardService>();
 
+// Background service: batch-write ViewCount to DB every 5 minutes
+builder.Services.AddHostedService<TechGearShop_V1.Services.ViewCountFlushService>();
+
 var app = builder.Build();
 
 // === Pipeline ===
+app.UseStatusCodePagesWithReExecute("/Home/Error", "?statusCode={0}");
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");

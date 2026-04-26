@@ -49,6 +49,9 @@ namespace TechGearShop_V1.Models.ViewModels
 
         public bool IsActive { get; set; } = true;
 
+        [Display(Name = "Sản phẩm nổi bật (Ghim lên đầu)")]
+        public bool IsFeatured { get; set; } = false;
+
         public IEnumerable<Category> Categories { get; set; } = new List<Category>();
     }
 }
