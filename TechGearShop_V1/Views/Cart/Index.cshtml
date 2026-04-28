@@ -57,23 +57,19 @@
                                         </td>
                                         <td class="text-danger fw-bold">@item.Price.ToString("N0")₫</td>
                                         <td>
-                                            <form asp-controller="Cart" asp-action="UpdateQuantity" method="post">
-                                                <input type="hidden" name="productId" value="@item.ProductId" />
+                                            <form class="update-qty-form" data-product-id="@item.ProductId">
                                                 <div class="input-group border rounded" style="width: 120px; margin: 0 auto;">
-                                                    <button class="btn btn-light border-0 px-2 text-secondary" type="button" onclick="this.parentNode.querySelector('input[type=number]').stepDown(); this.form.submit();"><i class="bi bi-dash"></i></button>
-                                                    <input type="number" name="quantity" class="form-control border-0 text-center px-0 bg-white fw-bold" value="@item.Quantity" min="1" max="99" readonly>
-                                                    <button class="btn btn-light border-0 px-2 text-secondary" type="button" onclick="this.parentNode.querySelector('input[type=number]').stepUp(); this.form.submit();"><i class="bi bi-plus"></i></button>
+                                                    <button class="btn btn-light border-0 px-2 text-secondary btn-minus" type="button"><i class="bi bi-dash"></i></button>
+                                                    <input type="number" class="form-control border-0 text-center px-0 bg-white fw-bold qty-input" value="@item.Quantity" min="0" max="99" readonly>
+                                                    <button class="btn btn-light border-0 px-2 text-secondary btn-plus" type="button"><i class="bi bi-plus"></i></button>
                                                 </div>
                                             </form>
                                         </td>
                                         <td class="fw-bold item-total-price">@totalItemPrice.ToString("N0")₫</td>
                                         <td class="text-end">
-                                            <form asp-controller="Cart" asp-action="Remove" method="post">
-                                                <input type="hidden" name="productId" value="@item.ProductId" />
-                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </form>
+                                            <button type="button" class="btn btn-sm btn-outline-danger btn-remove" data-product-id="@item.ProductId" title="Xóa">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
                                         </td>
                                     </tr>
                                 }
@@ -239,6 +235,137 @@
                         container.appendChild(input);
                     });
                 });
+            }
+
+            // AJAX Update Quantity function
+            function updateCartQuantity(productId, newQty, rowEl) {
+                const formData = new FormData();
+                formData.append('productId', productId);
+                formData.append('quantity', newQty);
+
+                fetch('/Cart/UpdateQuantity', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        // Nếu qty <= 0 (bị xóa) -> xóa row
+                        if (data.newQuantity === 0) {
+                            rowEl.remove();
+                        } else {
+                            // Cập nhật qty & UI
+                            const input = rowEl.querySelector('.qty-input');
+                            const checkbox = rowEl.querySelector('.item-check');
+                            const totalEl = rowEl.querySelector('.item-total-price');
+
+                            input.value = data.newQuantity;
+                            checkbox.setAttribute('data-quantity', data.newQuantity);
+                            totalEl.textContent = new Intl.NumberFormat('vi-VN').format(data.newPriceTotal) + '₫';
+
+                            if (data.warning) {
+                                Swal.fire('Lưu ý', data.warning, 'warning');
+                            }
+                        }
+                        
+                        // Cập nhật header badge
+                        updateHeaderBadge(data.newCount);
+                        calculateTotal();
+                        checkEmptyCart(data.newCount);
+                    }
+                })
+                .catch(err => console.error(err));
+            }
+
+            // AJAX Remove Item function
+            function removeCartItem(productId, rowEl) {
+                const formData = new FormData();
+                formData.append('productId', productId);
+
+                fetch('/Cart/Remove', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        rowEl.remove();
+                        updateHeaderBadge(data.newCount);
+                        calculateTotal();
+                        checkEmptyCart(data.newCount);
+                        
+                        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: data.message, showConfirmButton: false, timer: 2000 });
+                    }
+                })
+                .catch(err => console.error(err));
+            }
+
+            // Gắn event tăng giảm
+            document.querySelectorAll('.update-qty-form').forEach(form => {
+                const productId = form.getAttribute('data-product-id');
+                const rowEl = form.closest('tr');
+                const input = form.querySelector('.qty-input');
+                const btnMinus = form.querySelector('.btn-minus');
+                const btnPlus = form.querySelector('.btn-plus');
+
+                btnMinus.addEventListener('click', () => {
+                    let qty = parseInt(input.value) - 1;
+                    if (qty < 0) qty = 0;
+                    updateCartQuantity(productId, qty, rowEl);
+                });
+
+                btnPlus.addEventListener('click', () => {
+                    let qty = parseInt(input.value) + 1;
+                    updateCartQuantity(productId, qty, rowEl);
+                });
+            });
+
+            // Gắn event xóa
+            document.querySelectorAll('.btn-remove').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const productId = this.getAttribute('data-product-id');
+                    const rowEl = this.closest('tr');
+                    
+                    Swal.fire({
+                        title: 'Xóa sản phẩm?',
+                        text: "Bạn có muốn bỏ sản phẩm này khỏi giỏ hàng?",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Xóa',
+                        cancelButtonText: 'Hủy'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            removeCartItem(productId, rowEl);
+                        }
+                    });
+                });
+            });
+
+            // Helper: Cập nhật badge giỏ hàng trên header
+            function updateHeaderBadge(count) {
+                const badge = document.querySelector('a[href="/Cart"] .badge');
+                if (badge) {
+                    if (count > 0) {
+                        badge.childNodes[0].nodeValue = count; // Thay text content
+                    } else {
+                        badge.remove(); // Xóa thẻ badge do đếm = 0
+                    }
+                } else if (count > 0) {
+                    // Nếu chưa có badge thì tạo mới (chuyển từ 0 -> 1)
+                    const cartBtn = document.querySelector('a[href="/Cart"]');
+                    if (cartBtn) {
+                        cartBtn.insertAdjacentHTML('beforeend', `<span class="position-absolute top-10 start-100 translate-middle badge rounded-pill bg-danger">${count}<span class="visually-hidden">sản phẩm trong giỏ</span></span>`);
+                    }
+                }
+            }
+
+            // Helper: Reload trang (để render layout rỗng) khi xóa hết SP
+            function checkEmptyCart(count) {
+                if (count === 0) {
+                    window.location.reload();
+                }
             }
         });
     </script>

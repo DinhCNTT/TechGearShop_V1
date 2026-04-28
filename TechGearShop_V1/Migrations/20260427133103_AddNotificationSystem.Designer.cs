@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TechGearShop_V1.Data;
 
@@ -11,9 +12,11 @@ using TechGearShop_V1.Data;
 namespace TechGearShop_V1.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260427133103_AddNotificationSystem")]
+    partial class AddNotificationSystem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -199,12 +202,6 @@ namespace TechGearShop_V1.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime?>("CancelledDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("CompletedDate")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("CouponCode")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
@@ -225,9 +222,6 @@ namespace TechGearShop_V1.Migrations
                     b.Property<int>("PaymentMethod")
                         .HasColumnType("int");
 
-                    b.Property<DateTime?>("ProcessingDate")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("Province")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
@@ -246,9 +240,6 @@ namespace TechGearShop_V1.Migrations
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
-
-                    b.Property<DateTime?>("ShippingDate")
-                        .HasColumnType("datetime2");
 
                     b.Property<decimal>("ShippingFee")
                         .HasColumnType("decimal(18,2)");

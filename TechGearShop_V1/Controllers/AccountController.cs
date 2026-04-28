@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using TechGearShop_V1.Extensions;
 using TechGearShop_V1.Models.Entities;
 using TechGearShop_V1.Models.ViewModels;
 using TechGearShop_V1.Services.Interfaces;
@@ -11,12 +13,18 @@ namespace TechGearShop_V1.Controllers
     public class AccountController : Controller
     {
         private readonly IUserService _userService;
+        private readonly ICartService _cartService;
+        private readonly INotificationService _notificationService;
+        private readonly IOrderService _orderService;
         private readonly ILogger<AccountController> _logger;
 
-        public AccountController(IUserService userService, ILogger<AccountController> logger)
+        public AccountController(IUserService userService, ICartService cartService, INotificationService notificationService, IOrderService orderService, ILogger<AccountController> logger)
         {
             _userService = userService;
-            _logger = logger;
+            _cartService = cartService;
+            _notificationService = notificationService;
+            _orderService = orderService;
+            _logger      = logger;
         }
 
         // GET: /Account/Login
@@ -79,6 +87,14 @@ namespace TechGearShop_V1.Controllers
 
             _logger.LogInformation("User {Username} logged in successfully.", user.Username);
 
+            // ── Merge giỏ hàng guest (Session) vào DB ──
+            var sessionCart = HttpContext.Session.Get<List<CartItem>>(CartController.CART_KEY);
+            if (sessionCart != null && sessionCart.Any())
+            {
+                await _cartService.MergeSessionCartAsync(user.Id, sessionCart);
+                HttpContext.Session.Remove(CartController.CART_KEY);
+            }
+
             // Safe redirect: chỉ redirect về URL local để chống Open Redirect Attack
             if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
                 return Redirect(model.ReturnUrl);
@@ -122,6 +138,16 @@ namespace TechGearShop_V1.Controllers
             }
 
             _logger.LogInformation("New user registered: {Username}", model.Username);
+            
+            // Bắn thông báo
+            await _notificationService.CreateNotificationAsync(
+                newUser.Id,
+                TechGearShop_V1.Models.Enums.NotificationType.Account,
+                "Chào mừng đến với TechGearShop! 🎉",
+                "Khám phá ngay hàng ngàn deal công nghệ xịn sò. Bắt đầu mua sắm ngay thôi!",
+                "/Product"
+            );
+
             TempData["UserSuccess"] = "Đăng ký thành công! Hãy đăng nhập để tiếp tục mua sắm.";
             return RedirectToAction(nameof(Login));
         }
@@ -139,5 +165,57 @@ namespace TechGearShop_V1.Controllers
 
         // GET: /Account/AccessDenied
         public IActionResult AccessDenied() => View();
+
+        // GET: /Account/Orders
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> Orders()
+        {
+            int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var orders = await _orderService.GetUserOrdersAsync(userId);
+            return View(orders);
+        }
+
+        // GET: /Account/OrderDetail/{id}
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> OrderDetail(int id)
+        {
+            int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var order = await _orderService.GetOrderWithDetailsAsync(id);
+            if (order == null || order.UserId != userId)
+            {
+                TempData["UserError"] = "Đơn hàng không tồn tại hoặc bạn không có quyền xem.";
+                return RedirectToAction(nameof(Orders));
+            }
+            return View(order);
+        }
+
+        // GET: /Account/Notifications
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> Notifications()
+        {
+            int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            // Fetch top 50 recent notifications. NotificationService already does this via API, but we need it here.
+            // Wait, we can just return a View and let JS fetch it, or inject INotificationService.
+            // Since INotificationService isn't injected in AccountController, I'll just return View and use JS.
+            return View();
+        }
+
+        // POST: /Account/CancelOrder/{id}
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelOrder(int id)
+        {
+            int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            bool success = await _orderService.CancelOrderAsync(id, userId);
+            if (success)
+                TempData["UserSuccess"] = $"Đã hủy đơn hàng #{id} thành công.";
+            else
+                TempData["UserError"] = "Không thể hủy đơn hàng này. Chỉ có thể hủy khi đơn đang Chờ xác nhận.";
+            return RedirectToAction(nameof(Orders));
+        }
     }
 }

@@ -1,0 +1,219 @@
+@{
+    ViewData["Title"] = "Tất cả thông báo";
+}
+
+<div class="container py-5 mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="fw-bold m-0"><i class="bi bi-bell-fill text-warning me-2"></i>Tất cả thông báo</h3>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-danger btn-sm rounded-pill px-3 shadow-sm" onclick="confirmDeleteAll()">
+                        <i class="bi bi-trash3 me-1"></i>Xóa tất cả
+                    </button>
+                    <button class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm" onclick="markAllNotifAsRead()">
+                        <i class="bi bi-check-all me-1"></i>Đánh dấu đã đọc
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter Tabs -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body p-1">
+                    <ul class="nav nav-pills nav-fill notification-full-tabs">
+                        <li class="nav-item">
+                            <button class="nav-link active-tab fw-bold rounded-3 text-dark" onclick="filterFullNotifs('all', this)">Tất cả</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link text-muted rounded-3" onclick="filterFullNotifs('order', this)">Đơn hàng</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link text-muted rounded-3" onclick="filterFullNotifs('promo', this)">Khuyến mãi</button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- List + Pagination -->
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-0" id="fullNotifListContainer">
+                    <div class="text-center text-muted p-5">
+                        <div class="spinner-border text-primary mb-3" role="status"></div>
+                        <p>Đang tải dữ liệu...</p>
+                    </div>
+                </div>
+                <div id="paginationContainer"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const PAGE_SIZE = 7;
+    let currentPage = 1;
+    let currentFilter = 'all';
+
+    async function initFullPage() {
+        if (window.notificationsData && window.notificationsData.length > 0) {
+            window.fullPageNotifsData = window.notificationsData;
+            renderFullNotifications();
+        } else {
+            try {
+                const res = await fetch('/api/Notification/GetList?limit=200');
+                if (res.ok) {
+                    const result = await res.json();
+                    window.fullPageNotifsData = result.data || result.Data || [];
+                    renderFullNotifications();
+                }
+            } catch (e) { console.error(e); }
+        }
+    }
+
+    function filterFullNotifs(type, btnEl) {
+        document.querySelectorAll('.notification-full-tabs .nav-link').forEach(b => {
+            b.classList.remove('active-tab', 'text-dark', 'fw-bold');
+            b.classList.add('text-muted');
+        });
+        btnEl.classList.add('active-tab', 'text-dark', 'fw-bold');
+        btnEl.classList.remove('text-muted');
+        currentFilter = type;
+        currentPage = 1;
+        renderFullNotifications();
+    }
+
+    function getFiltered() {
+        const all = window.fullPageNotifsData || [];
+        if (currentFilter === 'order') return all.filter(n => n.typeString === 'Order');
+        if (currentFilter === 'promo') return all.filter(n => n.typeString === 'Promotion');
+        return all;
+    }
+
+    function renderFullNotifications() {
+        const container = document.getElementById('fullNotifListContainer');
+        const filtered = getFiltered();
+        const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+        currentPage = Math.min(currentPage, totalPages);
+        const start = (currentPage - 1) * PAGE_SIZE;
+        const pageData = filtered.slice(start, start + PAGE_SIZE);
+
+        if (filtered.length === 0) {
+            container.innerHTML = `<div class="text-center text-muted p-5">
+                <i class="bi bi-bell-slash fs-1 d-block mb-3"></i>
+                <h5 class="fw-bold text-dark">Chưa có thông báo nào</h5>
+                <p>Tất cả thông báo của bạn sẽ được lưu trữ ở đây.</p></div>`;
+            document.getElementById('paginationContainer').innerHTML = '';
+            return;
+        }
+
+        container.innerHTML = pageData.map(n => {
+            const unreadCls = !n.isRead ? 'bg-primary bg-opacity-10 border-start border-4 border-primary' : '';
+            const iconCls = n.typeString === 'Order' ? 'bi-box-seam text-success' :
+                n.typeString === 'Promotion' ? 'bi-tags-fill text-danger' :
+                n.typeString === 'Account' ? 'bi-person-badge text-info' : 'bi-bell-fill text-warning';
+            return `<div class="p-4 border-bottom ${unreadCls} notif-row" style="transition:background 0.2s;">
+                <div class="d-flex align-items-start gap-3">
+                    <div class="flex-shrink-0">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center bg-white shadow-sm border" style="width:52px;height:52px;">
+                            <i class="bi ${iconCls} fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1" onclick="readAndNavigateFull(${n.id},'${n.linkTo || '/'}')" style="cursor:pointer;">
+                        <h6 class="mb-1 fw-bold">${n.title}</h6>
+                        <p class="mb-1 text-secondary lh-base" style="font-size:.93rem;">${n.message}</p>
+                        <span class="text-muted" style="font-size:.82rem;"><i class="bi bi-clock me-1"></i>${n.createdAt}</span>
+                    </div>
+                    <button class="btn btn-sm text-danger p-1 notif-delete-btn" onclick="deleteNotif(${n.id})" title="Xóa thông báo">
+                        <i class="bi bi-trash3 fs-5"></i>
+                    </button>
+                </div>
+            </div>`;
+        }).join('');
+
+        renderPagination(totalPages, filtered.length);
+    }
+
+    async function deleteNotif(id) {
+        const res = await fetch(`/api/Notification/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+            window.fullPageNotifsData = window.fullPageNotifsData.filter(n => n.id !== id);
+            if (window.notificationsData) window.notificationsData = window.notificationsData.filter(n => n.id !== id);
+            renderFullNotifications();
+        }
+    }
+
+    function confirmDeleteAll() {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Xóa tất cả thông báo?',
+                text: 'Toàn bộ thông báo sẽ bị xóa vĩnh viễn. Không thể hoàn tác!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '<i class="bi bi-trash3 me-1"></i> Xóa hết',
+                cancelButtonText: 'Hủy bỏ'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    await fetch('/api/Notification/all', { method: 'DELETE' });
+                    window.fullPageNotifsData = [];
+                    if (window.notificationsData) window.notificationsData = [];
+                    renderFullNotifications();
+                }
+            });
+        } else {
+            if (confirm('Xóa toàn bộ thông báo?')) {
+                fetch('/api/Notification/all', { method: 'DELETE' }).then(() => {
+                    window.fullPageNotifsData = [];
+                    renderFullNotifications();
+                });
+            }
+        }
+    }
+
+    function renderPagination(totalPages, totalItems) {
+        const el = document.getElementById('paginationContainer');
+        if (totalPages <= 1) { el.innerHTML = ''; return; }
+        const s = (currentPage - 1) * PAGE_SIZE + 1;
+        const e = Math.min(currentPage * PAGE_SIZE, totalItems);
+        let pages = '';
+        for (let i = 1; i <= totalPages; i++) {
+            pages += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+                <a class="page-link border-0 shadow-sm mx-1 rounded-3" href="#" onclick="goToPage(${i});return false;">${i}</a></li>`;
+        }
+        el.innerHTML = `<div class="d-flex justify-content-between align-items-center px-4 py-3 border-top bg-light rounded-bottom-4">
+            <small class="text-muted">Hiển thị <strong>${s}–${e}</strong> / ${totalItems} thông báo</small>
+            <nav><ul class="pagination pagination-sm mb-0 gap-1">
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link border-0 shadow-sm rounded-3" href="#" onclick="goToPage(${currentPage - 1});return false;">‹</a></li>
+                ${pages}
+                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link border-0 shadow-sm rounded-3" href="#" onclick="goToPage(${currentPage + 1});return false;">›</a></li>
+            </ul></nav>
+        </div>`;
+    }
+
+    function goToPage(page) {
+        currentPage = page;
+        renderFullNotifications();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function readAndNavigateFull(id, url) {
+        await fetch(`/api/Notification/MarkAsRead/${id}`, { method: 'POST' });
+        window.location.href = url;
+    }
+
+    document.addEventListener("DOMContentLoaded", initFullPage);
+</script>
+
+<style>
+    .notification-full-tabs .nav-link { transition: all 0.2s; background: transparent; border: none; }
+    .notification-full-tabs .nav-link:hover { background: #f8f9fa !important; color: #212529 !important; }
+    .page-item.active .page-link { background: #0d6efd; border-color: #0d6efd; color: #fff; }
+    .page-link { color: #0d6efd; }
+    /* Icon xóa hiện dần khi hover vào từng dòng thông báo */
+    .notif-row .notif-delete-btn { opacity: 0; transition: opacity 0.2s; }
+    .notif-row:hover .notif-delete-btn { opacity: 1; }
+</style>
+}

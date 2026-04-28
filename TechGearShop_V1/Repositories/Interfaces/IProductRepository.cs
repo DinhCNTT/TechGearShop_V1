@@ -4,6 +4,7 @@ namespace TechGearShop_V1.Repositories.Interfaces
 {
     public interface IProductRepository : IGenericRepository<Product>
     {
+        Task<IEnumerable<Product>> GetAllWithCategoryAsync();
         Task<IEnumerable<Product>> GetProductsByCategoryIdAsync(int categoryId);
         Task<IEnumerable<Product>> GetFeaturedProductsAsync(int count);
         Task<IEnumerable<Product>> GetNewProductsAsync(int count);

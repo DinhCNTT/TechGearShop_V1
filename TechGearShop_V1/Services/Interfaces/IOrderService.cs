@@ -9,5 +9,6 @@ namespace TechGearShop_V1.Services.Interfaces
         Task UpdateOrderStatusAsync(int orderId, OrderStatus status);
         Task<IEnumerable<Order>> GetAllOrdersWithUsersAsync();
         Task<Order?> GetOrderWithDetailsAsync(int orderId);
+        Task<bool> CancelOrderAsync(int orderId, int userId);
     }
 }

@@ -14,9 +14,12 @@ namespace TechGearShop_V1.Areas.Admin.Controllers
             _dashboardService = dashboardService;
         }
 
-        public async Task<IActionResult> Index()
+        /// <summary>
+        /// Hiển thị Dashboard. Nếu không truyền month/year thì dùng tháng hiện tại (múi giờ VN).
+        /// </summary>
+        public async Task<IActionResult> Index(int? month, int? year)
         {
-            var model = await _dashboardService.GetDashboardDataAsync();
+            var model = await _dashboardService.GetDashboardDataAsync(month, year);
             return View(model);
         }
     }

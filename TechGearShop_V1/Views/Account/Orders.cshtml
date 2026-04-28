@@ -1,0 +1,330 @@
+@model IEnumerable<TechGearShop_V1.Models.Entities.Order>
+@using TechGearShop_V1.Models.Entities
+@{
+    ViewData["Title"] = "Đơn hàng của tôi";
+    var all = Model.ToList();
+    var filter = Context.Request.Query["status"].ToString();
+    var displayed = filter switch {
+        "pending"    => all.Where(o => o.Status == OrderStatus.Pending).ToList(),
+        "processing" => all.Where(o => o.Status == OrderStatus.Processing).ToList(),
+        "shipping"   => all.Where(o => o.Status == OrderStatus.Shipping).ToList(),
+        "completed"  => all.Where(o => o.Status == OrderStatus.Completed).ToList(),
+        "cancelled"  => all.Where(o => o.Status == OrderStatus.Cancelled).ToList(),
+        _            => all
+    };
+}
+
+@* Hiển thị thông báo thành công / lỗi toàn trang *@
+@if (TempData["UserSuccess"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show m-0 rounded-0 border-0" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>@TempData["UserSuccess"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["UserError"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show m-0 rounded-0 border-0" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["UserError"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="container py-5">
+    <div class="row g-4">
+        <!-- Sidebar Account -->
+        <div class="col-lg-3">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden sticky-top" style="top: 80px;">
+                <div class="card-body p-4 text-center" style="background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);">
+                    <div class="rounded-circle bg-white d-inline-flex align-items-center justify-content-center mb-3 shadow" style="width: 72px; height: 72px;">
+                        <i class="bi bi-person-fill text-primary" style="font-size: 2rem;"></i>
+                    </div>
+                    <h6 class="fw-bold text-white mb-1">@User.Identity!.Name</h6>
+                    <span class="badge bg-white bg-opacity-25 text-white small px-3 py-1 rounded-pill">⭐ Thành viên TechGear</span>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="#" class="list-group-item list-group-item-action border-0 py-3 px-4 text-muted d-flex align-items-center gap-3">
+                        <i class="bi bi-person-circle fs-5 text-primary"></i>Hồ sơ của tôi
+                    </a>
+                    <a href="/Account/Orders" class="list-group-item list-group-item-action border-0 py-3 px-4 fw-semibold d-flex align-items-center gap-3" style="background: rgba(13,110,253,0.07); color: #0d6efd; border-left: 3px solid #0d6efd !important;">
+                        <i class="bi bi-bag-check-fill fs-5"></i>Đơn hàng của tôi
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action border-0 py-3 px-4 text-muted d-flex align-items-center gap-3">
+                        <i class="bi bi-bell-fill fs-5 text-warning"></i>Thông báo
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-lg-9">
+            <!-- Status Filter Tabs (như Shopee) -->
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+                <div class="d-flex border-bottom overflow-auto" style="white-space: nowrap;">
+                    @{
+                        (string Key, string Label, int Count)[] tabs = {
+                            ("",          "Tất cả",         all.Count),
+                            ("pending",   "Chờ xác nhận",   all.Count(o => o.Status == OrderStatus.Pending)),
+                            ("processing","Đang xử lý",     all.Count(o => o.Status == OrderStatus.Processing)),
+                            ("shipping",  "Đang giao",      all.Count(o => o.Status == OrderStatus.Shipping)),
+                            ("completed", "Hoàn thành",     all.Count(o => o.Status == OrderStatus.Completed)),
+                            ("cancelled", "Đã hủy",         all.Count(o => o.Status == OrderStatus.Cancelled)),
+                        };
+                    }
+                    @foreach (var tab in tabs)
+                    {
+                        bool isActive = filter == tab.Key;
+                        <a href="/Account/Orders@(tab.Key != "" ? "?status=" + tab.Key : "")"
+                           class="py-3 px-4 text-decoration-none flex-shrink-0 d-flex align-items-center gap-2 @(isActive ? "fw-bold border-bottom border-primary border-3 text-primary" : "text-muted")"
+                           style="font-size: 0.9rem;">
+                            @tab.Label
+                            @if (tab.Count > 0)
+                            {
+                                <span class="badge rounded-pill @(isActive ? "bg-primary" : "bg-secondary bg-opacity-50 text-dark")">@tab.Count</span>
+                            }
+                        </a>
+                    }
+                </div>
+            </div>
+
+            @if (!displayed.Any())
+            {
+                <div class="card border-0 shadow-sm rounded-4 p-5 text-center">
+                    <i class="bi bi-bag-x mb-4" style="font-size: 5rem; color: #dee2e6;"></i>
+                    <h5 class="fw-bold text-dark mb-2">Không có đơn hàng nào</h5>
+                    <p class="text-muted small mb-4">Có vẻ như bạn chưa có đơn hàng nào trong mục này.</p>
+                    <a href="/Product" class="btn btn-primary rounded-pill px-5 fw-bold mx-auto" style="max-width:200px;">Mua sắm ngay</a>
+                </div>
+            }
+            else
+            {
+                @foreach (var order in displayed)
+                {
+                    var paymentLabel = order.PaymentMethod switch {
+                        TechGearShop_V1.Models.Entities.PaymentMethod.VNPay => ("VNPay", "text-danger"),
+                        TechGearShop_V1.Models.Entities.PaymentMethod.MoMo  => ("MoMo",  "text-danger"),
+                        _                                                    => ("COD",   "text-success")
+                    };
+                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 order-card">
+
+                        <!-- Order Header -->
+                        <div class="card-header bg-white border-bottom px-4 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="fw-bold text-dark">Đơn hàng #@order.Id</span>
+                                
+                                @* LOGIC HIỂN THỊ THỜI GIAN THỰC TẾ THEO TAB *@
+                                @{
+                                    string timeLabel = "Đặt lúc:";
+                                    DateTime timeValue = order.OrderDate;
+
+                                    if (order.Status == OrderStatus.Shipping && order.ShippingDate.HasValue)
+                                    {
+                                        timeLabel = "Giao lúc:";
+                                        timeValue = order.ShippingDate.Value;
+                                    }
+                                    else if (order.Status == OrderStatus.Completed && order.CompletedDate.HasValue)
+                                    {
+                                        timeLabel = "Hoàn thành lúc:";
+                                        timeValue = order.CompletedDate.Value;
+                                    }
+                                    else if (order.Status == OrderStatus.Cancelled && order.CancelledDate.HasValue)
+                                    {
+                                        timeLabel = "Hủy lúc:";
+                                        timeValue = order.CancelledDate.Value;
+                                    }
+                                    
+                                    // Chuyển UTC sang giờ Việt Nam (+7)
+                                    var vnTime = timeValue.AddHours(7).ToString("HH:mm - dd/MM/yyyy");
+                                }
+
+                                <span class="text-muted small"><i class="bi bi-clock me-1"></i>@timeLabel @vnTime</span>
+                                <span class="badge @(paymentLabel.Item2 == "text-success" ? "bg-success" : "bg-danger") bg-opacity-10 @(paymentLabel.Item2) border border-opacity-25 fw-normal px-2 py-1" style="font-size: 0.75rem;">
+                                    <i class="bi bi-credit-card me-1"></i>@paymentLabel.Item1
+                                </span>
+                            </div>
+                            <div>
+                                @switch (order.Status)
+                                {
+                                    case OrderStatus.Pending:
+                                        <span class="badge bg-warning text-dark px-3 py-2 rounded-pill">⏳ Chờ xác nhận</span>; break;
+                                    case OrderStatus.Processing:
+                                        <span class="badge bg-info px-3 py-2 rounded-pill">⚙️ Đang xử lý</span>; break;
+                                    case OrderStatus.Shipping:
+                                        <span class="badge bg-primary px-3 py-2 rounded-pill">🚚 Đang giao hàng</span>; break;
+                                    case OrderStatus.Completed:
+                                        <span class="badge bg-success px-3 py-2 rounded-pill">✅ Đã giao thành công</span>; break;
+                                    default:
+                                        <span class="badge bg-danger px-3 py-2 rounded-pill">❌ Đã hủy</span>; break;
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Shipping Address -->
+                        <div class="px-4 py-2 bg-light border-bottom d-flex align-items-center gap-2 small text-muted">
+                            <i class="bi bi-geo-alt-fill text-danger"></i>
+                            <span>Giao đến: <strong class="text-dark">@order.ReceiverName</strong> — @order.ShippingAddress</span>
+                        </div>
+
+                        <!-- Items List -->
+                        <div class="card-body p-0">
+                            @foreach (var detail in order.OrderDetails)
+                            {
+                                <div class="d-flex align-items-center px-4 py-3 border-bottom order-item-row" style="transition: background 0.2s;">
+                                    <a href="/Account/OrderDetail/@order.Id" class="flex-shrink-0">
+                                        <img src="@detail.Product?.ImagePath" alt="@detail.Product?.Name"
+                                             class="rounded-3 object-fit-cover shadow-sm"
+                                             style="width: 80px; height: 80px;" onerror="this.src='/images/no-image.png'" />
+                                    </a>
+                                    <div class="ms-3 flex-grow-1">
+                                        <a href="/Account/OrderDetail/@order.Id" class="text-decoration-none text-dark">
+                                            <h6 class="mb-1 fw-semibold line-clamp-2">@detail.Product?.Name</h6>
+                                        </a>
+                                        <div class="text-muted small">Phân loại: Chính hãng</div>
+                                    </div>
+                                    <div class="text-end ms-3 flex-shrink-0">
+                                        <div class="text-muted small">x @detail.Quantity</div>
+                                        <div class="fw-bold text-danger">@detail.UnitPrice.ToString("N0") ₫</div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Price Breakdown Footer -->
+                        <div class="card-footer bg-white border-top px-4 py-3">
+                            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                                <!-- Action Buttons -->
+                                <div class="d-flex gap-2 flex-wrap align-items-center">
+                                    @if (order.Status == OrderStatus.Pending)
+                                    {
+                                        <form asp-controller="Account" asp-action="CancelOrder" method="post"
+                                              onsubmit="return confirm('Bạn chắc chắn muốn hủy đơn #@order.Id?')">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@order.Id" />
+                                            <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3">
+                                                <i class="bi bi-x-circle me-1"></i>Hủy đơn
+                                            </button>
+                                        </form>
+                                    }
+                                    @if (order.Status == OrderStatus.Completed)
+                                    {
+                                        <a href="/Cart" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                                            <i class="bi bi-bag-plus me-1"></i>Mua lại
+                                        </a>
+                                        <a href="#" class="btn btn-outline-warning btn-sm rounded-pill px-3">
+                                            <i class="bi bi-star me-1"></i>Đánh giá
+                                        </a>
+                                    }
+                                    @if (order.Status == OrderStatus.Shipping)
+                                    {
+                                        <span class="small text-muted fst-italic"><i class="bi bi-truck me-1"></i>Đơn đang trên đường giao đến bạn...</span>
+                                    }
+                                </div>
+
+                                <!-- Price Summary -->
+                                <div class="text-end">
+                                    <div class="small text-muted">Tạm tính: @order.TotalAmount.ToString("N0") ₫</div>
+                                    @if (order.ShippingFee > 0)
+                                    {
+                                        <div class="small text-muted">Phí vận chuyển: +@order.ShippingFee.ToString("N0") ₫</div>
+                                    }
+                                    @if (order.DiscountAmount > 0)
+                                    {
+                                        <div class="small text-success"><i class="bi bi-tags-fill me-1"></i>Giảm giá: -@order.DiscountAmount.ToString("N0") ₫</div>
+                                    }
+                                    <div class="fs-6 fw-bold text-danger mt-1">
+                                        Thành tiền: @order.FinalAmount.ToString("N0") ₫
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            
+            <div id="paginationContainer" class="mt-4"></div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .order-item-row:hover { background-color: rgba(13, 110, 253, 0.03); }
+</style>
+
+@section Scripts {
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const PAGE_SIZE = 5;
+        let currentPage = 1;
+        const items = Array.from(document.querySelectorAll('.order-card'));
+        const totalItems = items.length;
+        const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+        
+        function renderPage(page) {
+            currentPage = page;
+            const start = (page - 1) * PAGE_SIZE;
+            const end = start + PAGE_SIZE;
+
+            items.forEach((item, index) => {
+                if (index >= start && index < end) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            renderPagination();
+        }
+
+        function renderPagination() {
+            const container = document.getElementById('paginationContainer');
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const startIdx = (currentPage - 1) * PAGE_SIZE + 1;
+            const endIdx = Math.min(currentPage * PAGE_SIZE, totalItems);
+
+            let pagesHtml = '';
+            for (let i = 1; i <= totalPages; i++) {
+                pagesHtml += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link border-0 shadow-sm mx-1 rounded-3" href="#" data-page="${i}">${i}</a>
+                </li>`;
+            }
+
+            container.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center bg-white p-3 rounded-4 shadow-sm border-0">
+                    <small class="text-muted">Hiển thị <strong>${startIdx}–${endIdx}</strong> / ${totalItems} đơn hàng</small>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0 gap-1">
+                            <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                                <a class="page-link border-0 shadow-sm rounded-3" href="#" data-page="${currentPage - 1}">‹</a>
+                            </li>
+                            ${pagesHtml}
+                            <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                                <a class="page-link border-0 shadow-sm rounded-3" href="#" data-page="${currentPage + 1}">›</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            `;
+
+            container.querySelectorAll('.page-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (this.parentElement.classList.contains('disabled')) return;
+                    const page = parseInt(this.getAttribute('data-page'));
+                    if (page >= 1 && page <= totalPages) {
+                        renderPage(page);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                });
+            });
+        }
+
+        if (totalItems > 0) {
+            renderPage(1);
+        }
+    });
+</script>
+}

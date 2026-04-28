@@ -11,6 +11,15 @@ namespace TechGearShop_V1.Repositories
         {
         }
 
+        /// <summary>Lấy toàn bộ sản phẩm kèm thông tin Danh mục (dùng cho Admin list).</summary>
+        public async Task<IEnumerable<Product>> GetAllWithCategoryAsync()
+        {
+            return await _dbSet
+                .Include(p => p.Category)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<Product>> GetFeaturedProductsAsync(int count)
         {
             return await _dbSet

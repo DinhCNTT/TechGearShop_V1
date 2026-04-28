@@ -44,6 +44,8 @@ builder.Services.AddScoped<TechGearShop_V1.Repositories.Interfaces.ICategoryRepo
 builder.Services.AddScoped<TechGearShop_V1.Repositories.Interfaces.IOrderRepository, TechGearShop_V1.Repositories.OrderRepository>();
 builder.Services.AddScoped<TechGearShop_V1.Repositories.Interfaces.IUserRepository, TechGearShop_V1.Repositories.UserRepository>();
 builder.Services.AddScoped<TechGearShop_V1.Repositories.Interfaces.ICouponRepository, TechGearShop_V1.Repositories.CouponRepository>();
+builder.Services.AddScoped<TechGearShop_V1.Repositories.Interfaces.ICartRepository, TechGearShop_V1.Repositories.CartRepository>();
+builder.Services.AddScoped<TechGearShop_V1.Repositories.Interfaces.INotificationRepository, TechGearShop_V1.Repositories.NotificationRepository>();
 
 // Services
 builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.IProductService, TechGearShop_V1.Services.ProductService>();
@@ -53,6 +55,11 @@ builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.IUserService, Tec
 builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.ICouponService, TechGearShop_V1.Services.CouponService>();
 builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.IImageService, TechGearShop_V1.Services.ImageService>();
 builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.IDashboardService, TechGearShop_V1.Services.DashboardService>();
+builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.ICartService, TechGearShop_V1.Services.CartService>();
+builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.INotificationService, TechGearShop_V1.Services.NotificationService>();
+
+// 🚀 Đăng ký SignalR
+builder.Services.AddSignalR();
 
 // Background service: batch-write ViewCount to DB every 5 minutes
 builder.Services.AddHostedService<TechGearShop_V1.Services.ViewCountFlushService>();
@@ -77,6 +84,9 @@ app.UseAuthorization();
 app.UseSession(); // Phải đứng sau UseRouting
 
 app.MapStaticAssets();
+
+// 🚀 Map SignalR Endpoint
+app.MapHub<TechGearShop_V1.Hubs.NotificationHub>("/notificationHub");
 
 app.MapControllerRoute(
     name: "areas",

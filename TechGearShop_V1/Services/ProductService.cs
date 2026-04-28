@@ -17,7 +17,7 @@ namespace TechGearShop_V1.Services
 
         public async Task<IEnumerable<Product>> GetAllProductsAsync()
         {
-            return await _productRepository.GetAllAsync();
+            return await _productRepository.GetAllWithCategoryAsync();
         }
 
         public async Task<Product?> GetProductByIdAsync(int id)

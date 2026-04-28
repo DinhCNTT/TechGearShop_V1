@@ -26,11 +26,15 @@
 
             @using TechGearShop_V1.Extensions
 @using TechGearShop_V1.Models.ViewModels
+@inject TechGearShop_V1.Services.Interfaces.ICartService CartService
 @inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
 
 @{
-    var cartItems = HttpContextAccessor.HttpContext?.Session.Get<List<CartItem>>("shopping_cart") ?? new List<CartItem>();
-    int cartCount = cartItems.Count;
+    int cartCount = 0;
+    var userIdStr = HttpContextAccessor.HttpContext?.User
+        .FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    if (int.TryParse(userIdStr, out var cartUserId))
+        cartCount = await CartService.GetCartCountAsync(cartUserId);
 }
 <ul class="navbar-nav d-flex align-items-center">
     <!-- Custom Language Switcher (hides the ugly Google widget off-screen) -->
@@ -68,6 +72,47 @@
         </a>
     </li>
                 <!-- Dynamic Auth Dropdown: Đọc từ Cookie Claims -->
+                <!-- ================== NOTIFICATION BELL ================== -->
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <li class="nav-item me-2 dropdown" id="notificationMenuContainer">
+                        <a class="nav-link text-white position-relative dropdown-toggle-hidden" href="#" id="notifDropdown" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" onclick="fetchNotifications()">
+                            <i class="bi bi-bell fs-5"></i>
+                            <span id="notifBadge" class="position-absolute top-10 start-100 translate-middle badge rounded-pill bg-warning text-dark" style="display: none; font-size: 0.65rem;">
+                                0
+                            </span>
+                        </a>
+
+                        <div class="dropdown-menu dropdown-menu-end shadow-lg notification-dropdown border-0" aria-labelledby="notifDropdown" style="width: 350px; border-radius: 12px; backdrop-filter: blur(16px); background: rgba(255, 255, 255, 0.95);">
+                            <!-- Header Info -->
+                            <div class="d-flex justify-content-between align-items-center px-4 py-3 border-bottom shadow-sm">
+                                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-bell-fill text-warning me-2"></i>Thông báo</h6>
+                                <button class="btn btn-sm text-primary p-0 fw-semibold text-decoration-none" onclick="markAllNotifAsRead()">Đánh dấu đã đọc</button>
+                            </div>
+                            <!-- Categories -->
+                            <div class="d-flex border-bottom notification-tabs bg-light bg-opacity-50">
+                                <button class="flex-fill btn btn-link text-decoration-none py-2 text-dark fw-bold border-0 rounded-0 active-tab" onclick="filterNotifs('all', this)">Tất cả</button>
+                                <button class="flex-fill btn btn-link text-decoration-none py-2 text-muted border-0 rounded-0" onclick="filterNotifs('order', this)">Đơn hàng</button>
+                                <button class="flex-fill btn btn-link text-decoration-none py-2 text-muted border-0 rounded-0" onclick="filterNotifs('promo', this)">Khuyến mãi</button>
+                            </div>
+                            <!-- List -->
+                            <div class="notification-list overflow-auto" id="notifListContainer" style="max-height: 400px; min-height: 200px;">
+                                <div class="text-center text-muted p-4 d-flex flex-column align-items-center justify-content-center h-100">
+                                    <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
+                                    <small>Đang tải thông báo...</small>
+                                </div>
+                            </div>
+                            <!-- Footer View All -->
+                            <div class="border-top text-center" style="background-color: #f8f9fa; border-radius: 0 0 12px 12px;">
+                                <a href="/Account/Notifications" class="btn btn-link text-decoration-none text-primary fw-bold w-100 py-3" style="font-size: 0.9rem;">
+                                    Xem tất cả thông báo <i class="bi bi-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </li>
+                }
+                <!-- ================== END NOTIFICATION ================== -->
+
                 <li class="nav-item dropdown">
                     @if (User.Identity?.IsAuthenticated == true)
                     {

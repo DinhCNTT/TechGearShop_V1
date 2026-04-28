@@ -11,6 +11,10 @@ namespace TechGearShop_V1.Models.Entities
         public int UserId { get; set; }
 
         public DateTime OrderDate { get; set; } = DateTime.UtcNow;
+        public DateTime? ProcessingDate { get; set; }
+        public DateTime? ShippingDate { get; set; }
+        public DateTime? CompletedDate { get; set; }
+        public DateTime? CancelledDate { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal TotalAmount { get; set; }

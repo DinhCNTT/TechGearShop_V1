@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TechGearShop_V1.Data;
 
@@ -11,9 +12,11 @@ using TechGearShop_V1.Data;
 namespace TechGearShop_V1.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260427125742_AddDbCart")]
+    partial class AddDbCart
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -151,46 +154,6 @@ namespace TechGearShop_V1.Migrations
                     b.ToTable("Coupons");
                 });
 
-            modelBuilder.Entity("TechGearShop_V1.Models.Entities.Notification", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsRead")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("LinkTo")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("Message")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Notifications");
-                });
-
             modelBuilder.Entity("TechGearShop_V1.Models.Entities.Order", b =>
                 {
                     b.Property<int>("Id")
@@ -198,12 +161,6 @@ namespace TechGearShop_V1.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime?>("CancelledDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("CompletedDate")
-                        .HasColumnType("datetime2");
 
                     b.Property<string>("CouponCode")
                         .HasMaxLength(50)
@@ -225,9 +182,6 @@ namespace TechGearShop_V1.Migrations
                     b.Property<int>("PaymentMethod")
                         .HasColumnType("int");
 
-                    b.Property<DateTime?>("ProcessingDate")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("Province")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
@@ -246,9 +200,6 @@ namespace TechGearShop_V1.Migrations
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
-
-                    b.Property<DateTime?>("ShippingDate")
-                        .HasColumnType("datetime2");
 
                     b.Property<decimal>("ShippingFee")
                         .HasColumnType("decimal(18,2)");
@@ -472,17 +423,6 @@ namespace TechGearShop_V1.Migrations
                     b.Navigation("Cart");
 
                     b.Navigation("Product");
-                });
-
-            modelBuilder.Entity("TechGearShop_V1.Models.Entities.Notification", b =>
-                {
-                    b.HasOne("TechGearShop_V1.Models.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("TechGearShop_V1.Models.Entities.Order", b =>

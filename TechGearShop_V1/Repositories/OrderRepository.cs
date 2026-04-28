@@ -18,6 +18,8 @@ namespace TechGearShop_V1.Repositories
         {
             return await _dbSet
                 .Where(o => o.UserId == userId)
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.Product)
                 .OrderByDescending(o => o.OrderDate)
                 .ToListAsync();
         }
