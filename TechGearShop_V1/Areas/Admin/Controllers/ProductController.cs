@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using TechGearShop_V1.Models.Entities;
@@ -7,18 +8,20 @@ using TechGearShop_V1.Services.Interfaces;
 namespace TechGearShop_V1.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    // [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")]
     public class ProductController : Controller
     {
         private readonly IProductService _productService;
         private readonly ICategoryService _categoryService;
         private readonly IImageService _imageService;
+        private readonly IStockNotificationQueue _notificationQueue;
 
-        public ProductController(IProductService productService, ICategoryService categoryService, IImageService imageService)
+        public ProductController(IProductService productService, ICategoryService categoryService, IImageService imageService, IStockNotificationQueue notificationQueue)
         {
             _productService = productService;
             _categoryService = categoryService;
             _imageService = imageService;
+            _notificationQueue = notificationQueue;
         }
 
         public async Task<IActionResult> Index(int page = 1)
@@ -144,6 +147,8 @@ namespace TechGearShop_V1.Areas.Admin.Controllers
                     product.ImagePath = await _imageService.UploadImageWithWatermarkAsync(model.ImageFile, "products");
                 }
 
+                int oldStock = product.Stock;
+
                 product.Name = model.Name;
                 product.Brand = model.Brand;
                 product.CategoryId = model.CategoryId;
@@ -169,6 +174,13 @@ namespace TechGearShop_V1.Areas.Admin.Controllers
                 }
 
                 await _productService.UpdateProductAsync(product);
+
+                // Nếu nhập hàng từ hết hàng (0) sang có hàng (> 0), kích hoạt luồng tự động gửi thông báo ngầm
+                if (oldStock == 0 && product.Stock > 0)
+                {
+                    await _notificationQueue.QueueRestockNotificationAsync(product.Id);
+                }
+
                 TempData["SuccessMessage"] = "Cập nhật sản phẩm thành công!";
                 return RedirectToAction(nameof(Index));
             }

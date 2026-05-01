@@ -73,7 +73,7 @@
     </li>
                 <!-- Dynamic Auth Dropdown: Đọc từ Cookie Claims -->
                 <!-- ================== NOTIFICATION BELL ================== -->
-                @if (User.Identity?.IsAuthenticated == true)
+                @if (User.Identity?.IsAuthenticated == true && !User.IsInRole("Admin"))
                 {
                     <li class="nav-item me-2 dropdown" id="notificationMenuContainer">
                         <a class="nav-link text-white position-relative dropdown-toggle-hidden" href="#" id="notifDropdown" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" onclick="fetchNotifications()">

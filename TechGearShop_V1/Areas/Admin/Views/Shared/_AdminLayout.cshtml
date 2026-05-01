@@ -88,7 +88,7 @@
         /* ── Page Header ── */
         .page-header {
             display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 28px;
+            margin-bottom: 28px; position: relative; z-index: 100;
         }
         .page-header h1 {
             font-size: 1.5rem; font-weight: 700; color: #0f172a; margin: 0;
@@ -180,6 +180,45 @@
 
         /* badge */
         .badge-status { border-radius: 6px; font-size: 0.72rem; font-weight: 600; padding: 4px 10px; }
+
+        /* ── Admin Topbar & Notifications ── */
+        .admin-topbar {
+            display: inline-flex; align-items: center;
+            margin: 0; padding: 0;
+            background: transparent; border-radius: 0;
+            box-shadow: none; position: relative; z-index: 1050;
+        }
+        .admin-topbar .nav-action {
+            position: relative; width: 44px; height: 44px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 14px; background: #fff; color: #475569;
+            cursor: pointer; transition: all 0.2s; border: 1.5px solid #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .admin-topbar .nav-action:hover { background: #f8fafc; color: var(--sidebar-accent); border-color: #cbd5e1; }
+        .admin-notif-badge {
+            position: absolute; top: -4px; right: -4px; display: none;
+            background: #ef4444; color: #fff; font-size: 0.65rem; font-weight: bold;
+            padding: 2px 6px; border-radius: 10px; border: 2px solid #fff;
+            animation: pulse-red 2s infinite;
+        }
+        @@keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .admin-notif-dropdown {
+            width: 360px; border: none; border-radius: 16px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.12); overflow: hidden; margin-top: 10px !important;
+            z-index: 9999 !important;
+        }
+        .admin-notif-item { padding: 16px; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: background 0.2s; }
+        .admin-notif-item:hover { background: #f8fafc; }
+        .admin-notif-item.unread { background: rgba(59,130,246,0.05); border-left: 3px solid var(--sidebar-accent); }
+        .admin-notif-icon {
+            width: 38px; height: 38px; border-radius: 10px; background: #fff;
+            display: flex; align-items: center; justify-content: center; font-size: 1.1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
     </style>
 </head>
 <body>
@@ -212,6 +251,9 @@
         <a href="/Admin/Order" class="sidebar-nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Order" ? "active" : "")">
             <i class="bi bi-bag-check-fill"></i> Đơn hàng
         </a>
+        <a href="/Admin/Notification" class="sidebar-nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Notification" ? "active" : "")">
+            <i class="bi bi-bell-fill"></i> Thông báo
+        </a>
     </div>
 
     <div class="sidebar-footer">
@@ -228,6 +270,43 @@
 </div>
 
 <main class="admin-content fade-in">
+    <!-- Admin Topbar (Sẽ được JS tự động move vào Header của từng trang) -->
+    <div class="admin-topbar" id="globalAdminTopbar">
+        <!-- Notification Dropdown -->
+        <div class="dropdown">
+            <button class="nav-action" type="button" id="adminNotifDropdown" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+                <i class="bi bi-bell-fill fs-5"></i>
+                <span id="adminNotifBadge" class="admin-notif-badge">0</span>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end admin-notif-dropdown" aria-labelledby="adminNotifDropdown">
+                <!-- Header Info -->
+                <div class="d-flex justify-content-between align-items-center px-4 py-3 border-bottom shadow-sm bg-white">
+                    <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-bell-fill text-warning me-2"></i>Thông báo hệ thống</h6>
+                    <button type="button" class="btn btn-sm text-primary p-0 fw-semibold text-decoration-none" onclick="markAllAdminNotifAsRead()">Đánh dấu đã đọc</button>
+                </div>
+                <!-- Categories -->
+                <div class="d-flex border-bottom bg-light bg-opacity-50 admin-notif-tabs">
+                    <button type="button" class="flex-fill btn btn-link text-decoration-none py-2 text-dark fw-bold border-0 rounded-0 active-tab" onclick="filterAdminNotifs('all', this)">Tất cả</button>
+                    <button type="button" class="flex-fill btn btn-link text-decoration-none py-2 text-muted border-0 rounded-0" onclick="filterAdminNotifs('order', this)">Đơn hàng</button>
+                    <button type="button" class="flex-fill btn btn-link text-decoration-none py-2 text-muted border-0 rounded-0" onclick="filterAdminNotifs('qna', this)">Hỏi đáp</button>
+                </div>
+                <!-- List -->
+                <div id="adminNotifListContainer" class="overflow-auto bg-white" style="max-height: 400px; min-height: 200px;">
+                    <div class="text-center text-muted p-4 d-flex flex-column align-items-center justify-content-center h-100">
+                        <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
+                        <small>Đang tải thông báo...</small>
+                    </div>
+                </div>
+                <!-- Footer View All -->
+                <div class="border-top text-center" style="background-color: #f8f9fa;">
+                    <a href="/Admin/Notification" class="btn btn-link text-decoration-none text-primary fw-bold w-100 py-3" style="font-size: 0.85rem;">
+                        Xem tất cả thông báo <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @if (TempData["SuccessMessage"] != null)
     {
         <div class="alert-admin-success mb-4">
@@ -246,8 +325,237 @@
     @RenderBody()
 </main>
 
+<!-- Inline QA Reply Modal -->
+<div class="modal fade" id="adminQaReplyModal" tabindex="-1" aria-labelledby="adminQaReplyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered border-0">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+            <div class="modal-header border-0 bg-light bg-opacity-50" style="border-radius: 16px 16px 0 0;">
+                <h5 class="modal-title fw-bold text-dark" id="adminQaReplyModalLabel"><i class="bi bi-reply-fill text-primary me-2"></i>Trả lời khách hàng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="p-3 mb-3 rounded" style="background: #f8fafc; border-left: 4px solid var(--sidebar-accent);">
+                    <div class="d-flex align-items-center mb-1">
+                        <i class="bi bi-person-circle text-secondary me-2"></i>
+                        <strong class="text-dark" id="adminQaReplyUsername">Username</strong>
+                    </div>
+                    <p class="mb-0 text-muted small" id="adminQaReplyContent">Content</p>
+                </div>
+                
+                <input type="hidden" id="adminQaReplyQuestionId" />
+                <input type="hidden" id="adminQaReplyProductId" />
+                
+                <div class="form-group">
+                    <label class="form-label fw-semibold text-dark small mb-2">Câu trả lời của bạn</label>
+                    <textarea class="form-control bg-light" id="adminQaReplyInput" rows="3" placeholder="Nhập câu trả lời..." style="border-radius: 12px; resize: none;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pb-4 px-4 pt-0">
+                <button type="button" class="btn btn-light rounded-pill px-4 fw-semibold" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4 fw-semibold" onclick="sendAdminQaReply()">
+                    Gửi trả lời <i class="bi bi-send ms-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+<script>
+    let adminNotifData = [];
+    let adminQaConnection = null;
+
+    $(document).ready(function() {
+        // Tự động "nhúng" chuông vào Header của từng trang để hòa làm 1 khối
+        const topbar = $('#globalAdminTopbar');
+        if ($('.db-header').length) {
+            $('.period-filter').parent().css('display', 'flex').css('gap', '12px');
+            topbar.appendTo($('.period-filter').parent());
+        } else if ($('.page-header').length) {
+            if ($('.page-header').css('display') !== 'flex') {
+                $('.page-header').css({'display':'flex', 'justify-content':'space-between', 'align-items':'center'});
+            }
+            topbar.appendTo($('.page-header'));
+        } else if ($('.admin-content > .d-flex.justify-content-between').length) {
+            topbar.appendTo($('.admin-content > .d-flex.justify-content-between').first());
+        }
+
+        fetchAdminNotifs();
+        initAdminSignalR();
+        initAdminQaHub();
+    });
+
+    async function fetchAdminNotifs() {
+        try {
+            const res = await fetch('/api/Notification/GetList');
+            if (res.ok) {
+                const result = await res.json();
+                if (result.success) {
+                    adminNotifData = result.data;
+                    updateAdminNotifBadge(result.unreadCount);
+                    renderAdminNotifs('all');
+                }
+            }
+        } catch (e) { console.error('Fetch notif error', e); }
+    }
+
+    function updateAdminNotifBadge(count) {
+        const badge = document.getElementById('adminNotifBadge');
+        if (!badge) return;
+        if (count > 0) {
+            badge.textContent = count > 9 ? '9+' : count;
+            badge.style.display = 'inline-block';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    function filterAdminNotifs(type, btnEl) {
+        document.querySelectorAll('.admin-notif-tabs .btn').forEach(b => {
+            b.classList.remove('active-tab', 'text-dark', 'fw-bold');
+            b.classList.add('text-muted');
+        });
+        btnEl.classList.add('active-tab', 'text-dark', 'fw-bold');
+        btnEl.classList.remove('text-muted');
+        renderAdminNotifs(type);
+    }
+
+    function renderAdminNotifs(filterStr) {
+        const container = document.getElementById('adminNotifListContainer');
+        if (!container) return;
+
+        let filtered = adminNotifData;
+        if (filterStr === 'order') filtered = adminNotifData.filter(n => n.typeString === 'Order');
+        else if (filterStr === 'qna') filtered = adminNotifData.filter(n => n.typeString === 'QnA');
+
+        if (filtered.length === 0) {
+            container.innerHTML = `
+                <div class="text-center text-muted p-5 d-flex flex-column align-items-center justify-content-center h-100 opacity-75">
+                    <i class="bi bi-bell-slash fs-1 mb-3"></i>
+                    <h6 class="fw-bold">Chưa có thông báo</h6>
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = filtered.slice(0, 7).map(n => {
+            const unreadClass = !n.isRead ? 'unread' : '';
+            const iconClass = n.typeString === 'Order' ? 'bi-box-seam text-success' :
+                n.typeString === 'QnA' ? 'bi-chat-dots-fill text-primary' : 'bi-bell-fill text-warning';
+
+            // Click behavior
+            let clickAction = `readAndNavigateAdmin(${n.id}, '${n.linkTo || '/'}')`;
+            
+            // Nếu là thông báo QnA, mở Popup Inline Reply
+            // Cần extract ProductId và QuestionId. Giả định LinkTo có dạng /Product/Detail/123?qa=456
+            if (n.typeString === 'QnA' && n.linkTo) {
+                // Tách productId
+                const pMatch = n.linkTo.match(/Detail\/(\d+)/) || n.linkTo.match(/categoryId=\d+.*&id=(\d+)/) || n.linkTo.match(/id=(\d+)/);
+                const qMatch = n.linkTo.match(/qa=(\d+)/);
+                if (pMatch && qMatch) {
+                    const pId = pMatch[1];
+                    const qId = qMatch[1];
+                    // Clean title string for JS
+                    const cleanTitle = n.title.replace(/'/g, "\\'");
+                    const cleanMsg = n.message.replace(/'/g, "\\'");
+                    clickAction = `openQaReplyModal(${n.id}, ${pId}, ${qId}, '${cleanTitle}', '${cleanMsg}')`;
+                }
+            }
+
+            return `
+                <div class="admin-notif-item ${unreadClass}" onclick="${clickAction}">
+                    <div class="d-flex gx-3">
+                        <div class="me-3">
+                            <div class="admin-notif-icon"><i class="bi ${iconClass}"></i></div>
+                        </div>
+                        <div>
+                            <h6 class="mb-1 text-dark" style="font-size: 0.9rem; font-weight: 600;">${n.title}</h6>
+                            <p class="mb-1 text-muted small lh-sm" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${n.message}</p>
+                            <small class="text-secondary" style="font-size: 0.75rem;"><i class="bi bi-clock me-1"></i>${n.createdAt}</small>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    async function markAllAdminNotifAsRead() {
+        const res = await fetch('/api/Notification/MarkAllAsRead', { method: 'POST' });
+        if (res.ok) fetchAdminNotifs();
+    }
+
+    async function readAndNavigateAdmin(id, url) {
+        await fetch(`/api/Notification/MarkAsRead/${id}`, { method: 'POST' });
+        window.location.href = url;
+    }
+
+    // Modal QnA
+    async function openQaReplyModal(notifId, productId, questionId, title, message) {
+        // Đánh dấu đã đọc trước
+        await fetch(`/api/Notification/MarkAsRead/${notifId}`, { method: 'POST' });
+        fetchAdminNotifs();
+
+        // Điền data vào modal
+        document.getElementById('adminQaReplyProductId').value = productId;
+        document.getElementById('adminQaReplyQuestionId').value = questionId;
+        document.getElementById('adminQaReplyUsername').innerText = title.replace('Câu hỏi mới từ ', '');
+        document.getElementById('adminQaReplyContent').innerText = message;
+        document.getElementById('adminQaReplyInput').value = '';
+
+        const modal = new bootstrap.Modal(document.getElementById('adminQaReplyModal'));
+        modal.show();
+    }
+
+    function initAdminQaHub() {
+        adminQaConnection = new signalR.HubConnectionBuilder()
+            .withUrl("/qaHub")
+            .withAutomaticReconnect()
+            .build();
+        
+        adminQaConnection.on("QaSuccess", function (msg) {
+            alert("Đã gửi câu trả lời thành công!");
+            bootstrap.Modal.getInstance(document.getElementById('adminQaReplyModal')).hide();
+        });
+        adminQaConnection.on("QaError", function (msg) {
+            alert("Lỗi: " + msg);
+        });
+
+        adminQaConnection.start().catch(err => console.error("Admin QaHub err", err));
+    }
+
+    function sendAdminQaReply() {
+        const pId = parseInt(document.getElementById('adminQaReplyProductId').value);
+        const qId = parseInt(document.getElementById('adminQaReplyQuestionId').value);
+        const content = document.getElementById('adminQaReplyInput').value.trim();
+
+        if (!content) return;
+        if (!adminQaConnection || adminQaConnection.state !== signalR.HubConnectionState.Connected) {
+            alert('Đang kết nối lại server, vui lòng thử lại.');
+            return;
+        }
+
+        // SendQuestion(int productId, string content, int? parentId = null)
+        adminQaConnection.invoke("SendQuestion", pId, content, qId).catch(err => {
+            console.error(err);
+            alert("Gửi thất bại.");
+        });
+    }
+
+    function initAdminSignalR() {
+        const notifConnection = new signalR.HubConnectionBuilder()
+            .withUrl("/notificationHub")
+            .withAutomaticReconnect()
+            .build();
+
+        notifConnection.on("ReceiveNotification", function (title, message) {
+            fetchAdminNotifs(); // Fetch lại list
+        });
+
+        notifConnection.start().catch(err => console.error("Admin NotificationHub err", err));
+    }
+</script>
+
 @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

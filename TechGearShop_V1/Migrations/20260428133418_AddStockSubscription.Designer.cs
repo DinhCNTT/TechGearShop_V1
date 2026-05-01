@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TechGearShop_V1.Data;
 
@@ -11,9 +12,11 @@ using TechGearShop_V1.Data;
 namespace TechGearShop_V1.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260428133418_AddStockSubscription")]
+    partial class AddStockSubscription
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -69,7 +72,6 @@ namespace TechGearShop_V1.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("UnitPrice")
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -311,9 +313,6 @@ namespace TechGearShop_V1.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal>("AverageRating")
-                        .HasColumnType("decimal(3,2)");
-
                     b.Property<string>("Brand")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
@@ -348,9 +347,6 @@ namespace TechGearShop_V1.Migrations
                     b.Property<decimal?>("PromotionalPrice")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int>("ReviewCount")
-                        .HasColumnType("int");
-
                     b.Property<int>("SoldCount")
                         .HasColumnType("int");
 
@@ -368,10 +364,7 @@ namespace TechGearShop_V1.Migrations
                     b.HasIndex("CategoryId")
                         .HasDatabaseName("IX_Products_CategoryId");
 
-                    b.ToTable("Products", t =>
-                        {
-                            t.HasCheckConstraint("CHK_Products_Stock_NonNegative", "[Stock] >= 0");
-                        });
+                    b.ToTable("Products");
                 });
 
             modelBuilder.Entity("TechGearShop_V1.Models.Entities.ProductImage", b =>
@@ -407,84 +400,6 @@ namespace TechGearShop_V1.Migrations
                     b.ToTable("ProductImages");
                 });
 
-            modelBuilder.Entity("TechGearShop_V1.Models.Entities.ProductQuestion", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsAdminReply")
-                        .HasColumnType("bit");
-
-                    b.Property<int?>("ParentId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("ProductId", "CreatedAt")
-                        .HasDatabaseName("IX_ProductQuestions_Product_CreatedAt");
-
-                    b.ToTable("ProductQuestions");
-                });
-
-            modelBuilder.Entity("TechGearShop_V1.Models.Entities.Review", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsVerifiedPurchase")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Rating")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProductId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Reviews", t =>
-                        {
-                            t.HasCheckConstraint("CHK_Review_Rating", "[Rating] >= 1 AND [Rating] <= 5");
-                        });
-                });
-
             modelBuilder.Entity("TechGearShop_V1.Models.Entities.StockSubscription", b =>
                 {
                     b.Property<int>("Id")
@@ -497,6 +412,7 @@ namespace TechGearShop_V1.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("GuestEmail")
+                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
@@ -662,44 +578,6 @@ namespace TechGearShop_V1.Migrations
                     b.Navigation("Product");
                 });
 
-            modelBuilder.Entity("TechGearShop_V1.Models.Entities.ProductQuestion", b =>
-                {
-                    b.HasOne("TechGearShop_V1.Models.Entities.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("TechGearShop_V1.Models.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("TechGearShop_V1.Models.Entities.Review", b =>
-                {
-                    b.HasOne("TechGearShop_V1.Models.Entities.Product", "Product")
-                        .WithMany("Reviews")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("TechGearShop_V1.Models.Entities.User", "User")
-                        .WithMany("Reviews")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("TechGearShop_V1.Models.Entities.StockSubscription", b =>
                 {
                     b.HasOne("TechGearShop_V1.Models.Entities.Product", "Product")
@@ -738,15 +616,11 @@ namespace TechGearShop_V1.Migrations
                     b.Navigation("OrderDetails");
 
                     b.Navigation("ProductImages");
-
-                    b.Navigation("Reviews");
                 });
 
             modelBuilder.Entity("TechGearShop_V1.Models.Entities.User", b =>
                 {
                     b.Navigation("Orders");
-
-                    b.Navigation("Reviews");
                 });
 #pragma warning restore 612, 618
         }

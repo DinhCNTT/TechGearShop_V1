@@ -5,32 +5,61 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
+@* ════════════════════════════════════════════════
+   OVERLAY: Hiển thị khi hệ thống đang xử lý đơn hàng
+   Sau khi bấm "Đặt hàng", UI bị khóa lại tại đây
+   cho đến khi nhận được kết quả từ SignalR.
+════════════════════════════════════════════════ *@
+<div id="orderProcessingOverlay" style="
+    display: none;
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(4px);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    text-align: center;
+">
+    <div style="
+        background: #1e2939;
+        border-radius: 20px;
+        padding: 3rem 3.5rem;
+        box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+        max-width: 420px; width: 90%;
+    ">
+        <div class="spinner-border text-warning mb-4" style="width:3.5rem;height:3.5rem;border-width:5px;" role="status"></div>
+        <h4 class="fw-bold mb-2" style="letter-spacing:0.5px;">Đang xử lý đơn hàng...</h4>
+        <p class="text-white-50 mb-0" id="overlayStatusText">Hệ thống đang kiểm tra tồn kho và lưu đơn hàng của bạn. Vui lòng không tắt trang này.</p>
+    </div>
+</div>
+
 <div class="row gx-5">
-    <!-- Form thông tin đặt hàng (Trái) -->
+    @* Form thông tin đặt hàng (Trái) *@
     <div class="col-lg-7 mb-5">
         <div class="card border-0 shadow-sm rounded-4 p-4">
             <h4 class="fw-bold mb-4"><i class="bi bi-shield-lock-fill text-success"></i> Thông tin thanh toán</h4>
             
             <form asp-controller="Checkout" asp-action="PlaceOrder" method="post" id="checkoutForm">
                 @Html.AntiForgeryToken()
-                <div asp-validation-summary="ModelOnly" class="text-danger mb-3 fw-semibold"></div>
+                <div id="serverErrorMessage" class="alert alert-danger mb-3 d-none" role="alert"></div>
 
                 <div class="row g-3">
-                    <!-- Họ Tên -->
+                    @* Họ Tên *@
                     <div class="col-md-6 mb-3">
                         <label asp-for="ReceiverName" class="form-label fw-semibold">Họ và tên <span class="text-danger">*</span></label>
                         <input asp-for="ReceiverName" class="form-control bg-light" placeholder="Nguyễn Văn A" />
                         <span asp-validation-for="ReceiverName" class="text-danger small"></span>
                     </div>
 
-                    <!-- Số Điện Thoại -->
+                    @* Số Điện Thoại *@
                     <div class="col-md-6 mb-3">
                         <label asp-for="ReceiverPhone" class="form-label fw-semibold">Số điện thoại <span class="text-danger">*</span></label>
                         <input asp-for="ReceiverPhone" class="form-control bg-light" placeholder="0987123456" />
                         <span asp-validation-for="ReceiverPhone" class="text-danger small"></span>
                     </div>
 
-                    <!-- Tỉnh / Thành -->
+                    @* Tỉnh / Thành *@
                     <div class="col-md-5 mb-3">
                         <label asp-for="Province" class="form-label fw-semibold">Tỉnh / Thành phố <span class="text-danger">*</span></label>
                         <select asp-for="Province" class="form-select bg-light">
@@ -43,20 +72,20 @@
                         <span asp-validation-for="Province" class="text-danger small"></span>
                     </div>
 
-                    <!-- Lọc Địa chỉ (Ngắn) -->
+                    @* Địa chỉ *@
                     <div class="col-md-7 mb-3">
                         <label asp-for="ShippingAddress" class="form-label fw-semibold">Số nhà, Tên đường, Phường/Xã <span class="text-danger">*</span></label>
                         <input asp-for="ShippingAddress" class="form-control bg-light" placeholder="Số 1, Phố Y, Phường X..." />
                         <span asp-validation-for="ShippingAddress" class="text-danger small"></span>
                     </div>
 
-                    <!-- Ghi Chú -->
+                    @* Ghi Chú *@
                     <div class="col-12 mb-3">
                         <label asp-for="Note" class="form-label fw-semibold">Ghi chú giao hàng (Tùy chọn)</label>
                         <textarea asp-for="Note" class="form-control bg-light" rows="3" placeholder="Giao giờ hành chính..."></textarea>
                     </div>
 
-                    <!-- Hình thức thanh toán -->
+                    @* Hình thức thanh toán *@
                     <div class="col-12 mb-4">
                         <label class="form-label fw-semibold d-block">Hình thức thanh toán <span class="text-danger">*</span></label>
                         <div class="form-check p-3 border rounded mb-2 bg-light">
@@ -74,7 +103,7 @@
                     </div>
                 </div>
 
-                <!-- Hidden Input để đẩy Coupon Code nếu áp dụng thành công nộp chung cùng form -->
+                @* Hidden Input: Coupon Code *@
                 <input type="hidden" asp-for="CouponCode" id="hiddenCouponCode">
 
                 <button type="submit" class="btn btn-danger btn-lg w-100 fw-bold py-3 shadow-sm rounded-pill" id="btnPlaceOrder">
@@ -85,7 +114,7 @@
         </div>
     </div>
 
-    <!-- Tóm tắt Đơn hàng (Phải) -->
+    @* Tóm tắt Đơn hàng (Phải) *@
     <div class="col-lg-5">
         <div class="card border-0 shadow-sm rounded-4 bg-light p-4 sticky-top" style="top: 2rem;">
             <h5 class="fw-bold mb-4 border-bottom pb-2">Đơn hàng của bạn (@Model.CartItems.Count sản phẩm)</h5>
@@ -123,7 +152,7 @@
                 }
             </div>
 
-            <!-- Mã giảm giá AJAX Form -->
+            @* Mã giảm giá AJAX *@
             <div class="mb-4 pt-3 border-top">
                 <label class="form-label fw-semibold">Mã giảm giá (Coupon)</label>
                 <div class="input-group">
@@ -133,7 +162,7 @@
                 <div id="couponMessage" class="mt-2 small fw-semibold" style="display:none;"></div>
             </div>
 
-            <!-- Tính tiền tổng hợp -->
+            @* Tính tiền tổng hợp *@
             <div class="border-top pt-3">
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">Tạm tính</span>
@@ -162,8 +191,125 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    @* SignalR Client *@
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
+
     <script>
-        // Hiển thị cảnh báo nếu quá Stock
+        // ═══════════════════════════════════════════════════════
+        //  SIGNALR — Lắng nghe kết quả đơn hàng từ Background Worker
+        // ═══════════════════════════════════════════════════════
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/notificationHub")
+            .withAutomaticReconnect()
+            .build();
+
+        let hasOrderSucceeded = false; // Cờ chặn các thông báo lỗi đến sau nếu đã thành công
+
+        // Nhận kết quả từ OrderProcessingBackgroundService
+        connection.on("OrderPlacedResult", function (result) {
+            // Nếu đã nhận thông báo thành công (do request đầu tiên), bỏ qua mọi lỗi của request cướp tranh
+            if (hasOrderSucceeded) return; 
+
+            hideOverlay();
+
+            if (result.success) {
+                hasOrderSucceeded = true; // Khóa cờ lại
+                // ── Thành công: SweetAlert2 rồi chuyển trang Success ────────
+                Swal.fire({
+                    icon: 'success',
+                    title: '🎉 Đặt hàng thành công!',
+                    html: result.message,
+                    confirmButtonColor: '#198754',
+                    confirmButtonText: 'Xem đơn hàng',
+                    allowOutsideClick: false
+                }).then(() => {
+                    window.location.href = `/Checkout/Success?orderId=${result.orderId}`;
+                });
+            } else {
+                // ── Thất bại (hết hàng): Cảnh báo, mở khóa form ─────────────
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Không thể đặt hàng',
+                    text: result.message,
+                    confirmButtonColor: '#dc3545',
+                    confirmButtonText: 'Quay lại chọn hàng'
+                }).then(() => {
+                    enableForm();
+                });
+            }
+        });
+
+        // Khởi động kết nối SignalR
+        connection.start()
+            .then(() => console.log("[SignalR] Đã kết nối — sẵn sàng nhận kết quả đơn hàng."))
+            .catch(err => console.error("[SignalR] Lỗi kết nối:", err));
+
+        // ═══════════════════════════════════════════════════════
+        //  FORM SUBMIT — AJAX thay vì submit thông thường
+        // ═══════════════════════════════════════════════════════
+        document.getElementById("checkoutForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            // Ẩn lỗi cũ
+            const errorDiv = document.getElementById("serverErrorMessage");
+            errorDiv.classList.add("d-none");
+            errorDiv.innerText = "";
+
+            // Validate phía Client trước
+            if (!this.checkValidity()) {
+                this.reportValidity();
+                return;
+            }
+
+            showOverlay();
+
+            const formData = new FormData(this);
+
+            try {
+                const response = await fetch("/Checkout/PlaceOrder", {
+                    method: "POST",
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.queued) {
+                    // Đơn vào Queue thành công — chờ SignalR báo kết quả
+                    document.getElementById("overlayStatusText").innerText =
+                        "Đơn hàng đã được tiếp nhận! Đang kiểm tra tồn kho...";
+                } else {
+                    // Lỗi validation từ Backend
+                    hideOverlay();
+                    errorDiv.classList.remove("d-none");
+                    errorDiv.innerText = result.message || "Có lỗi xảy ra. Vui lòng thử lại.";
+                    enableForm();
+                }
+            } catch (err) {
+                hideOverlay();
+                errorDiv.classList.remove("d-none");
+                errorDiv.innerText = "Lỗi kết nối máy chủ. Vui lòng tải lại trang.";
+                enableForm();
+            }
+        });
+
+        // ═══════════════════════════════════════════════════════
+        //  HELPERS
+        // ═══════════════════════════════════════════════════════
+        function showOverlay() {
+            document.getElementById("orderProcessingOverlay").style.display = "flex";
+            document.getElementById("btnPlaceOrder").disabled = true;
+        }
+
+        function hideOverlay() {
+            document.getElementById("orderProcessingOverlay").style.display = "none";
+        }
+
+        function enableForm() {
+            document.getElementById("btnPlaceOrder").disabled = false;
+        }
+
+        // Cảnh báo nếu quá Stock (từ UpdateQuantity)
         @if (TempData["StockWarning"] != null)
         {
             <text>
@@ -177,7 +323,9 @@
             </text>
         }
 
-        // Javascript cho Validate Coupon API (Sử dụng kiến trúc Fetch API hiện đại)
+        // ═══════════════════════════════════════════════════════
+        //  COUPON AJAX — Giữ nguyên logic cũ
+        // ═══════════════════════════════════════════════════════
         async function applyCoupon() {
             var code = document.getElementById("couponInput").value.trim();
             var msgDiv = document.getElementById("couponMessage");
@@ -190,7 +338,6 @@
                 return;
             }
 
-            // Giao diện pending
             btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
             btn.disabled = true;
 
@@ -201,27 +348,22 @@
                 msgDiv.style.display = "block";
                 
                 if (result.success) {
-                    // Cập nhật giao diện tiền tệ
                     msgDiv.className = "mt-2 small fw-bold text-success";
                     msgDiv.innerHTML = `<i class="bi bi-check-circle-fill"></i> ${result.message}`;
                     
-                    document.getElementById("hiddenCouponCode").value = code; // Bind to main Form
-                    
-                    // Hiện row coupon và trừ tiền
+                    document.getElementById("hiddenCouponCode").value = code;
                     document.getElementById("discountRow").classList.remove("d-none");
                     document.getElementById("discountValue").innerText = `-${result.discount.toLocaleString('vi-VN')} ₫`;
 
                     let subTotal = parseFloat(document.getElementById("rawSubTotal").getAttribute("data-value"));
                     let fee = @Model.ShippingFee;
                     let finalAmount = subTotal + fee - result.discount;
-                    if(finalAmount < 0) finalAmount = 0; // Edge case
+                    if(finalAmount < 0) finalAmount = 0;
                     
                     document.getElementById("finalTotal").innerText = `${finalAmount.toLocaleString('vi-VN')} ₫`;
-                    
                     document.getElementById("couponInput").readOnly = true;
                     btn.innerText = "Đã áp dụng";
                 } else {
-                    // Mã sai
                     msgDiv.className = "mt-2 small text-danger";
                     msgDiv.innerText = result.message;
                     btn.innerHTML = "Áp dụng";

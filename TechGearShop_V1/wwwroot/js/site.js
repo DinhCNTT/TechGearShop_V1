@@ -1,4 +1,4 @@
-﻿// Global JS behavior for TechGear Shop Customer site
+// Global JS behavior for TechGear Shop Customer site
 
 document.addEventListener("DOMContentLoaded", function () {
     // 1. Setup Toast notification style using SweetAlert2
@@ -192,7 +192,8 @@ function renderNotifications(filterStr) {
         const unreadClass = !n.isRead ? 'bg-primary bg-opacity-10 fw-bold border-start border-4 border-primary' : '';
         const iconClass = n.typeString === 'Order' ? 'bi-box-seam text-success' :
             n.typeString === 'Promotion' ? 'bi-tags-fill text-danger' :
-                n.typeString === 'Account' ? 'bi-person-badge text-info' : 'bi-bell-fill text-warning';
+            n.typeString === 'Account' ? 'bi-person-badge text-info' :
+            n.typeString === 'QnA' ? 'bi-chat-dots-fill text-primary' : 'bi-bell-fill text-warning';
 
         return `
             <div class="p-3 border-bottom position-relative notif-item ${unreadClass}" style="cursor: pointer; transition: all 0.2s ease;" onclick="readAndNavigate(${n.id}, '${n.linkTo || '/'}')">

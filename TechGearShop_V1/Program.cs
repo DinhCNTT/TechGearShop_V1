@@ -11,7 +11,9 @@ builder.Services.AddHttpContextAccessor();
 
 // === Database — Entity Framework Core ===
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        sqlOptions => sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
 
 // === Authentication — Cookie-based ===
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -57,12 +59,29 @@ builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.IImageService, Te
 builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.IDashboardService, TechGearShop_V1.Services.DashboardService>();
 builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.ICartService, TechGearShop_V1.Services.CartService>();
 builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.INotificationService, TechGearShop_V1.Services.NotificationService>();
+builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.IReviewService, TechGearShop_V1.Services.ReviewService>();
+builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.IProductQuestionService, TechGearShop_V1.Services.ProductQuestionService>();
+
+// Stock Notification Services
+builder.Services.AddSingleton<TechGearShop_V1.Services.Interfaces.IStockNotificationQueue, TechGearShop_V1.Services.StockNotificationQueue>();
+builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.IStockSubscriptionService, TechGearShop_V1.Services.StockSubscriptionService>();
+builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.IEmailSenderService, TechGearShop_V1.Services.EmailSenderService>();
+
+// Order Processing Channel (In-Memory Queue chống Race Condition)
+// Singleton để Channel tồn tại suốt vòng đời ứng dụng và được share giữa tất cả HTTP request.
+builder.Services.AddSingleton<TechGearShop_V1.Services.Interfaces.IOrderChannel, TechGearShop_V1.Services.OrderChannel>();
 
 // 🚀 Đăng ký SignalR
 builder.Services.AddSignalR();
 
 // Background service: batch-write ViewCount to DB every 5 minutes
 builder.Services.AddHostedService<TechGearShop_V1.Services.ViewCountFlushService>();
+
+// Background service: Restock Notification Queue processor
+builder.Services.AddHostedService<TechGearShop_V1.Services.Background.RestockNotificationBackgroundService>();
+
+// Background service: Order Processing Queue processor (chống Race Condition khi mua hàng)
+builder.Services.AddHostedService<TechGearShop_V1.Services.Background.OrderProcessingBackgroundService>();
 
 var app = builder.Build();
 
@@ -87,6 +106,7 @@ app.MapStaticAssets();
 
 // 🚀 Map SignalR Endpoint
 app.MapHub<TechGearShop_V1.Hubs.NotificationHub>("/notificationHub");
+app.MapHub<TechGearShop_V1.Hubs.QaHub>("/qaHub");
 
 app.MapControllerRoute(
     name: "areas",

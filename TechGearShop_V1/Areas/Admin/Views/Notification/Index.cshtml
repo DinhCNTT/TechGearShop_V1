@@ -1,0 +1,454 @@
+@{
+    ViewData["Title"] = "Thông báo hệ thống";
+}
+
+<style>
+/* ════════════════════════════════════════
+   Admin Notifications Page — Premium UI
+════════════════════════════════════════ */
+
+/* Page Header */
+.np-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 28px; flex-wrap: wrap; gap: 16px;
+    position: relative; z-index: 100;
+}
+.np-title {
+    display: flex; align-items: center; gap: 14px;
+}
+.np-title-icon {
+    width: 48px; height: 48px; border-radius: 16px; flex-shrink: 0;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.25rem; color: #fff;
+    box-shadow: 0 8px 22px rgba(245,158,11,0.38);
+}
+.np-title h1 {
+    font-size: 1.5rem; font-weight: 800; color: #0f172a; margin: 0;
+    letter-spacing: -0.02em;
+}
+.np-title p {
+    font-size: 0.8rem; color: #94a3b8; margin: 2px 0 0; font-weight: 500;
+}
+
+/* Filter Tabs Pill */
+.np-filter {
+    display: flex; align-items: center; gap: 4px;
+    background: #fff; border-radius: 14px; padding: 5px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+.np-filter-btn {
+    border: none; background: transparent; padding: 7px 18px;
+    border-radius: 10px; font-size: 0.82rem; font-weight: 600;
+    color: #64748b; cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; gap: 6px; white-space: nowrap;
+}
+.np-filter-btn:hover { background: #f1f5f9; color: #334155; }
+.np-filter-btn.active {
+    background: #0f172a; color: #fff;
+    box-shadow: 0 4px 12px rgba(15,23,42,0.25);
+}
+.np-filter-btn .np-count {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 20px; height: 20px; padding: 0 5px;
+    background: rgba(255,255,255,0.2); border-radius: 6px;
+    font-size: 0.7rem; font-weight: 700; line-height: 1;
+}
+.np-filter-btn:not(.active) .np-count {
+    background: #f1f5f9; color: #475569;
+}
+
+/* Stats Strip */
+.np-stats {
+    display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;
+}
+.np-stat-pill {
+    display: flex; align-items: center; gap: 8px;
+    background: #fff; border-radius: 12px; padding: 10px 16px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05); flex: 1; min-width: 130px;
+}
+.np-stat-pill .stat-icon {
+    width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 0.95rem;
+}
+.np-stat-pill .stat-val { font-size: 1.2rem; font-weight: 800; color: #0f172a; line-height: 1; }
+.np-stat-pill .stat-lbl { font-size: 0.72rem; color: #94a3b8; font-weight: 500; }
+
+/* Main Card */
+.np-card {
+    background: #fff; border-radius: 22px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.07); overflow: hidden;
+}
+
+/* Action bar */
+.np-action-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 24px; border-bottom: 1px solid #f1f5f9;
+    background: #fafbfc; flex-wrap: wrap; gap: 8px;
+}
+.np-action-bar .info-text {
+    font-size: 0.8rem; font-weight: 600; color: #94a3b8;
+}
+.np-mark-all-btn {
+    border: none; background: transparent; padding: 6px 14px;
+    border-radius: 9px; font-size: 0.8rem; font-weight: 600;
+    color: #3b82f6; cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; gap: 5px;
+}
+.np-mark-all-btn:hover { background: #eff6ff; }
+
+/* Notification Item */
+.np-item {
+    display: flex; align-items: flex-start; gap: 16px;
+    padding: 18px 24px; border-bottom: 1px solid #f8fafc;
+    cursor: pointer; transition: background 0.18s, transform 0.18s;
+    animation: itemFadeIn 0.4s ease both;
+    position: relative;
+}
+.np-item:last-child { border-bottom: none; }
+.np-item:hover { background: #f8faff; transform: translateX(2px); }
+.np-item.unread {
+    border-left: 3px solid #3b82f6;
+    background: rgba(59,130,246,0.03);
+}
+.np-item .np-icon-wrap {
+    width: 46px; height: 46px; border-radius: 14px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 1.15rem;
+}
+.np-item .np-body { flex: 1; min-width: 0; }
+.np-item .np-item-title {
+    font-weight: 700; font-size: 0.88rem; color: #0f172a; margin-bottom: 4px;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.np-unread-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #3b82f6; flex-shrink: 0;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+}
+.np-item .np-msg {
+    font-size: 0.81rem; color: #64748b; margin-bottom: 6px;
+    line-height: 1.55; display: -webkit-box;
+    -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.np-item .np-time {
+    font-size: 0.73rem; color: #cbd5e1; font-weight: 500;
+    display: flex; align-items: center; gap: 4px;
+}
+.np-item .np-type-tag {
+    font-size: 0.68rem; font-weight: 700; padding: 2px 8px;
+    border-radius: 6px; white-space: nowrap;
+}
+.np-item .np-action-btn {
+    flex-shrink: 0; align-self: center;
+    width: 36px; height: 36px; border-radius: 10px;
+    border: 1.5px solid #e2e8f0; background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    color: #94a3b8; cursor: pointer; transition: all 0.2s;
+    font-size: 0.9rem; opacity: 0;
+}
+.np-item:hover .np-action-btn { opacity: 1; }
+.np-item .np-action-btn:hover { border-color: #3b82f6; color: #3b82f6; }
+
+/* Empty State */
+.np-empty {
+    padding: 72px 24px; text-align: center;
+}
+.np-empty-icon {
+    width: 80px; height: 80px; border-radius: 24px; margin: 0 auto 20px;
+    background: #f8fafc; display: flex; align-items: center; justify-content: center;
+    font-size: 2.2rem; color: #cbd5e1;
+}
+.np-empty h5 { font-weight: 800; color: #334155; margin-bottom: 6px; }
+.np-empty p { font-size: 0.85rem; color: #94a3b8; }
+
+/* Pagination */
+.np-pagination {
+    display: flex; justify-content: center; align-items: center;
+    gap: 6px; padding: 20px 24px; border-top: 1px solid #f1f5f9;
+}
+.np-page-btn {
+    min-width: 36px; height: 36px; border-radius: 10px; border: 1.5px solid #e2e8f0;
+    background: #fff; font-size: 0.82rem; font-weight: 600; color: #475569;
+    cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;
+}
+.np-page-btn:hover { border-color: #3b82f6; color: #3b82f6; }
+.np-page-btn.active { background: #0f172a; border-color: #0f172a; color: #fff; box-shadow: 0 4px 10px rgba(15,23,42,0.25); }
+.np-page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Animations */
+@@keyframes itemFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Loading skeleton */
+.np-skeleton {
+    height: 72px; background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background-size: 200% 100%; animation: skeleton-shimmer 1.4s infinite;
+    border-radius: 12px; margin: 16px 24px;
+}
+@@keyframes skeleton-shimmer { to { background-position: -200% 0; } }
+</style>
+
+<!-- ══════════════ Page Header ══════════════ -->
+<div class="np-header page-header">
+    <div class="np-title">
+        <div class="np-title-icon"><i class="bi bi-bell-fill"></i></div>
+        <div>
+            <h1>Thông báo hệ thống</h1>
+            <p id="np-subtitle">Đang tải...</p>
+        </div>
+    </div>
+    <div class="np-filter">
+        <button type="button" class="np-filter-btn active" onclick="filterPage('all', this)" id="btn-all">
+            <i class="bi bi-grid-fill"></i> Tất cả <span class="np-count" id="cnt-all">—</span>
+        </button>
+        <button type="button" class="np-filter-btn" onclick="filterPage('Order', this)" id="btn-order">
+            <i class="bi bi-bag-check-fill"></i> Đơn hàng <span class="np-count" id="cnt-order">—</span>
+        </button>
+        <button type="button" class="np-filter-btn" onclick="filterPage('QnA', this)" id="btn-qna">
+            <i class="bi bi-chat-dots-fill"></i> Hỏi đáp <span class="np-count" id="cnt-qna">—</span>
+        </button>
+    </div>
+</div>
+
+<!-- ══════════════ Stats Strip ══════════════ -->
+<div class="np-stats" id="npStats" style="display:none;">
+    <div class="np-stat-pill">
+        <div class="stat-icon" style="background:#eff6ff; color:#3b82f6;"><i class="bi bi-bell"></i></div>
+        <div>
+            <div class="stat-val" id="stat-total">0</div>
+            <div class="stat-lbl">Tổng thông báo</div>
+        </div>
+    </div>
+    <div class="np-stat-pill">
+        <div class="stat-icon" style="background:#fef9c3; color:#ca8a04;"><i class="bi bi-envelope-open"></i></div>
+        <div>
+            <div class="stat-val" id="stat-unread">0</div>
+            <div class="stat-lbl">Chưa đọc</div>
+        </div>
+    </div>
+    <div class="np-stat-pill">
+        <div class="stat-icon" style="background:#dcfce7; color:#16a34a;"><i class="bi bi-bag-check"></i></div>
+        <div>
+            <div class="stat-val" id="stat-orders">0</div>
+            <div class="stat-lbl">Đơn hàng</div>
+        </div>
+    </div>
+    <div class="np-stat-pill">
+        <div class="stat-icon" style="background:#dbeafe; color:#2563eb;"><i class="bi bi-chat-dots"></i></div>
+        <div>
+            <div class="stat-val" id="stat-qna">0</div>
+            <div class="stat-lbl">Câu hỏi</div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════ Main Card ══════════════ -->
+<div class="np-card">
+    <!-- Action Bar -->
+    <div class="np-action-bar">
+        <span class="info-text" id="npPageInfo">Đang tải thông báo...</span>
+        <button type="button" class="np-mark-all-btn" onclick="markAllRead()">
+            <i class="bi bi-check2-all"></i> Đánh dấu tất cả đã đọc
+        </button>
+    </div>
+    <!-- List -->
+    <div id="npList">
+        <div class="np-skeleton"></div>
+        <div class="np-skeleton" style="animation-delay:0.1s;opacity:.7;"></div>
+        <div class="np-skeleton" style="animation-delay:0.2s;opacity:.5;"></div>
+    </div>
+    <!-- Pagination -->
+    <div class="np-pagination" id="npPagination" style="display:none;"></div>
+</div>
+
+@section Scripts {
+<script>
+/* ════ State ════ */
+const PAGE_SIZE = 15;
+let allNotifs    = [];
+let filtered     = [];
+let currentPage  = 1;
+let activeFilter = 'all';
+
+/* ════ Bootstrap ════ */
+document.addEventListener('DOMContentLoaded', loadAll);
+
+async function loadAll() {
+    try {
+        const res    = await fetch('/api/Notification/GetList?limit=500');
+        const result = await res.json();
+        if (!result.success) return;
+
+        allNotifs = result.data || [];
+        filtered  = allNotifs;
+        updateStats();
+        renderList();
+    } catch (e) {
+        console.error('Admin Notifications load error:', e);
+    }
+}
+
+/* ════ Stats ════ */
+function updateStats() {
+    const unread = allNotifs.filter(n => !n.isRead).length;
+    const orders = allNotifs.filter(n => n.typeString === 'Order').length;
+    const qna    = allNotifs.filter(n => n.typeString === 'QnA').length;
+
+    setText('stat-total',  allNotifs.length);
+    setText('stat-unread', unread);
+    setText('stat-orders', orders);
+    setText('stat-qna',    qna);
+    setText('cnt-all',   allNotifs.length);
+    setText('cnt-order', orders);
+    setText('cnt-qna',   qna);
+    setText('np-subtitle', `${unread > 0 ? unread + ' chưa đọc — ' : ''}${allNotifs.length} tổng thông báo`);
+    document.getElementById('npStats').style.display = 'flex';
+}
+
+/* ════ Filter ════ */
+function filterPage(type, btn) {
+    document.querySelectorAll('.np-filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = type;
+    currentPage  = 1;
+    filtered = type === 'all' ? allNotifs : allNotifs.filter(n => n.typeString === type);
+    renderList();
+}
+
+/* ════ Render ════ */
+function renderList() {
+    const container = document.getElementById('npList');
+    const total  = filtered.length;
+    const start  = (currentPage - 1) * PAGE_SIZE;
+    const end    = Math.min(start + PAGE_SIZE, total);
+    const slice  = filtered.slice(start, end);
+
+    // Info bar
+    setText('npPageInfo', total === 0
+        ? 'Không có thông báo nào'
+        : `Hiển thị ${start + 1}–${end} / ${total} thông báo`);
+
+    if (total === 0) {
+        container.innerHTML = `
+            <div class="np-empty">
+                <div class="np-empty-icon"><i class="bi bi-bell-slash"></i></div>
+                <h5>Chưa có thông báo nào</h5>
+                <p>Tất cả thông báo mới từ khách hàng sẽ hiển thị tại đây.</p>
+            </div>`;
+        renderPagination(0);
+        return;
+    }
+
+    container.innerHTML = slice.map((n, idx) => buildItem(n, idx)).join('');
+    renderPagination(total);
+}
+
+function buildItem(n, idx) {
+    const { bg, color, icon, tag, tagBg, tagColor } = getTypeMeta(n.typeString);
+    const unreadClass = !n.isRead ? 'unread' : '';
+    const dot         = !n.isRead ? '<span class="np-unread-dot"></span>' : '';
+    const delay       = `animation-delay:${idx * 0.04}s`;
+
+    // Build click action
+    let clickFn = `readAndGo(${n.id}, '${escJs(n.linkTo || '/')}')`;
+    const qMatch = n.linkTo ? n.linkTo.match(/[?&]qa=(\d+)/) : null;
+    const pMatch = n.linkTo ? n.linkTo.match(/Detail\/(\d+)/) : null;
+    if (n.typeString === 'QnA' && qMatch && pMatch) {
+        clickFn = `openQaReplyModal(${n.id},${pMatch[1]},${qMatch[1]},'${escJs(n.title)}','${escJs(n.message)}')`;
+    }
+
+    return `
+    <div class="np-item ${unreadClass}" style="${delay}" onclick="${clickFn}">
+        <div class="np-icon-wrap" style="background:${bg};">
+            <i class="bi ${icon}" style="color:${color};"></i>
+        </div>
+        <div class="np-body">
+            <div class="np-item-title">
+                ${dot}
+                ${escHtml(n.title)}
+                <span class="np-type-tag" style="background:${tagBg};color:${tagColor};">${tag}</span>
+            </div>
+            <p class="np-msg">${escHtml(n.message)}</p>
+            <span class="np-time"><i class="bi bi-clock"></i>${n.createdAt}</span>
+        </div>
+        <button type="button" class="np-action-btn" onclick="event.stopPropagation(); readAndGo(${n.id}, '${escJs(n.linkTo || '/')}')" title="Xem chi tiết">
+            <i class="bi bi-arrow-right"></i>
+        </button>
+    </div>`;
+}
+
+/* ════ Pagination ════ */
+function renderPagination(total) {
+    const wrap  = document.getElementById('npPagination');
+    const pages = Math.ceil(total / PAGE_SIZE);
+    wrap.style.display = pages <= 1 ? 'none' : 'flex';
+    if (pages <= 1) return;
+
+    const maxVisible = 5;
+    const half = Math.floor(maxVisible / 2);
+    let startP = Math.max(1, currentPage - half);
+    let endP   = Math.min(pages, startP + maxVisible - 1);
+    if (endP - startP < maxVisible - 1) startP = Math.max(1, endP - maxVisible + 1);
+
+    let html = `<button type="button" class="np-page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>
+                    <i class="bi bi-chevron-left"></i></button>`;
+    if (startP > 1) html += `<button type="button" class="np-page-btn" onclick="goPage(1)">1</button>
+                              ${startP > 2 ? '<span style="color:#cbd5e1;padding:0 4px;">…</span>' : ''}`;
+    for (let i = startP; i <= endP; i++) {
+        html += `<button type="button" class="np-page-btn${i===currentPage?' active':''}" onclick="goPage(${i})">${i}</button>`;
+    }
+    if (endP < pages) html += `${endP < pages-1 ? '<span style="color:#cbd5e1;padding:0 4px;">…</span>' : ''}
+                                <button type="button" class="np-page-btn" onclick="goPage(${pages})">${pages}</button>`;
+    html += `<button type="button" class="np-page-btn" onclick="goPage(${currentPage+1})" ${currentPage===pages?'disabled':''}>
+                 <i class="bi bi-chevron-right"></i></button>`;
+    wrap.innerHTML = html;
+}
+
+function goPage(p) {
+    currentPage = p;
+    renderList();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ════ Actions ════ */
+async function readAndGo(id, url) {
+    await fetch(`/api/Notification/MarkAsRead/${id}`, { method: 'POST' });
+    window.location.href = url;
+}
+
+async function markAllRead() {
+    const res = await fetch('/api/Notification/MarkAllAsRead', { method: 'POST' });
+    if (!res.ok) return;
+    allNotifs  = allNotifs.map(n  => ({ ...n, isRead: true }));
+    filtered   = filtered.map(n   => ({ ...n, isRead: true }));
+    updateStats();
+    renderList();
+    if (typeof updateAdminNotifBadge === 'function') updateAdminNotifBadge(0);
+}
+
+/* ════ Helpers ════ */
+function getTypeMeta(type) {
+    const map = {
+        Order:     { bg:'#dcfce7', color:'#16a34a', icon:'bi-bag-check-fill',     tag:'Đơn hàng', tagBg:'#dcfce7', tagColor:'#15803d' },
+        QnA:       { bg:'#dbeafe', color:'#2563eb', icon:'bi-chat-dots-fill',      tag:'Hỏi đáp',  tagBg:'#dbeafe', tagColor:'#1d4ed8' },
+        Promotion: { bg:'#fef3c7', color:'#d97706', icon:'bi-tags-fill',           tag:'Khuyến mãi',tagBg:'#fef3c7', tagColor:'#b45309' },
+        Account:   { bg:'#f3e8ff', color:'#7c3aed', icon:'bi-person-badge-fill',   tag:'Tài khoản', tagBg:'#f3e8ff', tagColor:'#6d28d9' },
+    };
+    return map[type] || { bg:'#f1f5f9', color:'#475569', icon:'bi-bell-fill', tag:'Hệ thống', tagBg:'#f1f5f9', tagColor:'#475569' };
+}
+
+function escHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str || '';
+    return d.innerHTML;
+}
+
+function escJs(str) {
+    return (str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
+function setText(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+}
+</script>
+}

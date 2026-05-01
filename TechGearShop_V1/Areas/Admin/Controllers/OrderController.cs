@@ -6,7 +6,7 @@ using TechGearShop_V1.Services.Interfaces;
 namespace TechGearShop_V1.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    // [Authorize(Roles = "Admin")] // Uncomment khi kích hoạt Auth Admin thật
+    [Authorize(Roles = "Admin")]
     public class OrderController : Controller
     {
         private readonly IOrderService _orderService;

@@ -110,7 +110,8 @@
             const unreadCls = !n.isRead ? 'bg-primary bg-opacity-10 border-start border-4 border-primary' : '';
             const iconCls = n.typeString === 'Order' ? 'bi-box-seam text-success' :
                 n.typeString === 'Promotion' ? 'bi-tags-fill text-danger' :
-                n.typeString === 'Account' ? 'bi-person-badge text-info' : 'bi-bell-fill text-warning';
+                n.typeString === 'Account' ? 'bi-person-badge text-info' :
+                n.typeString === 'QnA' ? 'bi-chat-dots-fill text-primary' : 'bi-bell-fill text-warning';
             return `<div class="p-4 border-bottom ${unreadCls} notif-row" style="transition:background 0.2s;">
                 <div class="d-flex align-items-start gap-3">
                     <div class="flex-shrink-0">

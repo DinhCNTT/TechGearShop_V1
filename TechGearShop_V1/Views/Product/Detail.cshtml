@@ -5,6 +5,27 @@
     var relatedProducts = ViewBag.RelatedProducts as List<TechGearShop_V1.Models.Entities.Product> ?? new List<TechGearShop_V1.Models.Entities.Product>();
 }
 
+<style>
+    @@keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Deep-link highlight: glow xanh nhấp nháy khi Admin click từ Thông báo */
+    @@keyframes qaDeepLinkGlow {
+        0%   { box-shadow: 0 0 0 0 rgba(59,130,246,0);    background: transparent; }
+        20%  { box-shadow: 0 0 0 6px rgba(59,130,246,0.2); background: rgba(59,130,246,0.08); }
+        50%  { box-shadow: 0 0 0 4px rgba(59,130,246,0.15); background: rgba(59,130,246,0.05); }
+        80%  { box-shadow: 0 0 0 6px rgba(59,130,246,0.2); background: rgba(59,130,246,0.08); }
+        100% { box-shadow: 0 0 0 0 rgba(59,130,246,0);    background: transparent; }
+    }
+    .qa-deep-link-highlight {
+        animation: qaDeepLinkGlow 2.2s ease-in-out !important;
+        border-radius: 10px;
+        transition: background 0.3s;
+    }
+</style>
+
 <div class="bg-white rounded-4 shadow-sm p-4 p-md-5 mb-5 mt-3">
     <!-- Breadcrumb -->
     <nav aria-label="breadcrumb" class="mb-4">
@@ -18,35 +39,54 @@
 
     <div class="row gx-5">
         <!-- Ảnh Sản Phẩm -->
-        <div class="col-md-6 mb-4 mb-md-0 position-relative text-center">
-            @if (Model.PromotionalPrice.HasValue && Model.PromotionalPrice < Model.Price)
-            {
-                decimal discountPercent = ((Model.Price - Model.PromotionalPrice.Value) / Model.Price) * 100;
-                <span class="position-absolute top-0 start-0 badge bg-danger fs-6 py-2 px-3 z-3 rounded-pill" style="margin: 15px;">
-                    <i class="bi bi-lightning-charge-fill text-warning"></i> Giảm @discountPercent.ToString("N0")%
-                </span>
-            }
+        <div class="col-md-6 mb-4 mb-md-0 position-relative text-center d-flex flex-column">
+
 
             <div class="main-image-container position-relative d-flex align-items-center justify-content-center bg-white rounded-4 border shadow-sm mb-3" style="height: 450px; overflow: hidden;">
-                <!-- Mũi tên Trái -->
-                <button class="btn btn-light position-absolute start-0 top-50 translate-middle-y ms-2 rounded-circle shadow-sm z-3" style="width: 40px; height: 40px;" onclick="prevImage()" aria-label="Previous image">
-                    <i class="bi bi-chevron-left"></i>
-                </button>
+                <div class="position-absolute top-0 end-0 m-3 z-3 d-flex gap-2">
+                    <!-- Nút Share (Dropdown) -->
+                    <div class="dropdown">
+                        <button class="btn btn-light rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; transition: all 0.2s;" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Share">
+                            <i class="bi bi-share fs-5 text-secondary"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 p-2 text-center" style="min-width: 60px;">
+                            <li class="mb-2"><a class="dropdown-item p-1 rounded-circle d-flex align-items-center justify-content-center mx-auto" href="javascript:void(0)" style="width:35px; height:35px;"><i class="bi bi-facebook fs-4 text-primary"></i></a></li>
+                            <li class="mb-2"><a class="dropdown-item p-1 rounded-circle d-flex align-items-center justify-content-center mx-auto" href="javascript:void(0)" style="width:35px; height:35px;"><i class="bi bi-messenger fs-4 text-primary"></i></a></li>
+                            <li><a class="dropdown-item p-1 rounded-circle d-flex align-items-center justify-content-center mx-auto" href="javascript:void(0)" style="width:35px; height:35px;"><i class="bi bi-link-45deg fs-4 text-secondary"></i></a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Nút Yêu Thích (Trái tim) -->
+                    <button class="btn btn-light rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; transition: all 0.2s;" onclick="toggleFavorite(this)" aria-label="Favorite">
+                        <i class="bi bi-heart fs-5 text-secondary" style="transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);"></i>
+                    </button>
+                </div>
+
+                @if (Model.ProductImages != null && Model.ProductImages.Any())
+                {
+                    <!-- Mũi tên Trái -->
+                    <button class="btn btn-light position-absolute start-0 top-50 translate-middle-y ms-2 rounded-circle shadow-sm z-3" style="width: 40px; height: 40px;" onclick="prevImage()" aria-label="Previous image">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                }
 
                 <img id="mainProductImage" src="@(string.IsNullOrEmpty(Model.ImagePath) ? "/images/placeholder.jpg" : Model.ImagePath)" 
                      class="img-fluid object-fit-contain p-3 w-100 h-100" 
                      style="cursor: zoom-in;" onclick="openLightbox()"
                      alt="@Model.Name" />
 
-                <!-- Mũi tên Phải -->
-                <button class="btn btn-light position-absolute end-0 top-50 translate-middle-y me-2 rounded-circle shadow-sm z-3" style="width: 40px; height: 40px;" onclick="nextImage()" aria-label="Next image">
-                    <i class="bi bi-chevron-right"></i>
-                </button>
+                @if (Model.ProductImages != null && Model.ProductImages.Any())
+                {
+                    <!-- Mũi tên Phải -->
+                    <button class="btn btn-light position-absolute end-0 top-50 translate-middle-y me-2 rounded-circle shadow-sm z-3" style="width: 40px; height: 40px;" onclick="nextImage()" aria-label="Next image">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                }
             </div>
 
             @if (Model.ProductImages != null && Model.ProductImages.Any())
             {
-                <div class="d-flex flex-wrap gap-2 justify-content-center" id="galleryThumbs">
+                <div class="d-flex flex-wrap gap-2 justify-content-center justify-content-lg-start mt-3" id="galleryThumbs">
                     <!-- Ảnh đại diện -->
                     <div class="gallery-thumb" onclick="changeImageByIndex(0)" style="width: 80px; height: 80px; cursor: pointer; transition: all 0.2s;">
                         <img src="@Model.ImagePath" class="img-fluid rounded border w-100 h-100 object-fit-cover border-danger border-2 shadow-sm" alt="Thumbnail" />
@@ -62,15 +102,63 @@
                     }
                 </div>
             }
+
+            <!-- Banner Đặc Quyền (Modern Apple Style) -->
+            <div class="mt-auto pt-4">
+                <div class="p-4 rounded-4 shadow-sm position-relative overflow-hidden text-start" style="background: #ffffff; border: 1px solid rgba(0,0,0,0.08); transition: all 0.3s;" onmouseover="this.style.boxShadow='0 10px 30px rgba(0,0,0,0.08)'" onmouseout="this.style.boxShadow='0 .125rem .25rem rgba(0,0,0,.075)'">
+                
+                <!-- Hiệu ứng dải màu tinh tế trên cùng -->
+                <div class="position-absolute top-0 start-0 w-100" style="height: 4px; background: linear-gradient(90deg, #00f2fe 0%, #4facfe 100%);"></div>
+
+                <div class="d-flex align-items-center justify-content-between mb-4 pb-3 border-bottom border-light">
+                    <div class="d-flex align-items-center">
+                        <div class="d-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle me-3 shadow-sm" style="width: 40px; height: 40px;">
+                            <i class="bi bi-gem fs-5"></i>
+                        </div>
+                        <h6 class="fw-bold mb-0 text-dark" style="letter-spacing: 0.5px; font-size: 1.05rem;">Đặc quyền tại TechGear</h6>
+                    </div>
+                    <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 fw-medium shadow-sm">Độc quyền</span>
+                </div>
+                
+                <ul class="list-unstyled mb-0 d-flex flex-column gap-3" style="font-size: 0.95rem; color: #495057;">
+                    <li class="d-flex align-items-center" style="transition: transform 0.2s;" onmouseover="this.style.transform='translateX(6px)'" onmouseout="this.style.transform='translateX(0)'">
+                        <div class="d-flex align-items-center justify-content-center bg-danger bg-opacity-10 text-danger rounded-circle me-3 flex-shrink-0" style="width: 35px; height: 35px;">
+                            <i class="bi bi-arrow-repeat fs-5"></i>
+                        </div>
+                        <span>Bảo hành 1 đổi 1 trong <b>30 ngày</b> nếu có lỗi NSX.</span>
+                    </li>
+                    <li class="d-flex align-items-center" style="transition: transform 0.2s;" onmouseover="this.style.transform='translateX(6px)'" onmouseout="this.style.transform='translateX(0)'">
+                        <div class="d-flex align-items-center justify-content-center bg-info bg-opacity-10 text-info rounded-circle me-3 flex-shrink-0" style="width: 35px; height: 35px;">
+                            <i class="bi bi-tools fs-5"></i>
+                        </div>
+                        <span>Tặng gói bảo dưỡng, vệ sinh thiết bị <b>trọn đời</b>.</span>
+                    </li>
+                    <li class="d-flex align-items-center" style="transition: transform 0.2s;" onmouseover="this.style.transform='translateX(6px)'" onmouseout="this.style.transform='translateX(0)'">
+                        <div class="d-flex align-items-center justify-content-center bg-warning bg-opacity-10 text-warning rounded-circle me-3 flex-shrink-0" style="width: 35px; height: 35px;">
+                            <i class="bi bi-currency-dollar fs-5"></i>
+                        </div>
+                        <span>Trợ giá lên đến <b>30%</b> khi tham gia thu cũ đổi mới.</span>
+                    </li>
+                    <li class="d-flex align-items-center" style="transition: transform 0.2s;" onmouseover="this.style.transform='translateX(6px)'" onmouseout="this.style.transform='translateX(0)'">
+                        <div class="d-flex align-items-center justify-content-center bg-success bg-opacity-10 text-success rounded-circle me-3 flex-shrink-0" style="width: 35px; height: 35px;">
+                            <i class="bi bi-truck fs-5"></i>
+                        </div>
+                        <span>Miễn phí giao hàng toàn quốc cho đơn từ <b>1 triệu</b>.</span>
+                    </li>
+                </ul>
+            </div>
+            </div> <!-- Close mt-auto wrapper -->
+
         </div>
 
         <!-- Thông Tin Chi Tiết -->
-        <div class="col-md-6">
-            <span class="badge bg-light text-dark border px-3 py-2 mb-3 fw-bold">@Model.Brand</span>
+        <div class="col-md-6 d-flex flex-column">
+            <div>
+                <span class="badge bg-light text-dark border px-3 py-2 mb-3 fw-bold">@Model.Brand</span>
             
             <h2 class="fw-bold mb-3">@Model.Name</h2>
             
-            <!-- Trạng thái Kho & Đánh giá (Demo) -->
+            <!-- Trạng thái Kho & Thông số thực tế -->
             <div class="d-flex align-items-center gap-4 mb-3 text-muted small pb-3 border-bottom">
                 <div>
                     @if(Model.Stock > 0) {
@@ -79,80 +167,215 @@
                         <span class="badge bg-danger-subtle text-danger py-1 px-2 border"><i class="bi bi-x-circle"></i> Tạm hết hàng</span>
                     }
                 </div>
-                <div><i class="bi bi-star-fill text-warning"></i> 4.9 (128 Đánh giá)</div>
-                <div><i class="bi bi-box-seam text-primary"></i> Đã bán 350+</div>
+                @if(Model.ReviewCount > 0) {
+                    <div class="text-warning fw-bold" style="cursor: pointer;" onclick="document.getElementById('review-section').scrollIntoView({behavior: 'smooth'})">
+                        <i class="bi bi-star-fill"></i> @Model.AverageRating.ToString("0.0") 
+                        <span class="text-muted fw-normal ms-1 text-decoration-underline">(@Model.ReviewCount đánh giá)</span>
+                    </div>
+                }
+
+                @if(Model.SoldCount > 0) {
+                    <div><i class="bi bi-box-seam text-primary"></i> Đã bán @Model.SoldCount</div>
+                } else {
+                    <div><i class="bi bi-stars text-warning"></i> Sản phẩm mới</div>
+                }
             </div>
 
             <!-- Box Giá Tiền -->
-            <div class="bg-light p-4 rounded-4 mb-4">
+            <div class="p-4 rounded-4 mb-4 shadow-sm" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border: 1px solid rgba(0,0,0,0.05);">
                 @if (Model.PromotionalPrice.HasValue && Model.PromotionalPrice < Model.Price)
                 {
-                    <h1 class="text-danger fw-bold display-5 mb-1">@Model.PromotionalPrice.Value.ToString("N0") ₫</h1>
-                    <div class="text-muted text-decoration-line-through fs-5">@Model.Price.ToString("N0") ₫</div>
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <h2 class="text-danger fw-bold mb-0" style="letter-spacing: -0.5px; font-size: 2rem;">@Model.PromotionalPrice.Value.ToString("N0") ₫</h2>
+                        <span class="badge bg-danger text-white rounded-pill px-2 py-1 small shadow-sm"><i class="bi bi-lightning-charge-fill text-warning me-1"></i>GIẢM @Math.Round((1 - (decimal)Model.PromotionalPrice.Value / Model.Price) * 100)%</span>
+                    </div>
+                    <div class="text-muted text-decoration-line-through" style="font-size: 0.95rem;">@Model.Price.ToString("N0") ₫</div>
                 }
                 else
                 {
-                    <h1 class="text-danger fw-bold display-5 mb-0">@Model.Price.ToString("N0") ₫</h1>
+                    <h2 class="text-danger fw-bold mb-0" style="letter-spacing: -0.5px; font-size: 2rem;">@Model.Price.ToString("N0") ₫</h2>
                 }
             </div>
 
             <!-- Chọn số lượng -->
             @if (Model.Stock > 0)
             {
-                <div class="d-flex align-items-center mb-4">
-                    <label class="fw-bold me-3">Số lượng:</label>
-                    <div class="input-group border rounded" style="width: 130px;">
-                        <button class="btn btn-light border-0 text-secondary" type="button" onclick="decreaseQuantity()"><i class="bi bi-dash"></i></button>
-                        <input type="number" id="productQuantity" class="form-control border-0 text-center fw-semibold bg-white" value="1" min="1" max="@Model.Stock" onchange="syncQuantity()" readonly>
-                        <button class="btn btn-light border-0 text-secondary" type="button" onclick="increaseQuantity()"><i class="bi bi-plus"></i></button>
+                <div class="d-flex align-items-center justify-content-between justify-content-sm-start gap-sm-4 mb-4 bg-white p-3 rounded-4 shadow-sm border">
+                    <label class="fw-bold text-secondary mb-0">Số lượng:</label>
+                    <div class="input-group bg-light rounded-pill p-1 shadow-sm" style="width: 140px; border: 1px solid #dee2e6;">
+                        <button class="btn btn-light rounded-circle text-secondary d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;" type="button" onclick="decreaseQuantity()"><i class="bi bi-dash fs-5"></i></button>
+                        <input type="number" id="productQuantity" class="form-control border-0 text-center fw-bold bg-transparent px-1" value="1" min="1" max="@Model.Stock" onchange="syncQuantity()" readonly>
+                        <button class="btn btn-white rounded-circle text-dark shadow-sm d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;" type="button" onclick="increaseQuantity()"><i class="bi bi-plus fs-5"></i></button>
                     </div>
-                    <span class="text-muted ms-3 small">(@Model.Stock sản phẩm có sẵn)</span>
                 </div>
             }
 
             <!-- Hành động Mua hàng -->
-            <div class="d-flex gap-3 mb-4">
+            <div class="d-flex flex-column flex-sm-row gap-3 mb-4">
                 @if (Model.Stock > 0)
                 {
                     // Lên giỏ nhưng cho nhảy Ajax
                     <form asp-controller="Cart" asp-action="Add" asp-route-productId="@Model.Id" method="post" class="flex-grow-1 ajax-add-to-cart">
                         <input type="hidden" name="quantity" id="hiddenQtyAdd" value="1" />
-                        <button type="submit" class="btn btn-outline-danger btn-lg w-100 fw-bold py-3 rounded-pill btn-hover-zoom">
+                        <button type="submit" class="btn btn-outline-danger btn-lg w-100 fw-bold py-3 rounded-pill btn-hover-zoom shadow-sm border-2">
                             <i class="bi bi-cart-plus fs-5 me-2"></i> THÊM GIỎ HÀNG
                         </button>
                     </form>
                     // Nút mua ngay sang Checkout
                     <form asp-controller="Cart" asp-action="BuyNow" asp-route-productId="@Model.Id" method="post" class="flex-grow-1">
                         <input type="hidden" name="quantity" id="hiddenQtyBuy" value="1" />
-                        <button type="submit" class="btn btn-danger btn-lg w-100 fw-bold py-3 rounded-pill shadow-sm btn-hover-zoom">
-                            MUA NGAY <i class="bi bi-bag-check ms-2"></i>
+                        <button type="submit" class="btn btn-danger btn-lg w-100 fw-bold py-3 rounded-pill shadow btn-hover-zoom border-0" style="background: linear-gradient(45deg, #ff416c, #ff4b2b);">
+                            MUA NGAY <i class="bi bi-bag-check ms-2 fs-5"></i>
                         </button>
                     </form>
                 }
                 else
                 {
-                    <button class="btn btn-secondary btn-lg w-100 fw-bold py-3 rounded-pill disabled"><i class="bi bi-bell-fill me-2"></i> NHẬN THÔNG BÁO KHI CÓ HÀNG</button>
+                    <button type="button" class="btn notify-btn-modern w-100" onclick="openNotifyModal(@Model.Id)">
+                        <div class="notify-btn-content">
+                            <i class="bi bi-bell-fill bell-icon-animate"></i>
+                            <span>Nhận thông báo khi có hàng</span>
+                            <i class="bi bi-arrow-right ms-auto arrow-icon-slide"></i>
+                        </div>
+                    </button>
                 }
             </div>
+            </div> <!-- Close wrapper div -->
 
-            <!-- Thông tin bổ sung cam kết -->
-            <ul class="list-unstyled mb-0 bg-light-subtle rounded-3 p-3 border">
-                <li class="mb-2"><i class="bi bi-shield-check text-success fs-5 me-2 align-middle"></i>Bảo hành chính hãng 24 tháng.</li>
-                <li class="mb-2"><i class="bi bi-arrow-repeat text-primary fs-5 me-2 align-middle"></i>Đổi mới trong 7 ngày nếu có lỗi NSX.</li>
-                <li><i class="bi bi-truck text-dark fs-5 me-2 align-middle"></i>Miễn phí giao hàng toàn quốc.</li>
-            </ul>
+            <!-- Bình luận nhanh / Hỏi đáp -->
+            <div class="mt-auto" style="padding-top: 2rem;">
+                <div id="qa-section-block" class="bg-white rounded-4 p-3 border border-light-subtle shadow-sm hover-shadow" style="transition: all 0.3s;">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                            <i class="bi bi-chat-dots-fill fs-6"></i>
+                        </div>
+                        <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.95rem;">Hỏi đáp nhanh</h6>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <!-- Nút Xem thêm (hiện khi có nhiều hơn 8 câu) -->
+                        <div id="qa-load-more-wrap" style="display: none;">
+                            <button type="button" id="qa-load-more-btn" class="btn btn-sm btn-outline-primary rounded-pill py-0 px-2 fw-semibold d-flex align-items-center" style="font-size: 0.7rem; height: 22px;" onclick="openQaModal()" title="Xem toàn bộ">
+                                <i class="bi bi-arrows-angle-expand me-1" style="font-size: 0.6rem;"></i> Xem tất cả
+                            </button>
+                        </div>
+                        <!-- Trạng thái kết nối -->
+                        <span id="qa-connection-status" class="badge bg-success bg-opacity-10 text-success" style="font-size: 0.65rem; display: none;">
+                            <i class="bi bi-circle-fill me-1" style="font-size: 0.4rem;"></i>Trực tuyến
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Vùng chứa bình luận (Render bằng JS) -->
+                <div id="mini-qa-list" class="mb-3 d-flex flex-column gap-2 overflow-y-auto custom-scrollbar pe-1" style="height: 185px; scroll-behavior: smooth;">
+                    <!-- Loading spinner -->
+                    <div id="qa-loading" class="d-flex align-items-center justify-content-center h-100">
+                        <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                        <small class="text-muted">Đang tải câu hỏi...</small>
+                    </div>
+                </div>
+
+                <!-- Strip trích dẫn: hiện khi đang trả lời một câu hỏi cụ thể -->
+                <div id="qa-reply-strip" class="align-items-center justify-content-between px-2 py-1 mb-1 rounded" style="background: #f0f9ff; border: 1px solid #bae6fd; font-size: 0.75rem; color: #0369a1; display: none;">
+                    <div class="d-flex align-items-center gap-1 text-truncate">
+                        <i class="bi bi-reply-fill"></i>
+                        <span id="qa-reply-strip-text" class="text-truncate"></span>
+                    </div>
+                    <button type="button" class="btn btn-sm p-0 ms-2 text-secondary flex-shrink-0" onclick="cancelQaReply()" style="line-height: 1;" title="Hủy trả lời">
+                        <i class="bi bi-x-lg" style="font-size: 0.75rem;"></i>
+                    </button>
+                </div>
+
+                <!-- Form nhập câu hỏi -->
+                <form id="mini-qa-form" class="d-flex gap-2 position-relative" onsubmit="handleMiniQaSubmit(event)">
+                    <input type="text" id="mini-qa-input" class="form-control form-control-sm rounded-pill ps-3 pe-5 border-secondary border-opacity-25 bg-light focus-ring focus-ring-primary" placeholder="Viết câu hỏi..." style="font-size: 0.85rem; height: 36px;" autocomplete="off" maxlength="500">
+                    <button type="submit" id="mini-qa-submit-btn" class="btn btn-primary rounded-circle position-absolute end-0 top-50 translate-middle-y me-1 d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; padding: 0; background-color: #44b5fe; border: none;">
+                        <i class="bi bi-send-fill text-white" style="font-size: 0.75rem;"></i>
+                    </button>
+                </form>
+            </div>
+
         </div>
     </div>
 </div>
 
 <!-- Phần mô tả sản phẩm -->
-<div class="card border-0 shadow-sm rounded-4 mb-5">
-    <div class="card-header bg-white pt-4 pb-3">
+<div class="mb-5">
+    <div class="pt-4 pb-3">
         <h4 class="fw-bold m-0 text-dark border-start border-4 border-primary ps-3">Đặc điểm nổi bật</h4>
     </div>
-    <div class="card-body p-4 p-md-5">
+    <div class="pt-2">
         <div class="lh-lg" style="font-size: 1.05rem;">
             @Html.Raw(Model.Description?.Replace("\n", "<br/>") ?? "<p class='text-muted'>Chưa có bài viết mô tả cho sản phẩm này.</p>")
+        </div>
+    </div>
+</div>
+
+<!-- Khách hàng đánh giá -->
+<div class="card border-0 shadow-sm rounded-4 mb-5" id="review-section">
+    <div class="card-header bg-white pt-4 pb-3 d-flex justify-content-between align-items-center">
+        <h4 class="fw-bold m-0 text-dark border-start border-4 border-warning ps-3">Đánh giá sản phẩm</h4>
+    </div>
+    <div class="card-body p-4 p-md-5">
+        <!-- Dashboard Tổng quan -->
+        <div class="row align-items-center mb-5 pb-4 border-bottom">
+            <div class="col-md-4 text-center border-end-md mb-4 mb-md-0">
+                <h1 class="display-1 fw-bold text-warning mb-0" id="avg-rating-display">@Model.AverageRating.ToString("0.0")</h1>
+                <div class="text-warning fs-4 mb-2" id="avg-stars-display">
+                    <!-- JS sẽ render -->
+                </div>
+                <p class="text-muted mb-0"><span id="total-reviews-display">@Model.ReviewCount</span> đánh giá</p>
+            </div>
+            <div class="col-md-8 px-md-5" id="rating-bars-container">
+                <!-- Progress bars sẽ được render bằng JS -->
+                <div class="text-center text-muted small">Đang tải thống kê...</div>
+            </div>
+        </div>
+
+        <!-- Form Đánh giá -->
+        @if (User.Identity != null && User.Identity.IsAuthenticated)
+        {
+            <div class="bg-light p-4 rounded-4 mb-5">
+                <h5 class="fw-bold mb-3" id="review-form-title">Gửi đánh giá của bạn</h5>
+                <form id="frmReview" onsubmit="submitReview(event)">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Bạn cảm thấy sản phẩm này thế nào?</label>
+                        <div class="d-flex gap-2 text-warning fs-3 mb-1" id="star-selector" style="cursor: pointer;">
+                            <i class="bi bi-star" data-val="1"></i>
+                            <i class="bi bi-star" data-val="2"></i>
+                            <i class="bi bi-star" data-val="3"></i>
+                            <i class="bi bi-star" data-val="4"></i>
+                            <i class="bi bi-star" data-val="5"></i>
+                        </div>
+                        <input type="hidden" id="reviewRating" name="rating" value="0" required />
+                        <div class="small text-danger d-none" id="rating-error">Vui lòng chọn số sao.</div>
+                    </div>
+                    <div class="mb-3">
+                        <textarea class="form-control" id="reviewContent" name="content" rows="3" placeholder="Xin mời chia sẻ một số cảm nhận về sản phẩm (tối đa 1000 ký tự)..." required maxlength="1000"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-warning fw-bold px-4 rounded-pill text-dark" id="btnSubmitReview">Gửi đánh giá</button>
+                </form>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info rounded-4 text-center py-4 mb-5 border-0 bg-primary-subtle text-primary">
+                <i class="bi bi-info-circle fs-4 d-block mb-2"></i>
+                Vui lòng <a href="/Account/Login?returnUrl=/Product/Detail/@Model.Id" class="fw-bold text-decoration-underline text-primary">Đăng nhập</a> để chia sẻ cảm nhận của bạn.
+            </div>
+        }
+
+        <!-- Danh sách Bình luận -->
+        <div id="reviews-list-container">
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2 text-muted">Đang tải bình luận...</p>
+            </div>
+        </div>
+        
+        <!-- Phân trang -->
+        <div class="text-center mt-4 d-none" id="review-pagination">
+            <button class="btn btn-outline-primary rounded-pill px-4 fw-semibold" onclick="loadReviews(currentReviewPage + 1)" id="btnLoadMoreReviews">Xem thêm bình luận <i class="bi bi-chevron-down ms-1"></i></button>
         </div>
     </div>
 </div>
@@ -183,18 +406,386 @@
                 <button type="button" class="btn-close btn-close-white fs-4" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body d-flex justify-content-center align-items-center position-relative p-0 h-100">
-                <!-- Nút Trái Modal -->
-                <button class="btn btn-outline-light position-absolute start-0 top-50 translate-middle-y ms-3 ms-md-5 rounded-circle" style="width:50px;height:50px;" onclick="prevImage()" aria-label="Previous">
-                    <i class="bi bi-chevron-left fs-4"></i>
-                </button>
+                @if (Model.ProductImages != null && Model.ProductImages.Any())
+                {
+                    <!-- Nút Trái Modal -->
+                    <button class="btn btn-outline-light position-absolute start-0 top-50 translate-middle-y ms-3 ms-md-5 rounded-circle" style="width:50px;height:50px;" onclick="prevImage()" aria-label="Previous">
+                        <i class="bi bi-chevron-left fs-4"></i>
+                    </button>
+                }
                 
                 <!-- Ảnh Modal -->
                 <img id="lightboxImage" src="" class="img-fluid object-fit-contain" style="max-height: 90vh; max-width: 90vw;" alt="Zoomed Product" />
                 
-                <!-- Nút Phải Modal -->
-                <button class="btn btn-outline-light position-absolute end-0 top-50 translate-middle-y me-3 me-md-5 rounded-circle" style="width:50px;height:50px;" onclick="nextImage()" aria-label="Next">
-                    <i class="bi bi-chevron-right fs-4"></i>
+                @if (Model.ProductImages != null && Model.ProductImages.Any())
+                {
+                    <!-- Nút Phải Modal -->
+                    <button class="btn btn-outline-light position-absolute end-0 top-50 translate-middle-y me-3 me-md-5 rounded-circle" style="width:50px;height:50px;" onclick="nextImage()" aria-label="Next">
+                        <i class="bi bi-chevron-right fs-4"></i>
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notify Me Modal - Premium Design -->
+<style>
+    /* ===== Modern Notify Button ===== */
+    .notify-btn-modern {
+        background: #ffffff;
+        border: 1.5px solid #e2e8f0;
+        color: #0f172a;
+        border-radius: 14px;
+        padding: 14px 20px;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+    }
+    .notify-btn-modern:hover {
+        border-color: #3b82f6;
+        color: #3b82f6;
+        box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
+        transform: translateY(-2px);
+    }
+    .notify-btn-content {
+        display: flex;
+        align-items: center;
+        width: 100%;
+    }
+    .bell-icon-animate {
+        font-size: 1.25rem;
+        color: #ffc107;
+        margin-right: 12px;
+    }
+    .notify-btn-modern:hover .bell-icon-animate {
+        animation: ring 1s ease-in-out infinite;
+    }
+    .arrow-icon-slide {
+        font-size: 1.1rem;
+        color: #94a3b8;
+        transition: transform 0.3s ease;
+    }
+    .notify-btn-modern:hover .arrow-icon-slide {
+        color: #3b82f6;
+        transform: translateX(4px);
+    }
+    @@keyframes ring {
+        0%, 100% { transform: rotate(0deg); }
+        25% { transform: rotate(15deg); }
+        75% { transform: rotate(-15deg); }
+    }
+
+    /* ===== Modern Clean Modal ===== */
+    #notifyRestockModal .modal-content {
+        border: none;
+        border-radius: 24px;
+        background: #ffffff;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        overflow: hidden;
+    }
+    .modern-modal-header {
+        border-bottom: none;
+        padding: 0;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 36px;
+        background: #ffffff;
+    }
+    .modern-close-btn {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: #f1f5f9;
+        border: none;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+    .modern-close-btn:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+        transform: rotate(90deg);
+    }
+    .modal-icon-wrapper {
+        width: 64px;
+        height: 64px;
+        border-radius: 20px;
+        background: #fff8e1;
+        color: #ffc107;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        box-shadow: 0 8px 16px rgba(255, 193, 7, 0.15);
+        margin-bottom: 20px;
+    }
+    .modern-modal-title {
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 8px;
+    }
+    .modern-modal-subtitle {
+        font-size: 0.95rem;
+        color: #64748b;
+        text-align: center;
+        padding: 0 24px;
+        margin: 0;
+    }
+    .modern-product-box {
+        background: #f8fafc;
+        border: 1.5px solid #f1f5f9;
+        border-radius: 16px;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin: 24px 0;
+        transition: border-color 0.3s ease;
+    }
+    .modern-product-box:hover {
+        border-color: #e2e8f0;
+    }
+    .modern-product-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #3b82f6;
+        font-size: 1.5rem;
+    }
+    .modern-product-info {
+        flex: 1;
+    }
+    .modern-product-name {
+        font-weight: 700;
+        color: #1e293b;
+        font-size: 0.95rem;
+        line-height: 1.4;
+        margin-bottom: 4px;
+    }
+    .modern-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        background: #fef2f2;
+        color: #ef4444;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+    .pulsing-dot {
+        width: 6px;
+        height: 6px;
+        background: #ef4444;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+    }
+    @@keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+        70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+    .modern-form-group {
+        margin-bottom: 24px;
+    }
+    .modern-label {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #334155;
+        margin-bottom: 8px;
+        padding-left: 4px;
+    }
+    .modern-input-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+    .modern-input-wrap i {
+        position: absolute;
+        left: 16px;
+        color: #94a3b8;
+        font-size: 1.2rem;
+        transition: color 0.3s ease;
+    }
+    .modern-form-control {
+        width: 100%;
+        padding: 14px 16px 14px 46px;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 14px;
+        font-size: 0.95rem;
+        color: #0f172a;
+        background: #ffffff;
+        transition: all 0.3s ease;
+    }
+    .modern-form-control:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    }
+    .modern-form-control:focus + i {
+        color: #3b82f6;
+    }
+    .modern-info-card {
+        background: #f0fdfa;
+        border: 1.5px solid #ccfbf1;
+        border-radius: 14px;
+        padding: 16px;
+        display: flex;
+        gap: 12px;
+        color: #0f766e;
+        margin-bottom: 24px;
+    }
+    .modern-info-card i {
+        font-size: 1.35rem;
+        color: #14b8a6;
+    }
+    .modern-submit-btn {
+        width: 100%;
+        background: #3b82f6;
+        color: #ffffff;
+        border: none;
+        border-radius: 14px;
+        padding: 16px;
+        font-weight: 600;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+    }
+    .modern-submit-btn:hover {
+        background: #2563eb;
+        box-shadow: 0 8px 24px rgba(59, 130, 246, 0.35);
+        transform: translateY(-2px);
+    }
+    .modern-submit-btn i {
+        font-size: 1.1rem;
+        transition: transform 0.3s ease;
+    }
+    .modern-submit-btn:hover i {
+        transform: translateX(4px);
+    }
+</style>
+
+<div class="modal fade" id="notifyRestockModal" tabindex="-1" aria-labelledby="notifyRestockModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
+        <div class="modal-content modern-modal-content">
+            <div class="modern-modal-header">
+                <button type="button" class="modern-close-btn" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
                 </button>
+                <div class="modal-icon-wrapper">
+                    <i class="bi bi-bell-fill"></i>
+                </div>
+                <h5 class="modern-modal-title" id="notifyRestockModalLabel">Nhận thông báo</h5>
+                <p class="modern-modal-subtitle">Chúng tôi sẽ thông báo trực tiếp qua email ngay khi sản phẩm này về hàng.</p>
+            </div>
+            <div class="modal-body px-4 pb-4 pt-1">
+                <div class="modern-product-box">
+                    <div class="modern-product-icon">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                    <div class="modern-product-info">
+                        <div class="modern-product-name">@Model.Name</div>
+                        <div class="modern-badge">
+                            <span class="pulsing-dot"></span> Tạm hết hàng
+                        </div>
+                    </div>
+                </div>
+
+                <form id="frmNotifyRestock" onsubmit="submitNotifyRestock(event)">
+                    <input type="hidden" id="notifyProductId" name="productId" value="@Model.Id" />
+
+                    @if (User.Identity == null || !User.Identity.IsAuthenticated)
+                    {
+                        <div class="modern-form-group">
+                            <label class="modern-label">Email của bạn <span class="text-danger">*</span></label>
+                            <div class="modern-input-wrap">
+                                <i class="bi bi-envelope"></i>
+                                <input type="email" class="modern-form-control" id="notifyEmail" name="email" placeholder="Nhập địa chỉ email..." required autocomplete="email" />
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="modern-info-card">
+                            <i class="bi bi-shield-check"></i>
+                            <div>
+                                <strong class="d-block mb-1" style="font-size:0.9rem;">Thông tin tự động</strong>
+                                <span style="font-size:0.85rem; line-height:1.4;">Hệ thống sẽ tự động gửi thông báo đến email mà bạn đang dùng.</span>
+                            </div>
+                        </div>
+                        <input type="hidden" id="notifyEmail" name="email" value="" />
+                    }
+
+                    <button type="submit" class="modern-submit-btn" id="btnSubmitNotify">
+                        <i class="bi bi-send-fill" style="order: 2;"></i>
+                        <span>Gửi yêu cầu thông báo</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Full Q&A -->
+<div class="modal fade" id="qaFullModal" tabindex="-1" aria-labelledby="qaFullModalLabel" aria-hidden="true" style="backdrop-filter: blur(5px);">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom bg-light bg-opacity-50">
+                <h5 class="modal-title fw-bold text-dark" id="qaFullModalLabel">
+                    <i class="bi bi-chat-left-text text-primary me-2"></i> Lịch sử Hỏi đáp
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0 custom-scrollbar" style="background-color: #f8fafc;">
+                <div id="qa-modal-list" class="p-3 d-flex flex-column gap-3" style="min-height: 400px;">
+                    <div id="qa-modal-loading" class="d-flex align-items-center justify-content-center py-5">
+                        <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                        <small class="text-muted">Đang tải toàn bộ dữ liệu...</small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-white border-top-0 d-block p-3">
+                <!-- Strip trích dẫn trong Modal -->
+                <div id="qa-modal-reply-strip" class="align-items-center justify-content-between px-3 py-2 mb-2 rounded" style="background: #f0f9ff; border: 1px solid #bae6fd; font-size: 0.85rem; color: #0369a1; display: none;">
+                    <div class="d-flex align-items-center gap-2 text-truncate">
+                        <i class="bi bi-reply-fill fs-5"></i>
+                        <span id="qa-modal-reply-strip-text" class="text-truncate fw-semibold"></span>
+                    </div>
+                    <button type="button" class="btn btn-sm p-0 ms-2 text-secondary flex-shrink-0" onclick="cancelQaReply()" style="line-height: 1;" title="Hủy trả lời">
+                        <i class="bi bi-x-lg fs-6"></i>
+                    </button>
+                </div>
+                
+                <form id="mini-qa-modal-form" class="d-flex gap-2 position-relative" onsubmit="handleMiniQaSubmit(event, 'modal')">
+                    <input type="text" id="mini-qa-modal-input" class="form-control rounded-pill ps-4 pe-5 border-secondary border-opacity-25 bg-light focus-ring focus-ring-primary" placeholder="Viết câu hỏi mới hoặc trả lời..." style="height: 48px;" autocomplete="off" maxlength="500">
+                    <button type="submit" id="mini-qa-modal-submit-btn" class="btn btn-primary rounded-circle position-absolute end-0 top-50 translate-middle-y me-1 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; padding: 0; background-color: #44b5fe; border: none; transition: transform 0.2s;">
+                        <i class="bi bi-send-fill text-white fs-5"></i>
+                    </button>
+                </form>
             </div>
         </div>
     </div>
@@ -269,6 +860,23 @@
             changeImageByIndex(prevIdx);
         }
 
+        // JS cho nút thả tim (Yêu thích)
+        function toggleFavorite(btn) {
+            const icon = btn.querySelector('i');
+            if (icon.classList.contains('bi-heart')) {
+                // Tim đỏ
+                icon.classList.remove('bi-heart', 'text-secondary');
+                icon.classList.add('bi-heart-fill', 'text-danger');
+                icon.style.transform = 'scale(1.3)';
+                setTimeout(() => icon.style.transform = 'scale(1)', 200);
+            } else {
+                // Hủy tim
+                icon.classList.remove('bi-heart-fill', 'text-danger');
+                icon.classList.add('bi-heart', 'text-secondary');
+                icon.style.transform = 'scale(0.8)';
+                setTimeout(() => icon.style.transform = 'scale(1)', 200);
+            }
+        }
 
         function syncQuantity() {
             var qty = document.getElementById('productQuantity').value;
@@ -303,5 +911,763 @@
             input.stepDown();
             syncQuantity();
         }
+
+        function openNotifyModal(id) {
+            var myModal = new bootstrap.Modal(document.getElementById('notifyRestockModal'));
+            myModal.show();
+        }
+
+        async function submitNotifyRestock(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmitNotify');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Đang xử lý...';
+            btn.disabled = true;
+
+            const productId = document.getElementById('notifyProductId').value;
+            const emailElem = document.getElementById('notifyEmail');
+            const email = (emailElem && emailElem.type !== 'hidden') ? emailElem.value : '';
+
+            try {
+                const formData = new FormData();
+                formData.append("productId", productId);
+                formData.append("email", email);
+
+                const response = await fetch('/Product/SubscribeStockNotification', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Đăng ký thành công!',
+                        text: data.message,
+                        confirmButtonColor: '#198754'
+                    });
+                    var myModalEl = document.getElementById('notifyRestockModal');
+                    var modal = bootstrap.Modal.getInstance(myModalEl);
+                    modal.hide();
+                    if(emailElem && emailElem.type !== 'hidden') emailElem.value = '';
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Không thể đăng ký!',
+                        text: data.message,
+                        confirmButtonColor: '#dc3545'
+                    });
+                }
+            } catch (err) {
+                Swal.fire('Lỗi hệ thống', 'Không thể kết nối đến máy chủ. Vui lòng thử lại sau.', 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // ==========================================
+        // SYSTEM REVIEW: BÌNH LUẬN & ĐÁNH GIÁ (AJAX)
+        // ==========================================
+        let currentReviewPage = 1;
+        const productId = @Model.Id;
+
+        // Xử lý chọn Sao trên form
+        const stars = document.querySelectorAll('#star-selector i');
+        const ratingInput = document.getElementById('reviewRating');
+        const ratingError = document.getElementById('rating-error');
+        
+        stars.forEach(star => {
+            star.addEventListener('mouseover', function() {
+                const val = parseInt(this.getAttribute('data-val'));
+                fillStars(val);
+            });
+            star.addEventListener('mouseout', function() {
+                const val = parseInt(ratingInput.value);
+                fillStars(val);
+            });
+            star.addEventListener('click', function() {
+                const val = parseInt(this.getAttribute('data-val'));
+                ratingInput.value = val;
+                ratingError.classList.add('d-none');
+                fillStars(val);
+            });
+        });
+
+        function fillStars(val) {
+            stars.forEach((s, idx) => {
+                if(idx < val) {
+                    s.classList.remove('bi-star');
+                    s.classList.add('bi-star-fill');
+                } else {
+                    s.classList.remove('bi-star-fill');
+                    s.classList.add('bi-star');
+                }
+            });
+        }
+
+        // Gửi Đánh giá
+        async function submitReview(e) {
+            e.preventDefault();
+            const rating = parseInt(ratingInput.value);
+            if(rating === 0) {
+                ratingError.classList.remove('d-none');
+                return;
+            }
+
+            const btn = document.getElementById('btnSubmitReview');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Đang xử lý...';
+            btn.disabled = true;
+
+            const content = document.getElementById('reviewContent').value;
+            const formData = new FormData();
+            formData.append("productId", productId);
+            formData.append("rating", rating);
+            formData.append("content", content);
+
+            try {
+                const response = await fetch('/api/Review/add', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                if(data.success) {
+                    Swal.fire('Thành công', data.message, 'success');
+                    document.getElementById('frmReview').reset();
+                    ratingInput.value = 0;
+                    fillStars(0);
+                    // Tải lại danh sách từ trang 1 để thấy review mới
+                    document.getElementById('reviews-list-container').innerHTML = '';
+                    currentReviewPage = 1;
+                    loadReviews(1);
+                } else {
+                    Swal.fire('Thất bại', data.message, 'error');
+                }
+            } catch (err) {
+                Swal.fire('Lỗi', 'Không thể kết nối đến máy chủ.', 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // Tải danh sách Đánh giá & Render Dashboard
+        async function loadReviews(page) {
+            const btnMore = document.getElementById('btnLoadMoreReviews');
+            if(btnMore) {
+                btnMore.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Đang tải...';
+                btnMore.disabled = true;
+            }
+
+            try {
+                const res = await fetch(`/api/Review/${productId}?page=${page}&pageSize=5`);
+                const json = await res.json();
+
+                if(json.success && json.data) {
+                    const data = json.data;
+                    currentReviewPage = data.currentPage;
+                    
+                    // Render Dashboard Stats (Lần đầu tiên page 1)
+                    if(page === 1) {
+                        renderDashboard(data);
+                        if(data.reviews.length === 0) {
+                            document.getElementById('reviews-list-container').innerHTML = '<div class="text-center text-muted py-4"><i class="bi bi-chat-square-dots fs-1 d-block mb-2"></i>Chưa có đánh giá nào cho sản phẩm này. Hãy là người đầu tiên!</div>';
+                        } else {
+                            document.getElementById('reviews-list-container').innerHTML = ''; // Clear loading
+                        }
+                    }
+
+                    // Append reviews
+                    const container = document.getElementById('reviews-list-container');
+                    data.reviews.forEach(r => {
+                        container.insertAdjacentHTML('beforeend', buildReviewHTML(r));
+                    });
+
+                    // Xử lý nút Load More
+                    const paginationDiv = document.getElementById('review-pagination');
+                    if(data.currentPage < data.totalPages) {
+                        paginationDiv.classList.remove('d-none');
+                        if(btnMore) {
+                            btnMore.innerHTML = 'Xem thêm bình luận <i class="bi bi-chevron-down ms-1"></i>';
+                            btnMore.disabled = false;
+                        }
+                    } else {
+                        paginationDiv.classList.add('d-none');
+                    }
+                }
+            } catch(e) {
+                console.error("Lỗi tải bình luận:", e);
+                if(page === 1) {
+                    document.getElementById('reviews-list-container').innerHTML = '<div class="text-danger text-center">Không thể tải bình luận lúc này.</div>';
+                }
+            }
+        }
+
+        async function loadMyReview() {
+            try {
+                const res = await fetch(`/api/Review/my/${productId}`);
+                const json = await res.json();
+                if(json.success && json.data) {
+                    // Đã có bình luận, fill form
+                    const r = json.data;
+                    document.getElementById('reviewRating').value = r.rating;
+                    fillStars(r.rating);
+                    document.getElementById('reviewContent').value = r.content;
+                    
+                    const btn = document.getElementById('btnSubmitReview');
+                    if(btn) btn.innerText = "Cập nhật đánh giá";
+                    
+                    const title = document.getElementById('review-form-title');
+                    if(title) title.innerHTML = 'Cập nhật đánh giá của bạn <i class="bi bi-pencil-square ms-2"></i>';
+                }
+            } catch(e) {
+                console.error("Lỗi tải bình luận của tôi:", e);
+            }
+        }
+
+        function renderDashboard(data) {
+            document.getElementById('avg-rating-display').innerText = data.averageRating.toFixed(1);
+            document.getElementById('total-reviews-display').innerText = data.totalReviews;
+            
+            // Render sao trung bình
+            let starsHTML = '';
+            const avg = data.averageRating;
+            for(let i=1; i<=5; i++) {
+                if(avg >= i) starsHTML += '<i class="bi bi-star-fill"></i>';
+                else if(avg >= i - 0.5) starsHTML += '<i class="bi bi-star-half"></i>';
+                else starsHTML += '<i class="bi bi-star"></i>';
+            }
+            document.getElementById('avg-stars-display').innerHTML = starsHTML;
+
+            // Render Progress Bars
+            let barsHTML = '';
+            for(let i=5; i>=1; i--) {
+                const count = data.ratingDistribution[i-1] || 0;
+                const percent = data.totalReviews > 0 ? (count / data.totalReviews * 100) : 0;
+                barsHTML += `
+                <div class="d-flex align-items-center mb-2">
+                    <div class="text-warning text-nowrap" style="width: 50px;">${i} <i class="bi bi-star-fill"></i></div>
+                    <div class="progress flex-grow-1 mx-3" style="height: 8px;">
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: ${percent}%;" aria-valuenow="${percent}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <div class="text-muted small" style="width: 30px; text-align: right;">${count}</div>
+                </div>`;
+            }
+            document.getElementById('rating-bars-container').innerHTML = barsHTML;
+        }
+
+        function buildReviewHTML(r) {
+            // Encode content to prevent XSS (cơ bản)
+            const safeContent = r.content.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            
+            let starsHTML = '';
+            for(let i=1; i<=5; i++) {
+                starsHTML += i <= r.rating ? '<i class="bi bi-star-fill"></i>' : '<i class="bi bi-star"></i>';
+            }
+
+            const date = new Date(r.createdAt).toLocaleDateString('vi-VN');
+            const badge = r.isVerifiedPurchase 
+                ? '<span class="badge bg-success-subtle text-success ms-2 border"><i class="bi bi-check-circle-fill me-1"></i>Đã mua hàng tại TechGear</span>' 
+                : '';
+
+            return `
+            <div class="d-flex mb-4 pb-4 border-bottom">
+                <div class="me-3">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold fs-5 shadow-sm" style="width: 50px; height: 50px;">
+                        ${r.username.charAt(0).toUpperCase()}
+                    </div>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <div>
+                            <span class="fw-bold fs-6 text-dark">${r.username}</span>
+                            ${badge}
+                        </div>
+                        <small class="text-muted">${date}</small>
+                    </div>
+                    <div class="text-warning mb-2" style="font-size: 0.9rem;">
+                        ${starsHTML}
+                    </div>
+                    <p class="mb-0 text-dark lh-base">${safeContent}</p>
+                </div>
+            </div>`;
+        }
+
+        // ==========================================
+        // MINI Q&A — THREADED TREE + REALTIME SIGNALR
+        // ==========================================
+        const QA_PRODUCT_ID = @Model.Id;
+        const QA_PAGE_SIZE = 8;
+        let qaSkip = 0;
+        let qaTotal = 0;
+        let qaConnection = null;
+        let qaSpamLocked = false;
+        let qaReplyingToId = null;
+
+        // ── Format thời gian (UTC-safe) ──
+        function qaFormatTime(createdAt) {
+            const rawTime = createdAt.endsWith('Z') ? createdAt : createdAt + 'Z';
+            const d = new Date(rawTime);
+            const diffMin = Math.floor((new Date() - d) / 60000);
+            if (diffMin < 1) return 'Vừa xong';
+            if (diffMin < 60) return diffMin + ' phút trước';
+            if (diffMin < 1440) return Math.floor(diffMin / 60) + ' giờ trước';
+            return d.toLocaleDateString('vi-VN');
+        }
+
+        // ── Build HTML cho 1 câu hỏi gốc (có container replies bên trong) ──
+        function buildRootHTML(dto, listPrefix = 'inline') {
+            const safe = dto.content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const timeStr = qaFormatTime(dto.createdAt);
+
+            @if (User.IsInRole("Admin"))
+            {
+                <text>
+            const replyBtn = `<button type="button" class="btn btn-link p-0 mt-1" style="font-size: 0.72rem; color: #44b5fe; text-decoration: none;" onclick="setQaReply(${dto.id}, '${(dto.username ?? '').replace(/'/g,'\\u0027').replace(/`/g,'\\u0060')}', '${(dto.content ?? '').substring(0,40).replace(/'/g,'\\u0027').replace(/`/g,'\\u0060')}')"><i class="bi bi-reply me-1"></i>Trả lời</button>`;
+                </text>
+            }
+            @if (!User.IsInRole("Admin"))
+            {
+                <text>
+            const replyBtn = '';
+                </text>
+            }
+
+            // Avatar & bubble style thay đổi tuỳ Admin hay User
+            const avatarHTML = dto.isAdminReply
+                ? `<div class="bg-danger bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 30px; height: 30px;"><i class="bi bi-shield-check text-danger" style="font-size: 0.8rem;"></i></div>`
+                : `<div class="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 30px; height: 30px;"><i class="bi bi-person-fill text-secondary" style="font-size: 0.8rem;"></i></div>`;
+
+            const bubbleHTML = dto.isAdminReply
+                ? `<div class="bg-primary bg-opacity-10 border border-primary border-opacity-10 rounded-3 px-3 py-2" style="font-size: 0.84rem; border-top-left-radius: 0 !important;">
+                        <span class="fw-semibold text-danger" style="font-size: 0.75rem;">${dto.username}</span>
+                        <span class="badge bg-danger rounded-pill ms-1" style="font-size: 0.58rem; vertical-align: middle;">Admin</span>
+                        <span class="text-muted ms-1" style="font-size: 0.65rem;">• ${timeStr}</span>
+                        <div class="mt-1 text-dark">${safe}</div>
+                   </div>`
+                : `<div class="bg-light border border-light-subtle rounded-3 px-3 py-2" style="font-size: 0.84rem; border-top-left-radius: 0 !important;">
+                        <span class="fw-semibold text-primary" style="font-size: 0.75rem;">${dto.username}</span>
+                        <span class="text-muted ms-1" style="font-size: 0.65rem;">• ${timeStr}</span>
+                        <div class="mt-1 text-dark">${safe}</div>
+                   </div>`;
+
+            return `
+            <div class="qa-thread" id="qa-thread-${dto.id}" data-qa-id="${dto.id}" style="animation: fadeInUp 0.3s ease-out forwards;">
+                <div class="d-flex gap-2 align-items-start">
+                    ${avatarHTML}
+                    <div class="flex-fill">
+                        ${bubbleHTML}
+                        ${replyBtn}
+                    </div>
+                </div>
+                <div class="qa-replies ms-4 mt-1" id="${listPrefix}-qa-replies-${dto.id}" style="border-left: 2px solid #e2e8f0; padding-left: 12px;"></div>
+            </div>`;
+        }
+
+        // ── Build HTML cho 1 reply của Admin ──
+        function buildReplyHTML(dto) {
+            const safe = dto.content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const timeStr = qaFormatTime(dto.createdAt);
+            return `
+            <div class="d-flex gap-2 align-items-start mt-2" style="animation: fadeInUp 0.25s ease-out forwards;">
+                <div class="bg-danger bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 26px; height: 26px;">
+                    <i class="bi bi-shield-check text-danger" style="font-size: 0.7rem;"></i>
+                </div>
+                <div class="flex-fill">
+                    <div class="bg-primary bg-opacity-10 border border-primary border-opacity-10 rounded-3 px-3 py-2" style="font-size: 0.84rem; border-top-left-radius: 0 !important;">
+                        <span class="fw-semibold text-danger" style="font-size: 0.75rem;">${dto.username}</span>
+                        <span class="badge bg-danger rounded-pill ms-1" style="font-size: 0.58rem; vertical-align: middle;">Admin</span>
+                        <span class="text-muted ms-1" style="font-size: 0.65rem;">• ${timeStr}</span>
+                        <div class="mt-1 text-dark">${safe}</div>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        // ── Render toàn bộ cây từ flat list ──
+        function renderQaTree(messages, containerId, listPrefix, prepend = false) {
+            const listEl = document.getElementById(containerId);
+            if (!listEl) return;
+
+            // Tách: câu hỏi gốc và replies
+            const roots = messages.filter(m => !m.parentId);
+            const replies = messages.filter(m => m.parentId);
+
+            // Build map parentId → [replies]
+            const replyMap = {};
+            replies.forEach(r => {
+                if (!replyMap[r.parentId]) replyMap[r.parentId] = [];
+                replyMap[r.parentId].push(r);
+            });
+
+            roots.forEach(root => {
+                const rootHTML = buildRootHTML(root, listPrefix);
+                if (prepend) {
+                    listEl.insertAdjacentHTML('afterbegin', rootHTML);
+                } else {
+                    listEl.insertAdjacentHTML('beforeend', rootHTML);
+                }
+                // Gắn replies vào đúng container
+                const container = document.getElementById(`${listPrefix}-qa-replies-${root.id}`);
+                if (container && replyMap[root.id]) {
+                    replyMap[root.id].forEach(r => {
+                        container.insertAdjacentHTML('beforeend', buildReplyHTML(r));
+                    });
+                    container.style.display = replyMap[root.id].length ? 'block' : 'none';
+                } else if (container) {
+                    container.style.display = 'none';
+                }
+            });
+
+            // Replies mà câu hỏi gốc đã có sẵn trong DOM (realtime edge case)
+            replies.forEach(r => {
+                if (!roots.find(root => root.id === r.parentId)) {
+                    const container = document.getElementById(`${listPrefix}-qa-replies-${r.parentId}`);
+                    if (container) {
+                        container.insertAdjacentHTML('beforeend', buildReplyHTML(r));
+                        container.style.display = 'block';
+                    }
+                }
+            });
+        }
+
+        // ── Reply state ──
+        function setQaReply(id, username, contentPreview) {
+            qaReplyingToId = id;
+            // Cập nhật Strip ở ngoài
+            const strip = document.getElementById('qa-reply-strip');
+            const stripText = document.getElementById('qa-reply-strip-text');
+            if (strip && stripText) {
+                stripText.textContent = `${username}: ${contentPreview}${contentPreview.length >= 40 ? '...' : ''}`;
+                strip.style.display = 'flex';
+            }
+            // Cập nhật Strip trong Modal
+            const modalStrip = document.getElementById('qa-modal-reply-strip');
+            const modalStripText = document.getElementById('qa-modal-reply-strip-text');
+            if (modalStrip && modalStripText) {
+                modalStripText.textContent = `${username}: ${contentPreview}${contentPreview.length >= 40 ? '...' : ''}`;
+                modalStrip.style.display = 'flex';
+            }
+            
+            // Focus vào input đang hiện
+            const modalEl = document.getElementById('qaFullModal');
+            if (modalEl && modalEl.classList.contains('show')) {
+                document.getElementById('mini-qa-modal-input').focus();
+            } else {
+                document.getElementById('mini-qa-input').focus();
+            }
+
+            // Highlight câu hỏi đang chọn
+            document.querySelectorAll('.qa-thread').forEach(el => el.style.opacity = '0.5');
+            document.querySelectorAll(`[data-qa-id="${id}"]`).forEach(el => el.style.opacity = '1');
+        }
+
+        function cancelQaReply() {
+            qaReplyingToId = null;
+            const strip = document.getElementById('qa-reply-strip');
+            if (strip) strip.style.display = 'none';
+            const modalStrip = document.getElementById('qa-modal-reply-strip');
+            if (modalStrip) modalStrip.style.display = 'none';
+            document.querySelectorAll('.qa-thread').forEach(el => el.style.opacity = '1');
+        }
+
+        // ── Deep Link: Cuộn trang + cuộn container + highlight câu hỏi từ Thông báo Admin ──
+        function scrollToHighlightQa(questionId) {
+            const listEl  = document.getElementById('mini-qa-list');
+            const blockEl = document.getElementById('qa-section-block');
+            if (!listEl || !blockEl) return;
+
+            const target = document.getElementById(`qa-thread-${questionId}`);
+            if (!target) {
+                console.warn('[DeepLink] qa-thread-' + questionId + ' not found in DOM');
+                return;
+            }
+
+            // Bước 1: Cuộn trang xuống khu vực QA block mướt mà
+            blockEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            // Bước 2: Sau khi trang đã scroll (700ms), cuộn trong container đến đúng item
+            setTimeout(() => {
+                const listRect   = listEl.getBoundingClientRect();
+                const targetRect = target.getBoundingClientRect();
+                const scrollDelta = targetRect.top - listRect.top - 8;
+                listEl.scrollBy({ top: scrollDelta, behavior: 'smooth' });
+
+                // Bước 3: Sau khi container scroll xong (300ms), bật glow highlight 2s
+                setTimeout(() => {
+                    target.classList.add('qa-deep-link-highlight');
+                    setTimeout(() => target.classList.remove('qa-deep-link-highlight'), 2200);
+                }, 300);
+            }, 700);
+        }
+
+        // ── Load lịch sử (Khung nhỏ bên ngoài) ──
+        async function loadQaHistory() {
+            try {
+                const res = await fetch(`/api/qa/${QA_PRODUCT_ID}?take=${QA_PAGE_SIZE}&skip=0`);
+                const json = await res.json();
+                const loading = document.getElementById('qa-loading');
+                if (loading) loading.remove();
+
+                qaTotal = json.total || 0;
+                qaSkip = QA_PAGE_SIZE;
+
+                if (json.data && json.data.length > 0) {
+                    json.data.reverse(); // Cũ → mới
+                    renderQaTree(json.data, 'mini-qa-list', 'inline');
+
+                    // ── Deep Link: scroll + highlight câu hỏi từ thông báo Admin ──
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const targetQaId = urlParams.get('qa');
+                    if (targetQaId) {
+                        // Chờ 400ms cho animation render xong rồi mới scroll
+                        setTimeout(() => scrollToHighlightQa(parseInt(targetQaId, 10)), 450);
+                    } else {
+                        scrollQaToBottom('mini-qa-list');
+                    }
+                } else {
+                    document.getElementById('mini-qa-list').innerHTML =
+                        '<div class="text-center text-muted py-4"><i class="bi bi-chat-text fs-4 d-block mb-2 opacity-50"></i><small>Chưa có câu hỏi nào. Hãy là người đầu tiên!</small></div>';
+                }
+                
+                const wrap = document.getElementById('qa-load-more-wrap');
+                if (qaTotal > QA_PAGE_SIZE && wrap) {
+                    wrap.style.display = 'block';
+                } else if (wrap) { 
+                    wrap.style.display = 'none'; 
+                }
+            } catch (err) {
+                console.error('Load Q&A history failed:', err);
+            }
+        }
+
+        // ── Mở Modal & Tải toàn bộ lịch sử ──
+        async function openQaModal() {
+            const modalEl = document.getElementById('qaFullModal');
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+
+            const listEl = document.getElementById('qa-modal-list');
+            listEl.innerHTML = `
+                <div id="qa-modal-loading" class="d-flex align-items-center justify-content-center py-5">
+                    <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                    <small class="text-muted">Đang tải toàn bộ dữ liệu...</small>
+                </div>`;
+
+            try {
+                // Lấy lượng lớn để cover hết (có thể làm infinite scroll trong modal sau nếu quá nhiều)
+                const res = await fetch(`/api/qa/${QA_PRODUCT_ID}?take=500&skip=0`);
+                const json = await res.json();
+                listEl.innerHTML = ''; // Clear loading
+
+                if (json.data && json.data.length > 0) {
+                    json.data.reverse();
+                    renderQaTree(json.data, 'qa-modal-list', 'modal');
+                    scrollQaToBottom('qa-modal-list');
+                } else {
+                    listEl.innerHTML = '<div class="text-center text-muted py-4"><i class="bi bi-chat-text fs-4 d-block mb-2 opacity-50"></i><small>Chưa có câu hỏi nào.</small></div>';
+                }
+            } catch (err) { 
+                console.error(err); 
+                listEl.innerHTML = '<div class="text-center text-danger py-4">Có lỗi xảy ra khi tải dữ liệu!</div>';
+            }
+        }
+
+        function scrollQaToBottom(containerId) {
+            const el = document.getElementById(containerId);
+            if (el) {
+                if (containerId === 'qa-modal-list') {
+                    const parent = el.closest('.modal-body');
+                    if (parent) parent.scrollTop = parent.scrollHeight;
+                } else {
+                    el.scrollTop = el.scrollHeight;
+                }
+            }
+        }
+
+        function enforceInlineQaLimit() {
+            const listEl = document.getElementById('mini-qa-list');
+            if (!listEl) return;
+            
+            let threads = Array.from(listEl.querySelectorAll('.qa-thread'));
+            let totalCount = 0;
+            
+            // Tính tổng số tin nhắn (câu hỏi + trả lời) đang hiển thị
+            threads.forEach(t => {
+                totalCount += 1; // 1 cho câu hỏi gốc
+                const repliesContainer = t.querySelector('.qa-replies');
+                if (repliesContainer) {
+                    totalCount += repliesContainer.children.length; // + số lượng reply
+                }
+            });
+
+            // Nếu vượt quá 8, xóa dần thread cũ nhất (trên cùng)
+            while (totalCount > QA_PAGE_SIZE && threads.length > 0) {
+                const oldestThread = threads[0];
+                const repliesContainer = oldestThread.querySelector('.qa-replies');
+                const removedCount = 1 + (repliesContainer ? repliesContainer.children.length : 0);
+                
+                oldestThread.remove();
+                threads.shift(); // Cập nhật mảng
+                totalCount -= removedCount;
+                
+                const wrap = document.getElementById('qa-load-more-wrap');
+                if (wrap) wrap.style.display = 'block';
+            }
+        }
+
+        // ── Kết nối SignalR ──
+        async function initQaHub() {
+            qaConnection = new signalR.HubConnectionBuilder()
+                .withUrl("/qaHub")
+                .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+                .build();
+
+            qaConnection.on("ReceiveQuestion", (dto) => {
+                // Update danh sách ngoài (inline)
+                const inlineListEl = document.getElementById('mini-qa-list');
+                const emptyMsg = inlineListEl.querySelector('.text-center.text-muted');
+                if (emptyMsg) emptyMsg.remove();
+
+                if (!dto.parentId) {
+                    inlineListEl.insertAdjacentHTML('beforeend', buildRootHTML(dto, 'inline'));
+                    const c = document.getElementById(`inline-qa-replies-${dto.id}`);
+                    if (c) c.style.display = 'none';
+                } else {
+                    const container = document.getElementById(`inline-qa-replies-${dto.parentId}`);
+                    if (container) {
+                        container.insertAdjacentHTML('beforeend', buildReplyHTML(dto));
+                        container.style.display = 'block';
+                    }
+                }
+                
+                // Kiểm tra và ép giới hạn 8 tin nhắn TỔNG CỘNG
+                enforceInlineQaLimit();
+                
+                scrollQaToBottom('mini-qa-list');
+
+                // Update danh sách trong Modal (nếu đang load xong)
+                const modalListEl = document.getElementById('qa-modal-list');
+                if (modalListEl && !modalListEl.querySelector('#qa-modal-loading')) {
+                    const emptyModalMsg = modalListEl.querySelector('.text-center.text-muted');
+                    if (emptyModalMsg) emptyModalMsg.remove();
+
+                    if (!dto.parentId) {
+                        modalListEl.insertAdjacentHTML('beforeend', buildRootHTML(dto, 'modal'));
+                        const c = document.getElementById(`modal-qa-replies-${dto.id}`);
+                        if (c) c.style.display = 'none';
+                    } else {
+                        const container = document.getElementById(`modal-qa-replies-${dto.parentId}`);
+                        if (container) {
+                            container.insertAdjacentHTML('beforeend', buildReplyHTML(dto));
+                            container.style.display = 'block';
+                        }
+                    }
+                    scrollQaToBottom('qa-modal-list');
+                }
+
+                qaTotal++;
+                cancelQaReply();
+            });
+
+            qaConnection.on("QaError", (msg) => showQaToast(msg, 'warning'));
+            qaConnection.on("QaSuccess", (msg) => showQaToast(msg, 'success'));
+
+            const statusEl = document.getElementById('qa-connection-status');
+            qaConnection.onreconnecting(() => {
+                if (statusEl) {
+                    statusEl.style.display = 'inline-block';
+                    statusEl.className = 'badge bg-warning bg-opacity-10 text-warning';
+                    statusEl.innerHTML = '<i class="bi bi-arrow-repeat me-1" style="font-size: 0.4rem;"></i>Đang kết nối lại...';
+                }
+            });
+            qaConnection.onreconnected(() => {
+                if (statusEl) {
+                    statusEl.className = 'badge bg-success bg-opacity-10 text-success';
+                    statusEl.innerHTML = '<i class="bi bi-circle-fill me-1" style="font-size: 0.4rem;"></i>Trực tuyến';
+                    // Bỏ ẩn đi để luôn hiển thị trạng thái Trực tuyến
+                }
+                qaConnection.invoke("JoinProductRoom", QA_PRODUCT_ID.toString()).catch(() => {});
+            });
+            qaConnection.onclose(() => {
+                if (statusEl) {
+                    statusEl.style.display = 'inline-block';
+                    statusEl.className = 'badge bg-danger bg-opacity-10 text-danger';
+                    statusEl.innerHTML = '<i class="bi bi-exclamation-circle me-1" style="font-size: 0.4rem;"></i>Mất kết nối';
+                }
+            });
+
+            try {
+                await qaConnection.start();
+                await qaConnection.invoke("JoinProductRoom", QA_PRODUCT_ID.toString());
+                if (statusEl) { statusEl.style.display = 'inline-block'; }
+            } catch (err) { console.error("QaHub connection failed:", err); }
+        }
+
+        // ── Gửi câu hỏi / trả lời ──
+        function handleMiniQaSubmit(e, source = 'inline') {
+            e.preventDefault();
+            const inputId = source === 'modal' ? 'mini-qa-modal-input' : 'mini-qa-input';
+            const input = document.getElementById(inputId);
+            const content = input.value.trim();
+            if (!content) return;
+
+            @if (User.Identity == null || !User.Identity.IsAuthenticated)
+            {
+                <text>
+            showQaToast('Vui lòng đăng nhập để đặt câu hỏi.', 'warning');
+            return;
+                </text>
+            }
+
+            var isAdmin = @(User.IsInRole("Admin") ? "true" : "false");
+            if (!isAdmin && qaSpamLocked) { showQaToast('Vui lòng chờ 30 giây để gửi câu hỏi tiếp theo!', 'warning'); return; }
+            if (!qaConnection || qaConnection.state !== signalR.HubConnectionState.Connected) {
+                showQaToast('Đang kết nối lại, vui lòng thử lại sau.', 'warning'); return;
+            }
+
+            qaSpamLocked = true;
+            const replyId = qaReplyingToId;
+            cancelQaReply();
+            qaConnection.invoke("SendQuestion", QA_PRODUCT_ID, content, replyId).catch(err => {
+                showQaToast('Gửi thất bại, vui lòng thử lại.', 'error');
+                console.error(err);
+            });
+            input.value = '';
+            
+            // Xóa cả input bên kia nếu có
+            const otherInputId = source === 'modal' ? 'mini-qa-input' : 'mini-qa-modal-input';
+            const otherInput = document.getElementById(otherInputId);
+            if(otherInput) otherInput.value = '';
+
+            setTimeout(() => { qaSpamLocked = false; }, 30000);
+        }
+
+        // ── Toast ──
+        function showQaToast(msg, type) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    toast: true, position: 'bottom-end',
+                    icon: type === 'success' ? 'success' : type === 'error' ? 'error' : 'warning',
+                    title: msg, showConfirmButton: false, timer: 3000, timerProgressBar: true
+                });
+            }
+        }
+
+        // Tải bình luận ngay khi trang load
+        document.addEventListener("DOMContentLoaded", () => {
+            loadReviews(1);
+            loadQaHistory();
+            initQaHub();
+            
+            @if (User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                <text>loadMyReview();</text>
+            }
+        });
+
     </script>
 }

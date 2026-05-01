@@ -5,22 +5,70 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
+<style>
+    @@keyframes successPop {
+        0%   { transform: scale(0.5); opacity: 0; }
+        70%  { transform: scale(1.1); }
+        100% { transform: scale(1);   opacity: 1; }
+    }
+    .success-icon {
+        animation: successPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    @@keyframes slideUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    .slide-up { animation: slideUp 0.5s ease 0.4s both; }
+    .slide-up-2 { animation: slideUp 0.5s ease 0.6s both; }
+    .slide-up-3 { animation: slideUp 0.5s ease 0.8s both; }
+</style>
+
 <div class="row justify-content-center my-5">
     <div class="col-md-7 text-center">
-        <div class="mb-4">
-            <i class="bi bi-check-circle-fill text-success" style="font-size: 6rem;"></i>
-        </div>
-        <h1 class="display-5 fw-bold text-dark mb-3">Đơn hàng đã được ghi nhận!</h1>
-        <p class="fs-5 text-muted mb-4">Cảm ơn bạn đã tin tưởng mua sắm tại TechGear Shop. Chúng tôi đang xử lý đơn hàng của bạn và sẽ gửi email xác nhận trong ít phút ngắn ngủi nữa.</p>
-        
-        <div class="card bg-light border-0 rounded-4 p-4 mx-auto mb-5 shadow-sm" style="max-width: 500px;">
-            <p class="mb-1 text-secondary fw-semibold">Mã Đơn Hàng Của Bạn</p>
-            <h2 class="fw-bold m-0 text-primary">#TG-2026-@Model.ToString("D5")</h2>
+
+        @* Icon checkmark với animation *@
+        <div class="mb-4 success-icon">
+            <div style="
+                display: inline-flex; align-items: center; justify-content: center;
+                width: 120px; height: 120px; border-radius: 50%;
+                background: linear-gradient(135deg, #d4edda, #b8dacc);
+                box-shadow: 0 0 0 12px rgba(25,135,84,0.08);
+            ">
+                <i class="bi bi-check-lg text-success" style="font-size: 3.5rem;"></i>
+            </div>
         </div>
 
-        <div>
-            <a href="/" class="btn btn-primary btn-lg px-5 me-2 rounded-pill fw-bold shadow"><i class="bi bi-arrow-left-circle me-2"></i> Quay lại trang chủ</a>
-            <a href="/Product" class="btn btn-outline-dark btn-lg px-4 rounded-pill fw-bold">Tiếp tục mua sắm</a>
+        <h1 class="display-5 fw-bold text-dark mb-3 slide-up">Đơn hàng đã được ghi nhận!</h1>
+        <p class="fs-5 text-muted mb-5 slide-up-2">
+            Cảm ơn bạn đã tin tưởng mua sắm tại <strong>TechGear Shop</strong>.<br>
+            Đội ngũ chúng tôi đang xử lý và sẽ liên hệ sớm nhất có thể.
+        </p>
+
+        @* Mã đơn hàng *@
+        <div class="card border-0 rounded-4 p-4 mx-auto mb-5 shadow-sm slide-up-2" style="
+            max-width: 420px;
+            background: linear-gradient(135deg, #f8f9fa, #e9f5ec);
+            border-left: 5px solid #198754 !important;
+        ">
+            <p class="mb-1 text-secondary fw-semibold small text-uppercase tracking-wider">Mã Đơn Hàng Của Bạn</p>
+            <h2 class="fw-bold m-0 text-success" style="font-size: 2.2rem; letter-spacing: 2px;">
+                #TG-2026-@Model.ToString("D5")
+            </h2>
+            <p class="mt-2 mb-0 text-muted small">
+                <i class="bi bi-bell-fill text-warning"></i>
+                Bạn sẽ nhận được thông báo trạng thái đơn hàng qua hệ thống thông báo.
+            </p>
         </div>
+
+        @* Buttons *@
+        <div class="slide-up-3">
+            <a href="/Account/Orders" class="btn btn-success btn-lg px-5 me-2 rounded-pill fw-bold shadow">
+                <i class="bi bi-bag-check me-2"></i> Xem đơn hàng
+            </a>
+            <a href="/Product" class="btn btn-outline-dark btn-lg px-4 rounded-pill fw-bold">
+                Tiếp tục mua sắm
+            </a>
+        </div>
+
     </div>
 </div>

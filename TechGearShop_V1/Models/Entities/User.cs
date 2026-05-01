@@ -32,5 +32,6 @@ namespace TechGearShop_V1.Models.Entities
 
         // Navigation properties
         public ICollection<Order> Orders { get; set; } = new List<Order>();
+        public ICollection<Review> Reviews { get; set; } = new List<Review>();
     }
 }

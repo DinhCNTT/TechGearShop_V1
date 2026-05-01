@@ -5,6 +5,7 @@ namespace TechGearShop_V1.Models.Enums
         System = 1,
         Order = 2,
         Promotion = 3,
-        Account = 4
+        Account = 4,
+        QnA = 5
     }
 }

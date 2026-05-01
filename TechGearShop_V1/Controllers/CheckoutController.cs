@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using TechGearShop_V1.Extensions;
-using TechGearShop_V1.Models.Entities;
+using TechGearShop_V1.Models.DTOs;
 using TechGearShop_V1.Models.ViewModels;
 using TechGearShop_V1.Services.Interfaces;
 
@@ -130,27 +130,42 @@ namespace TechGearShop_V1.Controllers
         }
 
         // POST: /Checkout/PlaceOrder
+        // ─── KIẾN TRÚC MỚI: Bất đồng bộ qua In-Memory Channel ───────────────────────
+        // Controller chỉ làm 2 việc:
+        //   1. Xác thực đầu vào (Coupon, giỏ hàng) — nhanh, không tốn tài nguyên
+        //   2. Đẩy đơn hàng vào hàng đợi (OrderChannel) và trả về JSON ngay
+        // Việc trừ kho + lưu DB được xử lý bởi OrderProcessingBackgroundService.
+        // Kết quả thành công/thất bại sẽ được bắn về User qua SignalR (event "OrderPlacedResult").
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> PlaceOrder(CheckoutViewModel model)
+        public async Task<IActionResult> PlaceOrder(
+            [FromServices] IOrderChannel orderChannel,
+            CheckoutViewModel model)
         {
             var cart = await GetCartItemsAsync();
             if (!cart.Any())
-            {
-                TempData["UserError"] = "Giỏ hàng trống! Đơn hàng không hợp lệ.";
-                return RedirectToAction("Index", "Home");
-            }
+                return Json(new { success = false, message = "Giỏ hàng trống! Đơn hàng không hợp lệ." });
 
-            model.CartItems = cart;
+            model.CartItems   = cart;
             model.ShippingFee = 30000;
 
             if (!ModelState.IsValid)
-                return View("Index", model);
-
-            try
             {
-                // Tái xác thực Coupon ở Backend để chống giả mạo
-                if (!string.IsNullOrEmpty(model.CouponCode))
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .FirstOrDefault();
+                return Json(new { success = false, message = errors ?? "Thông tin đặt hàng không hợp lệ." });
+            }
+
+            var userId = GetUserId();
+            if (userId == null)
+                return Json(new { success = false, message = "Vui lòng đăng nhập để đặt hàng." });
+
+            // ── Tái xác thực Coupon ở Backend để chống giả mạo ──────────────────────
+            if (!string.IsNullOrEmpty(model.CouponCode))
+            {
+                try
                 {
                     var coupon = await _couponService.GetValidCouponAsync(model.CouponCode, model.SubTotal);
                     if (coupon != null)
@@ -162,66 +177,42 @@ namespace TechGearShop_V1.Controllers
                         model.DiscountAmount = calcDiscount;
                     }
                 }
-
-                // Chốt chặn Stock lần cuối trước khi lưu Order
-                foreach (var item in cart)
-                {
-                    var product = await _productService.GetProductByIdAsync(item.ProductId);
-                    if (product == null || product.Stock < item.Quantity)
-                    {
-                        ModelState.AddModelError("", $"Sản phẩm '{item.ProductName}' đã hết hàng hoặc không đủ số lượng.");
-                        return View("Index", model);
-                    }
-                }
-
-                // Lấy UserId thực từ Claims
-                var userId = GetUserId() ?? 1;
-
-                var order = new Order
-                {
-                    UserId          = userId,
-                    ReceiverName    = model.ReceiverName,
-                    ReceiverPhone   = model.ReceiverPhone,
-                    ShippingAddress = model.ShippingAddress,
-                    Province        = model.Province,
-                    PaymentMethod   = model.PaymentMethod,
-                    CouponCode      = model.CouponCode,
-                    Note            = model.Note,
-                    ShippingFee     = model.ShippingFee,
-                    DiscountAmount  = model.DiscountAmount,
-                    TotalAmount     = model.SubTotal,
-                    FinalAmount     = model.FinalTotal,
-                    OrderDate       = DateTime.UtcNow,
-                    Status          = OrderStatus.Pending,
-                    OrderDetails    = cart.Select(c => new OrderDetail
-                    {
-                        ProductId = c.ProductId,
-                        Quantity  = c.Quantity,
-                        UnitPrice = c.Price
-                    }).ToList()
-                };
-
-                bool isSuccess = await _orderService.PlaceOrderAsync(order);
-                if (isSuccess)
-                {
-                    // Xóa giỏ hàng sau khi đặt hàng thành công
-                    var uid = GetUserId();
-                    if (uid != null)
-                        await _cartService.ClearCartAsync(uid.Value);          // DB
-                    HttpContext.Session.Remove(CartController.CART_KEY);       // Session fallback
-                    HttpContext.Session.Remove(CartController.SELECTED_KEY);
-
-                    return RedirectToAction(nameof(Success), new { orderId = order.Id });
-                }
-
-                ModelState.AddModelError("", "Rất tiếc! Đã xảy ra lỗi trong quá trình xử lý đơn hàng. Vui lòng thử lại.");
-                return View("Index", model);
+                catch { /* Mã coupon lỗi thì bỏ qua discount, không chặn đơn hàng */ }
             }
-            catch (Exception ex)
+
+            // ── Đóng gói và đẩy vào Channel ─────────────────────────────────────────
+            var request = new OrderRequestDto
             {
-                ModelState.AddModelError("", "Lỗi hệ thống: " + ex.Message);
-                return View("Index", model);
-            }
+                UserId          = userId.Value,
+                ReceiverName    = model.ReceiverName,
+                ReceiverPhone   = model.ReceiverPhone,
+                ShippingAddress = model.ShippingAddress,
+                Province        = model.Province,
+                PaymentMethod   = model.PaymentMethod,
+                CouponCode      = model.CouponCode,
+                Note            = model.Note,
+                ShippingFee     = model.ShippingFee,
+                DiscountAmount  = model.DiscountAmount,
+                SubTotal        = model.SubTotal,
+                FinalAmount     = model.FinalTotal,
+                Items           = cart
+            };
+
+            await orderChannel.WriteAsync(request);
+
+            // ── Xóa giỏ hàng ngay — vì đơn đã được tiếp nhận vào Queue ─────────────
+            await _cartService.ClearCartAsync(userId.Value);
+            HttpContext.Session.Remove(CartController.CART_KEY);
+            HttpContext.Session.Remove(CartController.SELECTED_KEY);
+
+            // ── Trả về ngay cho Client, không chờ DB ─────────────────────────────────
+            // UI sẽ lắng nghe SignalR event "OrderPlacedResult" để biết kết quả cuối cùng.
+            return Json(new
+            {
+                success = true,
+                queued  = true,
+                message = "Hệ thống đang xử lý đơn hàng của bạn. Vui lòng chờ trong giây lát..."
+            });
         }
 
         public IActionResult Success(int orderId) => View(orderId);

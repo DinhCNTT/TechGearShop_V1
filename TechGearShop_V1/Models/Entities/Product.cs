@@ -35,6 +35,10 @@ namespace TechGearShop_V1.Models.Entities
         public bool IsFeatured { get; set; } = false;
         public int SoldCount { get; set; } = 0;
         public int ViewCount { get; set; } = 0;
+        public int ReviewCount { get; set; } = 0;
+        
+        [Column(TypeName = "decimal(3,2)")]
+        public decimal AverageRating { get; set; } = 0m;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -42,5 +46,6 @@ namespace TechGearShop_V1.Models.Entities
         public Category? Category { get; set; }
         public ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
         public ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
+        public ICollection<Review> Reviews { get; set; } = new List<Review>();
     }
 }

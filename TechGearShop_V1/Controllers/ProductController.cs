@@ -8,11 +8,13 @@ namespace TechGearShop_V1.Controllers
     {
         private readonly IProductService _productService;
         private readonly ICategoryService _categoryService;
+        private readonly IStockSubscriptionService _stockSubscriptionService;
 
-        public ProductController(IProductService productService, ICategoryService categoryService)
+        public ProductController(IProductService productService, ICategoryService categoryService, IStockSubscriptionService stockSubscriptionService)
         {
             _productService = productService;
             _categoryService = categoryService;
+            _stockSubscriptionService = stockSubscriptionService;
         }
 
         // GET: /Product?categoryId=1&keyword=abc&sortOrder=price_asc
@@ -62,6 +64,29 @@ namespace TechGearShop_V1.Controllers
             ViewBag.RelatedProducts = related.Where(p => p.Id != product.Id).Take(4).ToList();
 
             return View(product);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SubscribeStockNotification(int productId, string email)
+        {
+            int? userId = null;
+            if (User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier);
+                if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int uid))
+                {
+                    userId = uid;
+                }
+            }
+
+            if (!userId.HasValue && string.IsNullOrWhiteSpace(email))
+            {
+                return Json(new { success = false, message = "Vui lòng nhập Email để nhận thông báo." });
+            }
+
+            var result = await _stockSubscriptionService.SubscribeAsync(productId, userId, email);
+            
+            return Json(new { success = result.Success, message = result.Message });
         }
     }
 }
