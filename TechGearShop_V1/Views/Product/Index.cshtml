@@ -5,46 +5,95 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.css" />
+<style>
+    .noUi-connect { background: #6ea8fe; }
+    .noUi-handle {
+        border-radius: 50%;
+        background: #fff;
+        border: 2px solid #6ea8fe;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        cursor: pointer;
+    }
+    .noUi-horizontal { height: 6px; border-radius: 3px; border: none; background: #e9ecef; }
+    .noUi-horizontal .noUi-handle { width: 20px; height: 20px; right: -10px; top: -7px; }
+    .noUi-handle:before, .noUi-handle:after { display: none; } /* Ẩn 2 gạch trên cục trượt */
+</style>
+
 <div class="row">
-    <!-- Sidebar Bộ lọc -->
+    <!-- Nút Lọc Mobile -->
+    <div class="col-12 d-md-none mb-3">
+        <button class="btn btn-outline-primary w-100 fw-bold rounded-pill shadow-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#filterOffcanvas">
+            <i class="bi bi-funnel-fill me-2"></i> Lọc & Sắp xếp
+        </button>
+    </div>
+
+    <!-- Sidebar Bộ lọc (Desktop = Sidebar, Mobile = Offcanvas) -->
     <div class="col-md-3 mb-4">
-        <div class="card border-0 shadow-sm rounded-4 sticky-top" style="top: 2rem;">
-            <div class="card-header bg-white border-bottom-0 pt-4 pb-2">
-                <h5 class="fw-bold mb-0"><i class="bi bi-funnel-fill text-primary"></i> Bộ Lọc Tìm Kiếm</h5>
+        <div class="offcanvas-md offcanvas-start border-0 shadow-sm rounded-4 rounded-md-4" tabindex="-1" id="filterOffcanvas">
+            <div class="offcanvas-header bg-light rounded-top-4 border-bottom">
+                <h5 class="offcanvas-title fw-bold text-dark"><i class="bi bi-funnel-fill text-primary me-2"></i> Bộ Lọc Tìm Kiếm</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#filterOffcanvas" aria-label="Close"></button>
             </div>
-            <div class="card-body">
-                <form asp-controller="Product" asp-action="Index" method="get" id="filterForm">
+            <div class="offcanvas-body flex-column bg-white p-4 rounded-bottom-4 sticky-md-top" style="top: 2rem;">
+                <form id="filterForm" onsubmit="applyFilters(event)">
                     
                     <!-- Search Keyword -->
                     <div class="mb-4">
-                        <label class="form-label fw-semibold">Tên sản phẩm</label>
-                        <div class="input-group">
-                            <input type="text" name="keyword" class="form-control bg-light" value="@Model.CurrentKeyword" placeholder="VD: Laptop, Chuột...">
-                            <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i></button>
+                        <label class="form-label fw-bold text-dark fs-6">Tên sản phẩm</label>
+                        <div class="input-group shadow-sm" style="border-radius: 12px; overflow: hidden;">
+                            <span class="input-group-text bg-light border-0"><i class="bi bi-search text-muted"></i></span>
+                            <input type="text" name="keyword" class="form-control bg-light border-0 ps-0 shadow-none" value="@Model.CurrentKeyword" placeholder="Laptop, chuột...">
                         </div>
                     </div>
 
                     <!-- Category Filter -->
                     <div class="mb-4">
-                        <label class="form-label fw-semibold">Danh mục</label>
-                        <div class="d-flex flex-column gap-2">
+                        <label class="form-label fw-bold text-dark fs-6">Danh mục</label>
+                        <div class="d-flex flex-column gap-2 mt-1">
                             <div class="form-check custom-radio">
-                                <input class="form-check-input" type="radio" name="categoryId" id="catAll" value="" @(Model.CurrentCategoryId == null ? "checked" : "") onchange="this.form.submit()">
-                                <label class="form-check-label" for="catAll">Tất cả sản phẩm</label>
+                                <input class="form-check-input" type="radio" name="categoryId" id="catAll" value="" @(Model.CurrentCategoryId == null ? "checked" : "") onchange="applyFilters()">
+                                <label class="form-check-label text-secondary fw-semibold" for="catAll">Tất cả sản phẩm</label>
                             </div>
                             @foreach (var cat in Model.Categories)
                             {
                                 <div class="form-check custom-radio">
-                                    <input class="form-check-input" type="radio" name="categoryId" id="cat_@cat.Id" value="@cat.Id" @(Model.CurrentCategoryId == cat.Id ? "checked" : "") onchange="this.form.submit()">
-                                    <label class="form-check-label" for="cat_@cat.Id">@cat.Name</label>
+                                    <input class="form-check-input" type="radio" name="categoryId" id="cat_@cat.Id" value="@cat.Id" @(Model.CurrentCategoryId == cat.Id ? "checked" : "") onchange="applyFilters()">
+                                    <label class="form-check-label text-secondary fw-semibold" for="cat_@cat.Id">@cat.Name</label>
                                 </div>
                             }
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-outline-dark w-100 fw-bold d-md-none">Áp dụng lọc</button>
-                    <!-- Lưu luôn state sort nếu user đang chọn sort để không bị reset khi chọn Category -->
+                    <!-- Price Filter -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark fs-6 mb-3">Khoảng giá (VNĐ)</label>
+                        <div class="px-2 mb-4 mt-2">
+                            <div id="price-slider"></div>
+                        </div>
+                        <div class="row g-2 mb-3 align-items-center">
+                            <div class="col-5">
+                                <input type="number" name="minPrice" id="minPriceInput" class="form-control form-control-sm text-center fw-bold text-primary bg-light border-0" value="@Model.MinPrice" placeholder="0" min="0" max="100000000" oninput="this.value = Math.abs(this.value)">
+                            </div>
+                            <div class="col-2 text-center text-muted fw-bold">-</div>
+                            <div class="col-5">
+                                <input type="number" name="maxPrice" id="maxPriceInput" class="form-control form-control-sm text-center fw-bold text-primary bg-light border-0" value="@Model.MaxPrice" placeholder="Tối đa" min="0" max="100000000" oninput="this.value = Math.abs(this.value)">
+                            </div>
+                        </div>
+                        
+                        <button type="button" class="btn btn-primary btn-sm w-100 rounded-pill fw-bold shadow-sm" onclick="applyFilters()"><i class="bi bi-check2-circle me-1"></i> Áp dụng giá</button>
+                    </div>
+
+                    <hr class="text-muted opacity-25">
+
+                    <!-- Nút Xóa Lọc -->
+                    <button type="button" class="btn btn-light w-100 fw-bold rounded-pill text-danger shadow-sm border" onclick="clearFilters()">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i> Đặt lại bộ lọc
+                    </button>
+
+                    <!-- Hidden fields -->
                     <input type="hidden" name="sortOrder" id="hiddenSort" value="@Model.CurrentSortOrder" />
+                    <input type="hidden" name="page" id="hiddenPage" value="@Model.CurrentPage" />
                 </form>
             </div>
         </div>
@@ -52,26 +101,20 @@
 
     <!-- Danh sách hiển thị -->
     <div class="col-md-9">
-        <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded-4 shadow-sm border-0">
-            <h5 class="mb-0 fw-bold">
-                @if(!string.IsNullOrEmpty(Model.CurrentKeyword))
-                {
-                    <span>Kết quả tìm kiếm cho: <span class="text-primary">"@Model.CurrentKeyword"</span></span>
-                }
-                else if (Model.CurrentCategoryId.HasValue)
-                {
-                    <span>Danh mục: <span class="text-primary">@Model.Categories.FirstOrDefault(c => c.Id == Model.CurrentCategoryId)?.Name</span></span>
-                }
-                else
-                {
-                    <span>Tất cả sản phẩm</span>
-                }
-                <small class="text-muted fs-6 ms-2">(@Model.Products.Count() sản phẩm)</small>
-            </h5>
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 bg-white p-3 rounded-4 shadow-sm border gap-3 position-relative overflow-hidden">
+            <div class="position-relative z-1">
+                <h5 class="mb-1 fw-bold text-dark d-flex align-items-center">
+                    <i class="bi bi-boxes text-primary me-2 fs-4"></i> Danh sách sản phẩm
+                </h5>
+                <div id="activeFiltersContainer" class="d-flex flex-wrap gap-2 mt-2">
+                    <!-- JS sẽ render các thẻ filter đang chọn ở đây -->
+                </div>
+            </div>
             
-            <div class="d-flex align-items-center">
-                <span class="me-2 fw-semibold text-muted text-nowrap">Sắp xếp:</span>
-                <select class="form-select bg-light border-0 fw-semibold" style="width: 170px; cursor: pointer;" id="sortSelect" onchange="applySort(this.value)">
+            <div class="d-flex align-items-center bg-white border px-3 py-2 rounded-pill shadow-sm position-relative z-1">
+                <i class="bi bi-sort-down text-primary me-2"></i>
+                <span class="me-2 fw-semibold text-muted text-nowrap fs-7">Sắp xếp:</span>
+                <select class="form-select form-select-sm bg-transparent border-0 fw-bold text-dark shadow-none" style="width: auto; cursor: pointer; padding-left: 0; outline: none;" id="sortSelect" onchange="changeSort(this.value)">
                     <option value="" selected="@(string.IsNullOrEmpty(Model.CurrentSortOrder))">Mới nhất</option>
                     <option value="price_asc" selected="@(Model.CurrentSortOrder == "price_asc")">Giá thấp đến cao</option>
                     <option value="price_desc" selected="@(Model.CurrentSortOrder == "price_desc")">Giá cao đến thấp</option>
@@ -80,37 +123,230 @@
             </div>
         </div>
 
-        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
-            @if (!Model.Products.Any())
-            {
-                <div class="col-12 text-center py-5">
-                    <img src="https://cdni.iconscout.com/illustration/premium/thumb/empty-state-2130362-1800926.png" width="200" alt="Not found">
-                    <h4 class="mt-3 text-secondary">Rất tiếc, không tìm thấy sản phẩm nào!</h4>
-                    <p class="text-muted">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm nhé.</p>
-                </div>
-            }
-            else
-            {
-                @foreach (var product in Model.Products)
-                {
-                    <div class="col">
-                        <partial name="_ProductCard" model="product" />
+        <!-- Vùng hiển thị Lưới Sản phẩm -->
+        <div id="productGridContainer" class="position-relative" style="min-height: 400px;">
+            <!-- Overlay Loading đẹp mắt -->
+            <div id="loadingOverlay" class="position-absolute top-0 start-0 w-100 h-100 bg-white bg-opacity-75 d-none justify-content-center align-items-start pt-5" style="z-index: 10; backdrop-filter: blur(2px); border-radius: 16px;">
+                <div class="d-flex flex-column align-items-center bg-white p-4 rounded-4 shadow-lg">
+                    <div class="spinner-border text-primary mb-3" style="width: 2.5rem; height: 2.5rem; border-width: 0.25rem;" role="status">
+                        <span class="visually-hidden">Loading...</span>
                     </div>
-                }
-            }
+                    <span class="fw-bold text-primary">Đang tải sản phẩm...</span>
+                </div>
+            </div>
+            
+            <div id="productGridContent">
+                <partial name="_ProductGrid" model="Model" />
+            </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.js"></script>
     <script>
-        function applySort(sortValue) {
-            // Lấy form filter bên trái
-            const form = document.getElementById("filterForm");
-            // Gán lại giá trị sort vào input hidden
+        var priceSlider;
+        
+        document.addEventListener("DOMContentLoaded", function() {
+            renderActiveFilters();
+            
+            // Khởi tạo noUiSlider
+            var sliderElement = document.getElementById('price-slider');
+            var minInput = document.getElementById('minPriceInput');
+            var maxInput = document.getElementById('maxPriceInput');
+            
+            var startMin = minInput.value ? parseInt(minInput.value) : 0;
+            var startMax = maxInput.value ? parseInt(maxInput.value) : 100000000; // 100 triệu
+            
+            noUiSlider.create(sliderElement, {
+                start: [startMin, startMax],
+                connect: true,
+                step: 500000,
+                range: {
+                    'min': 0,
+                    'max': 100000000
+                },
+                format: {
+                    to: function (value) { return Math.round(value); },
+                    from: function (value) { return Number(value); }
+                }
+            });
+            
+            priceSlider = sliderElement.noUiSlider;
+            
+            // Slider cập nhật Input
+            priceSlider.on('update', function (values, handle) {
+                var value = values[handle];
+                if (handle) { // max
+                    maxInput.value = value;
+                } else { // min
+                    minInput.value = value;
+                }
+            });
+
+            // Input cập nhật Slider
+            minInput.addEventListener('change', function () {
+                priceSlider.set([this.value, null]);
+            });
+            maxInput.addEventListener('change', function () {
+                priceSlider.set([null, this.value]);
+            });
+
+            // Xử lý nút back/forward của trình duyệt
+            window.addEventListener('popstate', function(event) {
+                // Khi back, load lại toàn trang để đơn giản hóa state
+                window.location.reload(); 
+            });
+        });
+
+        function changeSort(sortValue) {
             document.getElementById("hiddenSort").value = sortValue;
-            // Submit tổng hợp 1 lần (giữ cả keyword, category, sort)
-            form.submit();
+            document.getElementById("hiddenPage").value = 1; // Reset về trang 1 khi đổi sort
+            applyFilters();
+        }
+
+        function goToPage(page) {
+            document.getElementById("hiddenPage").value = page;
+            applyFilters();
+            // Scroll mượt lên đầu danh sách sản phẩm
+            document.getElementById("productGridContainer").scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function clearFilters() {
+            document.getElementById("filterForm").reset();
+            // Đặt lại radio "Tất cả sản phẩm"
+            document.getElementById("catAll").checked = true;
+            // Xóa input hidden
+            document.getElementById("hiddenSort").value = "";
+            document.getElementById("hiddenPage").value = 1;
+            // Xóa min max
+            document.getElementById('minPriceInput').value = "";
+            document.getElementById('maxPriceInput').value = "";
+            
+            // Reset slider
+            if (priceSlider) {
+                priceSlider.set([0, 100000000]);
+            }
+            
+            applyFilters();
+        }
+
+        function applyFilters(event) {
+            if (event) event.preventDefault();
+            
+            // Hiện loading overlay
+            document.getElementById("loadingOverlay").classList.remove("d-none");
+            document.getElementById("loadingOverlay").classList.add("d-flex");
+
+            const form = document.getElementById("filterForm");
+            const formData = new FormData(form);
+            const params = new URLSearchParams();
+
+            for (const [key, value] of formData.entries()) {
+                if (key === 'minPrice' && (!value || value === "0")) continue;
+                if (key === 'maxPrice' && (!value || value === "100000000")) continue;
+                if (value) { // Chỉ gởi những tham số có giá trị
+                    params.append(key, value);
+                }
+            }
+
+            // Gọi AJAX
+            const url = `/Product?${params.toString()}`;
+            
+            fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById("productGridContent").innerHTML = html;
+                
+                // Cập nhật URL trình duyệt (không reload)
+                window.history.pushState({}, "", url);
+                
+                // Ẩn loading overlay
+                setTimeout(() => {
+                    document.getElementById("loadingOverlay").classList.add("d-none");
+                    document.getElementById("loadingOverlay").classList.remove("d-flex");
+                }, 300); // Thêm delay nhỏ để UI không giật cục nếu load quá nhanh
+                
+                // Cập nhật thẻ hiển thị
+                renderActiveFilters();
+
+                // Đóng offcanvas trên mobile nếu đang mở
+                var filterOffcanvas = document.getElementById('filterOffcanvas');
+                if (filterOffcanvas) {
+                    var bsOffcanvas = bootstrap.Offcanvas.getInstance(filterOffcanvas);
+                    if (bsOffcanvas) {
+                        bsOffcanvas.hide();
+                    }
+                }
+            })
+            .catch(error => {
+                console.error("Error fetching products:", error);
+                document.getElementById("loadingOverlay").classList.add("d-none");
+                alert("Có lỗi xảy ra khi tải dữ liệu.");
+            });
+        }
+
+        function renderActiveFilters() {
+            const container = document.getElementById("activeFiltersContainer");
+            container.innerHTML = "";
+            
+            const formData = new FormData(document.getElementById("filterForm"));
+            let hasFilter = false;
+            
+            // Keyword
+            const keyword = formData.get("keyword");
+            if (keyword) {
+                hasFilter = true;
+                container.innerHTML += `<span class="badge bg-white text-dark border shadow-sm px-3 py-2 rounded-pill fs-7 fw-semibold d-flex align-items-center"><i class="bi bi-search text-muted me-2"></i> ${keyword} <i class="bi bi-x-circle-fill ms-2 text-danger fs-6" style="cursor:pointer" onclick="removeFilter('keyword')"></i></span>`;
+            }
+
+            // Category
+            const catRadio = document.querySelector('input[name="categoryId"]:checked');
+            if (catRadio && catRadio.value !== "") {
+                hasFilter = true;
+                const catName = catRadio.nextElementSibling.innerText;
+                container.innerHTML += `<span class="badge bg-white text-dark border shadow-sm px-3 py-2 rounded-pill fs-7 fw-semibold d-flex align-items-center"><i class="bi bi-folder2-open text-primary me-2"></i> ${catName} <i class="bi bi-x-circle-fill ms-2 text-danger fs-6" style="cursor:pointer" onclick="removeFilter('category')"></i></span>`;
+            }
+
+            // Price
+            let minPrice = formData.get("minPrice");
+            let maxPrice = formData.get("maxPrice");
+            if (minPrice === "0") minPrice = "";
+            if (maxPrice === "100000000") maxPrice = "";
+            
+            if (minPrice || maxPrice) {
+                hasFilter = true;
+                let text = "";
+                if (minPrice && !maxPrice) text += `Từ ${new Intl.NumberFormat('vi-VN').format(minPrice)}đ`;
+                if (!minPrice && maxPrice) text += `Đến ${new Intl.NumberFormat('vi-VN').format(maxPrice)}đ`;
+                if (minPrice && maxPrice) text += `${new Intl.NumberFormat('vi-VN').format(minPrice)}đ - ${new Intl.NumberFormat('vi-VN').format(maxPrice)}đ`;
+                
+                container.innerHTML += `<span class="badge bg-white text-dark border shadow-sm px-3 py-2 rounded-pill fs-7 fw-semibold d-flex align-items-center"><i class="bi bi-cash-stack text-success me-2"></i> ${text} <i class="bi bi-x-circle-fill ms-2 text-danger fs-6" style="cursor:pointer" onclick="removeFilter('price')"></i></span>`;
+            }
+            
+            if (!hasFilter) {
+                container.innerHTML = `<span class="text-muted small fw-medium"><i class="bi bi-info-circle me-1"></i>Đang hiển thị tất cả</span>`;
+            }
+        }
+
+        function removeFilter(type) {
+            if (type === 'keyword') {
+                document.querySelectorAll('input[name="keyword"]').forEach(el => el.value = "");
+            } else if (type === 'category') {
+                document.getElementById("catAll").checked = true;
+            } else if (type === 'price') {
+                document.getElementById('minPriceInput').value = "";
+                document.getElementById('maxPriceInput').value = "";
+                if (priceSlider) {
+                    priceSlider.set([0, 100000000]);
+                }
+            }
+            document.getElementById("hiddenPage").value = 1;
+            applyFilters();
         }
     </script>
 }

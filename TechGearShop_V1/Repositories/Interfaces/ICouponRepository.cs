@@ -5,5 +5,9 @@ namespace TechGearShop_V1.Repositories.Interfaces
     public interface ICouponRepository : IGenericRepository<Coupon>
     {
         Task<Coupon?> GetByCodeAsync(string code);
+        Task<IEnumerable<Coupon>> GetAllWithUsageAsync();
+        Task<bool> HasUserUsedCouponAsync(int couponId, int userId);
+        Task AddCouponUsageAsync(CouponUsage usage);
+        Task IncrementUsageCountAsync(int couponId);
     }
 }

@@ -17,20 +17,32 @@ namespace TechGearShop_V1.Controllers
             _stockSubscriptionService = stockSubscriptionService;
         }
 
-        // GET: /Product?categoryId=1&keyword=abc&sortOrder=price_asc
-        public async Task<IActionResult> Index(int? categoryId, string? keyword, string? sortOrder)
+        // GET: /Product?categoryId=1&keyword=abc&sortOrder=price_asc&page=1&minPrice=1000&maxPrice=5000
+        public async Task<IActionResult> Index(int? categoryId, string? keyword, string? sortOrder, int page = 1, decimal? minPrice = null, decimal? maxPrice = null)
         {
-            var products = await _productService.FilterProductsAsync(categoryId, keyword, sortOrder);
+            int pageSize = 12; // Mặc định 12 sản phẩm mỗi trang cho giao diện Client
+            var result = await _productService.FilterProductsAsync(categoryId, keyword, sortOrder, page, pageSize, minPrice, maxPrice);
             var categories = await _categoryService.GetActiveCategoriesAsync();
 
             var model = new ProductListViewModel
             {
-                Products = products,
+                Products = result.Products,
                 Categories = categories,
                 CurrentCategoryId = categoryId,
                 CurrentKeyword = keyword,
-                CurrentSortOrder = sortOrder
+                CurrentSortOrder = sortOrder,
+                MinPrice = minPrice,
+                MaxPrice = maxPrice,
+                CurrentPage = page,
+                PageSize = pageSize,
+                TotalItems = result.TotalItems,
+                TotalPages = (int)Math.Ceiling(result.TotalItems / (double)pageSize)
             };
+
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return PartialView("_ProductGrid", model);
+            }
 
             return View(model);
         }

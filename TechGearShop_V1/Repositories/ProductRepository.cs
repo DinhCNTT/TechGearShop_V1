@@ -73,7 +73,7 @@ namespace TechGearShop_V1.Repositories
             }
         }
 
-        public async Task<IEnumerable<Product>> FilterProductsAsync(int? categoryId, string? keyword, string? sortOrder)
+        public async Task<(IEnumerable<Product> Products, int TotalItems)> FilterProductsAsync(int? categoryId, string? keyword, string? sortOrder, int page = 1, int pageSize = 12, decimal? minPrice = null, decimal? maxPrice = null)
         {
             var query = _dbSet.Include(p => p.Category).Where(p => p.IsActive && p.Category.IsActive).AsQueryable();
 
@@ -87,6 +87,16 @@ namespace TechGearShop_V1.Repositories
                 var lowerKeyword = keyword.ToLower();
                 query = query.Where(p => p.Name.ToLower().Contains(lowerKeyword) || (p.Brand != null && p.Brand.ToLower().Contains(lowerKeyword)));
             }
+            
+            if (minPrice.HasValue)
+            {
+                query = query.Where(p => p.Price >= minPrice.Value);
+            }
+            
+            if (maxPrice.HasValue)
+            {
+                query = query.Where(p => p.Price <= maxPrice.Value);
+            }
 
             query = sortOrder switch
             {
@@ -96,8 +106,11 @@ namespace TechGearShop_V1.Repositories
                 "name_desc" => query.OrderByDescending(p => p.Name),
                 _ => query.OrderByDescending(p => p.CreatedAt) // Mặc định là Mới nhất
             };
+            
+            var totalItems = await query.CountAsync();
+            var products = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
 
-            return await query.ToListAsync();
+            return (products, totalItems);
         }
     }
 }

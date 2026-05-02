@@ -125,6 +125,13 @@ namespace TechGearShop_V1.Services.Background
                 await db.SaveChangesAsync(ct);
                 await transaction.CommitAsync(ct);
 
+                // ── Bước 2b: Ghi nhận coupon usage (sau khi đơn hàng đã commit) ─────
+                if (!string.IsNullOrEmpty(request.CouponCode))
+                {
+                    var couponService = scope.ServiceProvider.GetRequiredService<ICouponService>();
+                    await couponService.RecordUsageAsync(request.CouponCode, request.UserId, order.Id);
+                }
+
                 _logger.LogInformation(
                     "[OrderProcessor] ✅ Đơn hàng #{OrderId} đã được tạo — UserId={UserId}",
                     order.Id, request.UserId);

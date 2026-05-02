@@ -1,0 +1,7 @@
+@model TechGearShop_V1.Models.DTOs.CouponFormDto
+@{
+    ViewData["Title"] = $"Chỉnh sửa - {Model.Code}";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+    ViewBag.CouponId = ViewBag.CouponId;
+}
+<partial name="Create" model="Model" />

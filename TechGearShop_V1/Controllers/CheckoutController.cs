@@ -108,25 +108,21 @@ namespace TechGearShop_V1.Controllers
             if (!cart.Any())
                 return Json(new { success = false, message = "Giỏ hàng trống." });
 
-            decimal subTotal = cart.Sum(c => c.Price * c.Quantity);
+            decimal subTotal    = cart.Sum(c => c.Price * c.Quantity);
+            decimal shippingFee = 30000;
+            int? userId         = GetUserId();
 
-            try
+            var result = await _couponService.ValidateCouponAsync(code, subTotal, shippingFee, userId);
+            if (!result.IsValid)
+                return Json(new { success = false, message = result.Message });
+
+            return Json(new
             {
-                var coupon = await _couponService.GetValidCouponAsync(code, subTotal);
-                if (coupon == null)
-                    return Json(new { success = false, message = "Mã không hợp lệ hoặc hết hạn." });
-
-                decimal discount = coupon.IsPercentage
-                    ? (subTotal * coupon.DiscountValue) / 100
-                    : coupon.DiscountValue;
-
-                if (discount > subTotal) discount = subTotal;
-                return Json(new { success = true, discount, message = "Áp dụng mã thành công!" });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
+                success          = true,
+                discount         = result.DiscountAmount,
+                shippingDiscount = result.ShippingDiscount,
+                message          = result.Message
+            });
         }
 
         // POST: /Checkout/PlaceOrder
@@ -165,19 +161,20 @@ namespace TechGearShop_V1.Controllers
             // ── Tái xác thực Coupon ở Backend để chống giả mạo ──────────────────────
             if (!string.IsNullOrEmpty(model.CouponCode))
             {
-                try
+                var result = await _couponService.ValidateCouponAsync(
+                    model.CouponCode, model.SubTotal, model.ShippingFee, userId);
+
+                if (result.IsValid)
                 {
-                    var coupon = await _couponService.GetValidCouponAsync(model.CouponCode, model.SubTotal);
-                    if (coupon != null)
-                    {
-                        decimal calcDiscount = coupon.IsPercentage
-                            ? (model.SubTotal * coupon.DiscountValue) / 100
-                            : coupon.DiscountValue;
-                        if (calcDiscount > model.SubTotal) calcDiscount = model.SubTotal;
-                        model.DiscountAmount = calcDiscount;
-                    }
+                    model.DiscountAmount = result.DiscountAmount;
+                    // Điều chỉnh phí ship nếu là FreeShipping coupon
+                    if (result.ShippingDiscount > 0)
+                        model.ShippingFee = Math.Max(0, model.ShippingFee - result.ShippingDiscount);
                 }
-                catch { /* Mã coupon lỗi thì bỏ qua discount, không chặn đơn hàng */ }
+                else
+                {
+                    model.DiscountAmount = 0; // Coupon không hợp lệ ở backend → bỏ qua discount
+                }
             }
 
             // ── Đóng gói và đẩy vào Channel ─────────────────────────────────────────

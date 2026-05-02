@@ -11,7 +11,10 @@ namespace TechGearShop_V1.Models.ViewModels
         public int? CurrentCategoryId { get; set; }
         public string? CurrentKeyword { get; set; }
         public string? CurrentSortOrder { get; set; }
-        // Pagination cho Admin
+        public decimal? MinPrice { get; set; }
+        public decimal? MaxPrice { get; set; }
+        
+        // Pagination
         public int CurrentPage { get; set; } = 1;
         public int PageSize { get; set; } = 10;
         public int TotalItems { get; set; }

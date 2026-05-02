@@ -1,0 +1,254 @@
+@model IEnumerable<TechGearShop_V1.Models.Entities.Coupon>
+@using TechGearShop_V1.Models.Entities
+@{
+    ViewData["Title"] = "Quản lý Mã giảm giá";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+
+    string? search = ViewBag.Search as string;
+    string? filter = ViewBag.Filter as string;
+
+    string GetStatusBadge(Coupon c)
+    {
+        if (!c.IsActive) return "<span class='badge-coupon bg-slate'>Đã tắt</span>";
+        if (c.IsNotStarted) return "<span class='badge-coupon bg-violet'>Chưa bắt đầu</span>";
+        if (c.IsExpired) return "<span class='badge-coupon bg-red'>Hết hạn</span>";
+        if (c.IsExhausted) return "<span class='badge-coupon bg-orange'>Hết lượt</span>";
+        return "<span class='badge-coupon bg-green'>Đang hoạt động</span>";
+    }
+
+    string GetTypeLabel(Coupon c) => c.DiscountType switch
+    {
+        DiscountType.Percentage   => $"<i class='bi bi-percent me-1'></i>{c.DiscountValue:0.##}%",
+        DiscountType.FixedAmount  => $"<i class='bi bi-cash-stack me-1'></i>{c.DiscountValue:N0}đ",
+        DiscountType.FreeShipping => "<i class='bi bi-truck me-1'></i>Free ship",
+        _                         => c.DiscountType.ToString()
+    };
+}
+
+<style>
+    .badge-coupon { font-size: 0.72rem; font-weight: 600; padding: 4px 10px; border-radius: 6px; display:inline-block; }
+    .bg-green   { background: #d1fae5; color: #065f46; }
+    .bg-red     { background: #fee2e2; color: #991b1b; }
+    .bg-orange  { background: #fff7ed; color: #9a3412; }
+    .bg-slate   { background: #f1f5f9; color: #475569; }
+    .bg-violet  { background: #ede9fe; color: #5b21b6; }
+    .code-pill  {
+        background: #0f172a; color: #38bdf8; font-family: monospace;
+        padding: 3px 10px; border-radius: 6px; font-size: 0.8rem; letter-spacing: 0.05em;
+        display: inline-flex; align-items: center; gap: 5px;
+    }
+    .filter-btn { border-radius: 20px; padding: 5px 16px; font-size: 0.82rem; font-weight: 500; border: 1.5px solid #e2e8f0; }
+    .filter-btn.active { background: #0f172a; color: #fff; border-color: #0f172a; }
+    .toggle-switch { position: relative; display: inline-block; width: 40px; height: 22px; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; cursor: pointer; top:0; left:0; right:0; bottom:0; background:#cbd5e1; border-radius:22px; transition:.3s; }
+    .toggle-slider:before { position:absolute; content:""; height:16px; width:16px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.3s; }
+    input:checked + .toggle-slider { background: #22c55e; }
+    input:checked + .toggle-slider:before { transform: translateX(18px); }
+    .usage-bar { height: 4px; background: #e2e8f0; border-radius: 2px; min-width: 60px; }
+    .usage-bar-fill { height: 100%; border-radius: 2px; background: #3b82f6; transition: width 0.3s; }
+</style>
+
+<div class="page-header">
+    <div>
+        <h1><i class="bi bi-tag-fill me-2 text-primary"></i>Mã Giảm Giá</h1>
+        <p class="text-muted mb-0 mt-1" style="font-size:0.875rem;">Quản lý toàn bộ coupon và chương trình khuyến mãi</p>
+    </div>
+    <a href="/Admin/Coupon/Create" class="btn-admin-primary btn">
+        <i class="bi bi-plus-circle-fill me-1"></i> Tạo mã mới
+    </a>
+</div>
+
+<!-- Filter & Search Bar -->
+<div class="bg-white rounded-3 p-3 mb-4 d-flex flex-wrap align-items-center gap-3 shadow-sm border">
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="/Admin/Coupon" class="btn filter-btn @(filter == null ? "active" : "")">Tất cả (@Model.Count())</a>
+        <a href="/Admin/Coupon?filter=active" class="btn filter-btn @(filter == "active" ? "active" : "")">
+            <i class="bi bi-check-circle me-1"></i> Đang hoạt động
+        </a>
+        <a href="/Admin/Coupon?filter=expired" class="btn filter-btn @(filter == "expired" ? "active" : "")">
+            <i class="bi bi-clock-history me-1"></i> Hết hạn
+        </a>
+        <a href="/Admin/Coupon?filter=inactive" class="btn filter-btn @(filter == "inactive" ? "active" : "")">
+            <i class="bi bi-toggle-off me-1"></i> Đã tắt
+        </a>
+    </div>
+    <form method="get" action="/Admin/Coupon" class="ms-auto d-flex gap-2">
+        <input type="hidden" name="filter" value="@filter" />
+        <input type="text" name="search" value="@search" class="form-control form-control-sm" style="width:220px; border-radius:8px;" placeholder="Tìm mã hoặc mô tả...">
+        <button type="submit" class="btn btn-sm btn-primary px-3" style="border-radius:8px;"><i class="bi bi-search"></i></button>
+    </form>
+</div>
+
+<!-- Table -->
+<div class="admin-table-wrap shadow-sm">
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-tag-fill fs-1 mb-3 d-block opacity-25"></i>
+            <h5>Chưa có mã giảm giá nào</h5>
+            <p class="mb-3 small">Bắt đầu tạo mã để kích cầu mua sắm</p>
+            <a href="/Admin/Coupon/Create" class="btn-admin-primary btn btn-sm"><i class="bi bi-plus-circle-fill me-1"></i> Tạo ngay</a>
+        </div>
+    }
+    else
+    {
+        <table class="table admin-table mb-0">
+            <thead>
+                <tr>
+                    <th>Mã Coupon</th>
+                    <th>Loại & Giá trị</th>
+                    <th>Đơn tối thiểu</th>
+                    <th>Lượt dùng</th>
+                    <th>Hiệu lực</th>
+                    <th>Trạng thái</th>
+                    <th>Bật/Tắt</th>
+                    <th class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var c in Model)
+                {
+                    int pct = (c.UsageLimit.HasValue && c.UsageLimit > 0)
+                        ? (int)Math.Min(100, c.UsageCount * 100.0 / c.UsageLimit.Value)
+                        : 0;
+
+                    <tr id="coupon-row-@c.Id">
+                        <td>
+                            <span class="code-pill">
+                                <i class="bi bi-ticket-perforated-fill"></i>
+                                @c.Code
+                            </span>
+                            @if (!string.IsNullOrEmpty(c.Description))
+                            {
+                                <div class="text-muted small mt-1" style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">@c.Description</div>
+                            }
+                        </td>
+                        <td class="fw-semibold text-primary">@Html.Raw(GetTypeLabel(c))</td>
+                        <td>
+                            @if (c.MinOrderValue > 0)
+                            {
+                                <span class="text-muted small">≥ @c.MinOrderValue.ToString("N0")đ</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted small fst-italic">Không yêu cầu</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fw-semibold">@c.UsageCount</span>
+                                @if (c.UsageLimit.HasValue)
+                                {
+                                    <span class="text-muted">/ @c.UsageLimit</span>
+                                    <div class="usage-bar">
+                                        <div class="usage-bar-fill" style="width:@pct%"></div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small fst-italic">∞</span>
+                                }
+                            </div>
+                        </td>
+                        <td style="font-size:0.8rem;">
+                            <div><i class="bi bi-play-circle text-success me-1"></i>@c.StartDate.ToLocalTime().ToString("dd/MM/yy")</div>
+                            <div><i class="bi bi-stop-circle text-danger me-1"></i>@c.ExpiryDate.ToLocalTime().ToString("dd/MM/yy")</div>
+                        </td>
+                        <td>@Html.Raw(GetStatusBadge(c))</td>
+                        <td>
+                            <label class="toggle-switch" title="@(c.IsActive ? "Đang bật — nhấn để tắt" : "Đang tắt — nhấn để bật")">
+                                <input type="checkbox" @(c.IsActive ? "checked" : "") onchange="toggleCoupon(@c.Id, this)">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </td>
+                        <td class="text-end">
+                            <a href="/Admin/Coupon/Edit/@c.Id" class="btn-icon btn-icon-edit" title="Chỉnh sửa">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+                            <form method="post" action="/Admin/Coupon/Delete/@c.Id" style="display:inline;"
+                                  onsubmit="return confirm('Xóa mã @c.Code? Thao tác này không thể hoàn tác.')">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn-icon btn-icon-delete" title="Xóa">
+                                    <i class="bi bi-trash3-fill"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@section Scripts {
+<!-- Hidden form chứa antiforgery token cho AJAX toggle -->
+<form id="__af" style="display:none">@Html.AntiForgeryToken()</form>
+
+<script>
+    function getAntiForgeryToken() {
+        return document.querySelector('#__af input[name="__RequestVerificationToken"]')?.value ?? '';
+    }
+
+    async function toggleCoupon(id, checkbox) {
+        const token = getAntiForgeryToken();
+        if (!token) {
+            alert('Không lấy được security token. Hãy tải lại trang.');
+            checkbox.checked = !checkbox.checked;
+            return;
+        }
+
+        // Disable toggle trong lúc chờ response để tránh double-click
+        checkbox.disabled = true;
+
+        try {
+            const res = await fetch(`/Admin/Coupon/Toggle/${id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `__RequestVerificationToken=${encodeURIComponent(token)}`
+            });
+
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+
+            if (data.success) {
+                // ── Cập nhật UI realtime ──────────────────────────────────
+                const row = document.getElementById(`coupon-row-${id}`);
+
+                // 1. Cập nhật badge trạng thái
+                const badge = row?.querySelector('td:nth-child(6) .badge-coupon');
+                if (badge) {
+                    badge.className = `badge-coupon ${data.statusCss}`;
+                    badge.textContent = data.statusLabel;
+
+                    // Hiệu ứng flash để báo hiệu đã thay đổi
+                    badge.style.transition = 'all 0.3s ease';
+                    badge.style.transform = 'scale(1.15)';
+                    setTimeout(() => badge.style.transform = 'scale(1)', 300);
+                }
+
+                // 2. Cập nhật tooltip của toggle switch
+                const label = checkbox.closest('label');
+                if (label) {
+                    label.title = data.isActive
+                        ? 'Đang bật — nhấn để tắt'
+                        : 'Đang tắt — nhấn để bật';
+                }
+
+                // 3. Làm mờ nhẹ row nếu mã bị tắt
+                if (row) {
+                    row.style.transition = 'opacity 0.3s ease';
+                    row.style.opacity = data.isActive ? '1' : '0.6';
+                }
+            } else {
+                // Rollback nếu server báo lỗi
+                checkbox.checked = !checkbox.checked;
+            }
+        } catch {
+            checkbox.checked = !checkbox.checked;
+        } finally {
+            checkbox.disabled = false; // Luôn re-enable toggle
+        }
+    }
+</script>
+}

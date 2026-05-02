@@ -1,0 +1,321 @@
+@model TechGearShop_V1.Models.DTOs.CouponFormDto
+@using TechGearShop_V1.Models.Entities
+@{
+    ViewData["Title"] = "Tạo Mã Giảm Giá";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+    bool isEdit = ViewBag.CouponId != null;
+    string pageTitle = isEdit ? "Chỉnh sửa Mã Giảm Giá" : "Tạo Mã Giảm Giá Mới";
+    string formAction = isEdit ? $"/Admin/Coupon/Edit/{ViewBag.CouponId}" : "/Admin/Coupon/Create";
+}
+
+<style>
+    .form-card { background: #fff; border-radius: 16px; padding: 28px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid #f1f5f9; }
+    .form-label { font-size: 0.8rem; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+    .form-control, .form-select {
+        border: 1.5px solid #e2e8f0; border-radius: 10px;
+        padding: 10px 14px; font-size: 0.9rem; transition: all 0.2s;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+    }
+    .form-control.is-invalid, .form-select.is-invalid { border-color: #ef4444; }
+    .type-btn { border: 2px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; cursor: pointer; transition: all 0.2s; text-align:center; }
+    .type-btn:hover { border-color: #3b82f6; background: #eff6ff; }
+    .type-btn.selected { border-color: #3b82f6; background: #eff6ff; color: #1d4ed8; }
+    .type-btn i { font-size: 1.5rem; display:block; margin-bottom:6px; }
+    .hint { font-size: 0.78rem; color: #94a3b8; margin-top: 4px; }
+    .section-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9; margin-bottom: 16px; }
+    .code-preview { font-family: monospace; font-size: 1.1rem; font-weight: 700; color: #0f172a; letter-spacing: 0.1em; }
+    /* Ẩn mũi tên spinner trên input number */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; }
+</style>
+
+<div class="page-header">
+    <div>
+        <h1><i class="bi bi-@(isEdit ? "pencil-square" : "plus-circle-fill") me-2 text-primary"></i>@pageTitle</h1>
+        <p class="text-muted mb-0 mt-1 small">
+            <a href="/Admin/Coupon" class="text-decoration-none text-muted"><i class="bi bi-arrow-left me-1"></i>Quay lại danh sách</a>
+        </p>
+    </div>
+    @if (isEdit)
+    {
+        <div class="text-muted small">Đã dùng: <strong>@ViewBag.UsageCount lượt</strong></div>
+    }
+</div>
+
+<form method="post" action="@formAction" id="couponForm">
+    @Html.AntiForgeryToken()
+
+    <div class="row g-4">
+        <!-- Left Column -->
+        <div class="col-lg-8">
+
+            <!-- Thông tin cơ bản -->
+            <div class="form-card mb-4">
+                <div class="section-title">Thông tin cơ bản</div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Mã giảm giá <span class="text-danger">*</span></label>
+                        <input asp-for="Code" class="form-control fw-bold" placeholder="VD: SUMMER2025"
+                               style="text-transform: uppercase; letter-spacing: 0.1em;"
+                               oninput="this.value = this.value.toUpperCase(); updatePreview()">
+                        <span asp-validation-for="Code" class="text-danger small"></span>
+                        <div class="hint">Chỉ dùng chữ IN HOA, số, dấu _ và -</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Mô tả nội bộ</label>
+                        <input asp-for="Description" class="form-control" placeholder="Ghi chú cho admin...">
+                        <span asp-validation-for="Description" class="text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loại giảm giá -->
+            <div class="form-card mb-4">
+                <div class="section-title">Loại giảm giá <span class="text-danger">*</span></div>
+                <div class="row g-3 mb-3" id="typeButtonGroup">
+                    <div class="col-4">
+                        <div class="type-btn @(Model.DiscountType == DiscountType.Percentage ? "selected" : "")"
+                             onclick="selectType(0, this)">
+                            <i class="bi bi-percent text-primary"></i>
+                            <div class="fw-semibold">Theo phần trăm</div>
+                            <small class="text-muted">VD: Giảm 20%</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="type-btn @(Model.DiscountType == DiscountType.FixedAmount ? "selected" : "")"
+                             onclick="selectType(1, this)">
+                            <i class="bi bi-cash-stack text-success"></i>
+                            <div class="fw-semibold">Số tiền cố định</div>
+                            <small class="text-muted">VD: Giảm 50.000đ</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="type-btn @(Model.DiscountType == DiscountType.FreeShipping ? "selected" : "")"
+                             onclick="selectType(2, this)">
+                            <i class="bi bi-truck text-warning"></i>
+                            <div class="fw-semibold">Miễn phí ship</div>
+                            <small class="text-muted">Giảm 100% phí ship</small>
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" asp-for="DiscountType" id="discountTypeInput">
+
+                <!-- Giá trị giảm — ẩn với FreeShipping -->
+                <div id="valueSection">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label" id="valueLabel">Giá trị giảm <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="text" id="DiscountValue_display" class="form-control" placeholder="0"
+                                       inputmode="numeric" autocomplete="off"
+                                       oninput="formatVnd(this, 'DiscountValue')">
+                                <input type="hidden" asp-for="DiscountValue" id="DiscountValue">
+                                <span class="input-group-text" id="valueUnit" style="border-radius: 0 10px 10px 0; border: 1.5px solid #e2e8f0; border-left: none;">%</span>
+                            </div>
+                            <span asp-validation-for="DiscountValue" class="text-danger small"></span>
+                        </div>
+                        <!-- Max discount — chỉ hiện với % -->
+                        <div class="col-md-6" id="maxDiscountSection">
+                            <label class="form-label">Giảm tối đa</label>
+                            <div class="input-group">
+                                <input type="text" id="MaxDiscountAmount_display" class="form-control" placeholder="Không giới hạn"
+                                       inputmode="numeric" autocomplete="off"
+                                       oninput="formatVnd(this, 'MaxDiscountAmount')">
+                                <input type="hidden" asp-for="MaxDiscountAmount" id="MaxDiscountAmount">
+                                <span class="input-group-text" style="border-radius: 0 10px 10px 0; border: 1.5px solid #e2e8f0; border-left: none;">đ</span>
+                            </div>
+                            <div class="hint">Để trống = không giới hạn mức giảm tối đa</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <label class="form-label">Đơn hàng tối thiểu</label>
+                    <div class="input-group" style="max-width:280px;">
+                        <input type="text" id="MinOrderValue_display" class="form-control" placeholder="0"
+                               inputmode="numeric" autocomplete="off"
+                               oninput="formatVnd(this, 'MinOrderValue')">
+                        <input type="hidden" asp-for="MinOrderValue" id="MinOrderValue">
+                        <span class="input-group-text" style="border-radius: 0 10px 10px 0; border: 1.5px solid #e2e8f0; border-left: none;">đ</span>
+                    </div>
+                    <div class="hint">0 = áp dụng cho mọi giá trị đơn hàng</div>
+                    <span asp-validation-for="MinOrderValue" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <!-- Thời gian & Giới hạn -->
+            <div class="form-card">
+                <div class="section-title">Thời gian hiệu lực & Giới hạn</div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Ngày bắt đầu <span class="text-danger">*</span></label>
+                        <input asp-for="StartDate" type="date" class="form-control">
+                        <span asp-validation-for="StartDate" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Ngày hết hạn <span class="text-danger">*</span></label>
+                        <input asp-for="ExpiryDate" type="date" class="form-control">
+                        <span asp-validation-for="ExpiryDate" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Giới hạn lượt dùng</label>
+                        <input type="text" id="UsageLimit_display" class="form-control" placeholder="Không giới hạn"
+                               inputmode="numeric" autocomplete="off"
+                               oninput="formatCount(this, 'UsageLimit')">
+                        <input type="hidden" asp-for="UsageLimit" id="UsageLimit">
+                        <div class="hint">Để trống = không giới hạn tổng số lượt</div>
+                        <span asp-validation-for="UsageLimit" class="text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column — Preview & Settings -->
+        <div class="col-lg-4">
+            <!-- Preview -->
+            <div class="form-card mb-4" style="background: linear-gradient(135deg, #0f172a, #1e293b); border: none;">
+                <div class="text-center mb-3">
+                    <div style="font-size:0.7rem; color:#64748b; text-transform:uppercase; letter-spacing:0.1em;" class="mb-2">Xem trước mã</div>
+                    <div class="d-flex align-items-center justify-content-center gap-2 mb-2">
+                        <i class="bi bi-ticket-perforated-fill text-sky-400" style="color:#38bdf8; font-size:1.3rem;"></i>
+                        <span id="previewCode" class="code-preview" style="color:#38bdf8; font-size:1.3rem; letter-spacing:0.15em;">YOURCODE</span>
+                    </div>
+                    <div id="previewDesc" class="text-muted small" style="color:#64748b !important;"></div>
+                </div>
+                <div style="border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 12px; margin-top: 4px;">
+                    <div class="d-flex justify-content-between text-white-50 small">
+                        <span>Trạng thái</span>
+                        <span id="previewStatus" class="fw-semibold text-white">Đang hoạt động</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings -->
+            <div class="form-card">
+                <div class="section-title">Cài đặt</div>
+                <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded-3">
+                    <div>
+                        <div class="fw-semibold text-dark">Kích hoạt ngay</div>
+                        <div class="hint mt-0">Mã có thể được dùng ngay khi tạo</div>
+                    </div>
+                    <div class="form-check form-switch mb-0">
+                        <input asp-for="IsActive" class="form-check-input" type="checkbox" role="switch" style="width:40px; height:22px;">
+                    </div>
+                </div>
+
+                <div class="mt-4 d-grid gap-2">
+                    <button type="submit" class="btn btn-primary fw-bold py-2" style="border-radius:10px;">
+                        <i class="bi bi-check2-circle me-2"></i>@(isEdit ? "Lưu thay đổi" : "Tạo mã giảm giá")
+                    </button>
+                    <a href="/Admin/Coupon" class="btn btn-light fw-semibold py-2" style="border-radius:10px;">
+                        <i class="bi bi-x-circle me-2"></i>Hủy
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+<partial name="_ValidationScriptsPartial" />
+<script>
+    const currentType = @((int)Model.DiscountType);
+
+    // ── VND Formatter ──────────────────────────────────────────────────────────
+    /** Định dạng input thành số có dấu phẩy, lưu giá trị thuần vào hidden input */
+    function formatVnd(displayEl, hiddenId) {
+        let raw = displayEl.value.replace(/[^0-9]/g, ''); // chỉ giữ số
+        if (raw === '') {
+            displayEl.value = '';
+            document.getElementById(hiddenId).value = '';
+            return;
+        }
+        let num = parseInt(raw, 10);
+        if (num < 0) num = 0; // không âm
+        displayEl.value = num.toLocaleString('vi-VN'); // 1.000.000
+        document.getElementById(hiddenId).value = num;
+    }
+
+    /** Cho trường số nguyên (lượt dùng) */
+    function formatCount(displayEl, hiddenId) {
+        let raw = displayEl.value.replace(/[^0-9]/g, '');
+        if (raw === '') {
+            displayEl.value = '';
+            document.getElementById(hiddenId).value = '';
+            return;
+        }
+        let num = parseInt(raw, 10);
+        if (num < 1) num = 1;
+        displayEl.value = num.toLocaleString('vi-VN');
+        document.getElementById(hiddenId).value = num;
+    }
+
+    // ── Init: điền giá trị từ model vào display inputs khi tải trang ───────────
+    function initDisplayInput(hiddenId) {
+        const hidden = document.getElementById(hiddenId);
+        const display = document.getElementById(hiddenId + '_display');
+        if (!hidden || !display) return;
+        const val = hidden.value;
+        if (val && val !== '' && val !== '0') {
+            const num = parseFloat(val);
+            if (!isNaN(num) && num > 0) {
+                display.value = Math.round(num).toLocaleString('vi-VN');
+            }
+        }
+    }
+
+    // Khởi tạo display cho các trường tiền
+    initDisplayInput('DiscountValue');
+    initDisplayInput('MaxDiscountAmount');
+    initDisplayInput('MinOrderValue');
+    initDisplayInput('UsageLimit');
+
+    // ── Type Selection ─────────────────────────────────────────────────────────
+    applyType(currentType);
+
+    function selectType(typeVal, el) {
+        document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
+        el.classList.add('selected');
+        document.getElementById('discountTypeInput').value = typeVal;
+        applyType(typeVal);
+    }
+
+    function applyType(typeVal) {
+        const valueSection = document.getElementById('valueSection');
+        const maxDiscount  = document.getElementById('maxDiscountSection');
+        const valueUnit    = document.getElementById('valueUnit');
+        const valueLabel   = document.getElementById('valueLabel');
+
+        if (typeVal === 2) { // FreeShipping
+            valueSection.style.display = 'none';
+        } else {
+            valueSection.style.display = '';
+            if (typeVal === 0) { // Percentage
+                valueUnit.textContent = '%';
+                valueLabel.innerHTML = 'Giá trị giảm (%) <span class="text-danger">*</span>';
+                maxDiscount.style.display = '';
+            } else { // FixedAmount
+                valueUnit.textContent = 'đ';
+                valueLabel.innerHTML = 'Số tiền giảm (đ) <span class="text-danger">*</span>';
+                maxDiscount.style.display = 'none';
+            }
+        }
+    }
+
+    // ── Live Preview ───────────────────────────────────────────────────────────
+    function updatePreview() {
+        const code = document.getElementById('Code')?.value || 'YOURCODE';
+        const desc = document.querySelector('[name="Description"]')?.value || '';
+        document.getElementById('previewCode').textContent = code || 'YOURCODE';
+        document.getElementById('previewDesc').textContent = desc;
+    }
+
+    document.querySelectorAll('input, select').forEach(el => {
+        el.addEventListener('input', updatePreview);
+    });
+    updatePreview();
+</script>
+}

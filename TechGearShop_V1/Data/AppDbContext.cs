@@ -12,6 +12,7 @@ namespace TechGearShop_V1.Data
         public DbSet<Category> Categories { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<Coupon> Coupons { get; set; }
+        public DbSet<CouponUsage> CouponUsages { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderDetail> OrderDetails { get; set; }
         public DbSet<CartEntity> Carts { get; set; }
@@ -46,6 +47,26 @@ namespace TechGearShop_V1.Data
                 .HasIndex(c => c.Code)
                 .IsUnique()
                 .HasDatabaseName("IX_Coupons_Code");
+
+            // CouponUsage: Unique (CouponId, UserId) — 1 user chỉ dùng 1 mã 1 lần
+            modelBuilder.Entity<CouponUsage>()
+                .HasIndex(cu => new { cu.CouponId, cu.UserId })
+                .IsUnique()
+                .HasDatabaseName("IX_CouponUsages_CouponId_UserId");
+
+            // CouponUsage → Coupon
+            modelBuilder.Entity<CouponUsage>()
+                .HasOne(cu => cu.Coupon)
+                .WithMany(c => c.Usages)
+                .HasForeignKey(cu => cu.CouponId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // CouponUsage → User
+            modelBuilder.Entity<CouponUsage>()
+                .HasOne(cu => cu.User)
+                .WithMany()
+                .HasForeignKey(cu => cu.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Cart: mỗi User có tối đa 1 Cart
             modelBuilder.Entity<CartEntity>()
