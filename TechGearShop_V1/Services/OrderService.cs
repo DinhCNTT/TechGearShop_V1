@@ -154,6 +154,11 @@ namespace TechGearShop_V1.Services
             return await _orderRepository.GetAllOrdersWithUsersAsync();
         }
 
+        public async Task<(IEnumerable<Order> Orders, int TotalCount)> GetPagedOrdersAsync(string keyword, OrderStatus? status, int page, int pageSize)
+        {
+            return await _orderRepository.GetPagedOrdersAsync(keyword, status, page, pageSize);
+        }
+
         public async Task<Order?> GetOrderWithDetailsAsync(int orderId)
         {
             return await _orderRepository.GetOrderWithDetailsAsync(orderId);

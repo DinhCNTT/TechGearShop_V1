@@ -200,6 +200,9 @@
         <button type="button" class="np-filter-btn active" onclick="filterPage('all', this)" id="btn-all">
             <i class="bi bi-grid-fill"></i> Tất cả <span class="np-count" id="cnt-all">—</span>
         </button>
+        <button type="button" class="np-filter-btn" onclick="filterPage('unread', this)" id="btn-unread">
+            <i class="bi bi-envelope-exclamation-fill"></i> Chưa đọc <span class="np-count" id="cnt-unread">—</span>
+        </button>
         <button type="button" class="np-filter-btn" onclick="filterPage('Order', this)" id="btn-order">
             <i class="bi bi-bag-check-fill"></i> Đơn hàng <span class="np-count" id="cnt-order">—</span>
         </button>
@@ -263,7 +266,7 @@
 @section Scripts {
 <script>
 /* ════ State ════ */
-const PAGE_SIZE = 15;
+const PAGE_SIZE = 10;
 let allNotifs    = [];
 let filtered     = [];
 let currentPage  = 1;
@@ -298,6 +301,7 @@ function updateStats() {
     setText('stat-orders', orders);
     setText('stat-qna',    qna);
     setText('cnt-all',   allNotifs.length);
+    setText('cnt-unread', unread);
     setText('cnt-order', orders);
     setText('cnt-qna',   qna);
     setText('np-subtitle', `${unread > 0 ? unread + ' chưa đọc — ' : ''}${allNotifs.length} tổng thông báo`);
@@ -310,7 +314,13 @@ function filterPage(type, btn) {
     btn.classList.add('active');
     activeFilter = type;
     currentPage  = 1;
-    filtered = type === 'all' ? allNotifs : allNotifs.filter(n => n.typeString === type);
+    if (type === 'all') {
+        filtered = allNotifs;
+    } else if (type === 'unread') {
+        filtered = allNotifs.filter(n => !n.isRead);
+    } else {
+        filtered = allNotifs.filter(n => n.typeString === type);
+    }
     renderList();
 }
 

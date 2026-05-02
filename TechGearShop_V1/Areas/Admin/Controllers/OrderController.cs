@@ -16,10 +16,23 @@ namespace TechGearShop_V1.Areas.Admin.Controllers
             _orderService = orderService;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchKeyword, OrderStatus? status, int page = 1)
         {
-            var orders = await _orderService.GetAllOrdersWithUsersAsync();
-            return View(orders);
+            const int pageSize = 15; // 15 orders per page
+            var (orders, totalCount) = await _orderService.GetPagedOrdersAsync(searchKeyword, status, page, pageSize);
+
+            var model = new TechGearShop_V1.Models.ViewModels.OrderListViewModel
+            {
+                Orders = orders,
+                CurrentPage = page,
+                PageSize = pageSize,
+                TotalItems = totalCount,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize),
+                SearchKeyword = searchKeyword,
+                Status = status
+            };
+
+            return View(model);
         }
 
         public async Task<IActionResult> Detail(int id)

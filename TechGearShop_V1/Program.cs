@@ -83,6 +83,9 @@ builder.Services.AddHostedService<TechGearShop_V1.Services.Background.RestockNot
 // Background service: Order Processing Queue processor (chống Race Condition khi mua hàng)
 builder.Services.AddHostedService<TechGearShop_V1.Services.Background.OrderProcessingBackgroundService>();
 
+// Background service: Tự động dọn dẹp thông báo cũ (giữ Database nhẹ)
+builder.Services.AddHostedService<TechGearShop_V1.Services.Background.NotificationCleanupBackgroundService>();
+
 var app = builder.Build();
 
 // === Pipeline ===

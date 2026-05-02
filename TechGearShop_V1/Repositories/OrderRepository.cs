@@ -65,5 +65,33 @@ namespace TechGearShop_V1.Repositories
                 .OrderByDescending(o => o.OrderDate)
                 .ToListAsync();
         }
+
+        public async Task<(IEnumerable<Order> Orders, int TotalCount)> GetPagedOrdersAsync(string keyword, OrderStatus? status, int page, int pageSize)
+        {
+            var query = _dbSet.Include(o => o.User).AsQueryable();
+
+            if (status.HasValue)
+            {
+                query = query.Where(o => o.Status == status.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                var lowerKw = keyword.ToLower();
+                query = query.Where(o => 
+                    o.Id.ToString() == lowerKw || 
+                    (o.User != null && (o.User.Username.ToLower().Contains(lowerKw) || o.User.Email.ToLower().Contains(lowerKw)))
+                );
+            }
+
+            var totalCount = await query.CountAsync();
+            var orders = await query
+                .OrderByDescending(o => o.OrderDate)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (orders, totalCount);
+        }
     }
 }

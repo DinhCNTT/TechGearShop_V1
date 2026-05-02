@@ -31,6 +31,6 @@ namespace TechGearShop_V1.Models.ViewModels
         public List<RecentOrderItem> RecentOrders { get; set; } = new();
     }
 
-    public record TopProductItem(string Name, int SoldQty, decimal Revenue);
+    public record TopProductItem(string Name, string ImageUrl, int SoldQty, decimal Revenue);
     public record RecentOrderItem(int Id, string CustomerName, decimal FinalAmount, string Status, DateTime OrderDate);
 }

@@ -11,5 +11,6 @@ namespace TechGearShop_V1.Repositories.Interfaces
         Task CommitTransactionAsync();
         Task RollbackTransactionAsync();
         Task<IEnumerable<Order>> GetAllOrdersWithUsersAsync();
+        Task<(IEnumerable<Order> Orders, int TotalCount)> GetPagedOrdersAsync(string keyword, OrderStatus? status, int page, int pageSize);
     }
 }

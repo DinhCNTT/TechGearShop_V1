@@ -49,7 +49,7 @@
                     <a href="/Account/Orders" class="list-group-item list-group-item-action border-0 py-3 px-4 fw-semibold d-flex align-items-center gap-3" style="background: rgba(13,110,253,0.07); color: #0d6efd; border-left: 3px solid #0d6efd !important;">
                         <i class="bi bi-bag-check-fill fs-5"></i>Đơn hàng của tôi
                     </a>
-                    <a href="#" class="list-group-item list-group-item-action border-0 py-3 px-4 text-muted d-flex align-items-center gap-3">
+                    <a href="/Account/Notifications" class="list-group-item list-group-item-action border-0 py-3 px-4 text-muted d-flex align-items-center gap-3">
                         <i class="bi bi-bell-fill fs-5 text-warning"></i>Thông báo
                     </a>
                 </div>
@@ -207,10 +207,15 @@
                                     }
                                     @if (order.Status == OrderStatus.Completed)
                                     {
-                                        <a href="/Cart" class="btn btn-outline-primary btn-sm rounded-pill px-3">
-                                            <i class="bi bi-bag-plus me-1"></i>Mua lại
-                                        </a>
-                                        <a href="#" class="btn btn-outline-warning btn-sm rounded-pill px-3">
+                                        <form asp-controller="Cart" asp-action="Reorder" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="orderId" value="@order.Id" />
+                                            <button type="submit" class="btn btn-outline-primary btn-sm rounded-pill px-3" title="Mua lại toàn bộ sản phẩm trong đơn này">
+                                                <i class="bi bi-bag-plus me-1"></i>Mua lại
+                                            </button>
+                                        </form>
+                                        <a href="#" class="btn btn-outline-warning btn-sm rounded-pill px-3 btn-review-order"
+                                           data-products='@System.Text.Json.JsonSerializer.Serialize(order.OrderDetails.Select(d => new { id = d.ProductId, name = d.Product?.Name, image = d.Product?.ImagePath }))'>
                                             <i class="bi bi-star me-1"></i>Đánh giá
                                         </a>
                                     }
@@ -242,6 +247,21 @@
             }
             
             <div id="paginationContainer" class="mt-4"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Review Modal -->
+<div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+            <div class="modal-header bg-warning bg-opacity-10 border-0">
+                <h5 class="modal-title fw-bold text-dark"><i class="bi bi-star-fill text-warning me-2"></i>Đánh giá sản phẩm</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 bg-light" id="reviewModalBody" style="max-height: 70vh; overflow-y: auto;">
+                <!-- Products will be injected here via JS -->
+            </div>
         </div>
     </div>
 </div>
@@ -325,6 +345,201 @@
         if (totalItems > 0) {
             renderPage(1);
         }
+
+        // Review Logic
+        const reviewModalElement = document.getElementById('reviewModal');
+        let reviewModal;
+        if(reviewModalElement) {
+            reviewModal = new bootstrap.Modal(reviewModalElement);
+        }
+
+        document.querySelectorAll('.btn-review-order').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const productsJson = this.getAttribute('data-products');
+                let products = [];
+                try {
+                    products = JSON.parse(productsJson);
+                } catch(err) { console.error("Parse JSON error", err); }
+
+                const modalBody = document.getElementById('reviewModalBody');
+                modalBody.innerHTML = ''; // clear
+
+                if(products.length === 0) {
+                    modalBody.innerHTML = '<p class="text-center text-muted">Không có sản phẩm nào để đánh giá.</p>';
+                    reviewModal.show();
+                    return;
+                }
+
+                products.forEach(p => {
+                    const pDiv = document.createElement('div');
+                    pDiv.className = 'card border-0 shadow-sm rounded-4 mb-3';
+                    pDiv.innerHTML = `
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-center mb-3">
+                                <img src="${p.image || '/images/no-image.png'}" alt="${p.name}" class="rounded-3 object-fit-cover me-3 shadow-sm" style="width: 60px; height: 60px;">
+                                <h6 class="mb-0 fw-semibold text-dark line-clamp-2">${p.name}</h6>
+                            </div>
+                            
+                            <div class="d-flex align-items-center mb-2 star-rating-container" data-product-id="${p.id}">
+                                <span class="me-2 text-muted small">Chất lượng:</span>
+                                <div class="stars" style="cursor: pointer;">
+                                    ${[1,2,3,4,5].map(i => `<i class="bi bi-star fs-4 text-warning star-item" data-value="${i}"></i>`).join('')}
+                                </div>
+                                <span class="ms-3 rating-text fw-bold text-warning" style="font-size: 0.9rem;"></span>
+                            </div>
+                            
+                            <textarea class="form-control bg-light border-0 mb-2 review-content" rows="2" placeholder="Hãy chia sẻ nhận xét của bạn về sản phẩm này nhé..."></textarea>
+                            
+                            <div class="text-end d-flex align-items-center justify-content-end gap-2">
+                                <span class="submit-msg text-success small d-none"><i class="bi bi-check-circle-fill"></i> Đã lưu</span>
+                                <button class="btn btn-warning rounded-pill px-4 fw-bold btn-submit-review text-white" data-product-id="${p.id}">Gửi đánh giá</button>
+                            </div>
+                        </div>
+                    `;
+                    modalBody.appendChild(pDiv);
+
+                    fetch(`/api/Review/my/${p.id}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            if(data.success && data.data) {
+                                const rev = data.data;
+                                setStars(pDiv, rev.rating);
+                                pDiv.querySelector('.review-content').value = rev.content || '';
+                                pDiv.querySelector('.btn-submit-review').textContent = 'Cập nhật đánh giá';
+                            }
+                        })
+                        .catch(err => console.error(err));
+
+                    let currentRating = 0;
+                    const stars = pDiv.querySelectorAll('.star-item');
+                    const textSpan = pDiv.querySelector('.rating-text');
+                    const texts = ['Tệ', 'Không hài lòng', 'Bình thường', 'Hài lòng', 'Tuyệt vời'];
+
+                    function setStars(container, rating) {
+                        currentRating = rating;
+                        const cStars = container.querySelectorAll('.star-item');
+                        cStars.forEach(s => {
+                            let val = parseInt(s.getAttribute('data-value'));
+                            if(val <= rating) {
+                                s.classList.remove('bi-star');
+                                s.classList.add('bi-star-fill');
+                            } else {
+                                s.classList.remove('bi-star-fill');
+                                s.classList.add('bi-star');
+                            }
+                        });
+                        if(rating > 0) {
+                            textSpan.textContent = texts[rating-1];
+                        } else {
+                            textSpan.textContent = '';
+                        }
+                    }
+
+                    stars.forEach(s => {
+                        s.addEventListener('mouseover', function() {
+                            let val = parseInt(this.getAttribute('data-value'));
+                            const cStars = pDiv.querySelectorAll('.star-item');
+                            cStars.forEach(st => {
+                                let stVal = parseInt(st.getAttribute('data-value'));
+                                if(stVal <= val) {
+                                    st.classList.remove('bi-star');
+                                    st.classList.add('bi-star-fill');
+                                } else {
+                                    st.classList.remove('bi-star-fill');
+                                    st.classList.add('bi-star');
+                                }
+                            });
+                            textSpan.textContent = texts[val-1];
+                        });
+                        
+                        s.parentElement.addEventListener('mouseleave', function() {
+                            setStars(pDiv, currentRating);
+                        });
+
+                        s.addEventListener('click', function() {
+                            currentRating = parseInt(this.getAttribute('data-value'));
+                            setStars(pDiv, currentRating);
+                        });
+                    });
+
+                    const submitBtn = pDiv.querySelector('.btn-submit-review');
+                    submitBtn.addEventListener('click', function() {
+                        if(currentRating === 0) {
+                            alert('Vui lòng chọn số sao để đánh giá!');
+                            return;
+                        }
+                        const content = pDiv.querySelector('.review-content').value;
+                        const formData = new FormData();
+                        formData.append('productId', p.id);
+                        formData.append('rating', currentRating);
+                        formData.append('content', content);
+
+                        submitBtn.disabled = true;
+                        const originalText = submitBtn.textContent;
+                        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang lưu...';
+
+                        fetch('/api/Review/add', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(res => res.json())
+                        .then(resData => {
+                            submitBtn.disabled = false;
+                            if(resData.success) {
+                                submitBtn.textContent = 'Cập nhật đánh giá';
+                                
+                                // 1. Đóng Modal tự động
+                                reviewModal.hide();
+                                
+                                // 2. Hiển thị Toast nhỏ gọn, tinh tế
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({
+                                        toast: true,
+                                        position: 'top-end',
+                                        icon: 'success',
+                                        title: resData.message || 'Cập nhật đánh giá thành công!',
+                                        showConfirmButton: false,
+                                        timer: 3000,
+                                        width: 'auto',
+                                        padding: '0.5em 1em',
+                                        customClass: {
+                                            popup: 'shadow-sm border-0'
+                                        }
+                                    });
+                                } else {
+                                    alert('Đánh giá thành công!');
+                                }
+                            } else {
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({
+                                        toast: true,
+                                        position: 'top-end',
+                                        icon: 'error',
+                                        title: resData.message || 'Đã có lỗi xảy ra',
+                                        showConfirmButton: false,
+                                        timer: 3000,
+                                        width: 'auto',
+                                        padding: '0.5em 1em',
+                                        customClass: { popup: 'shadow-sm border-0' }
+                                    });
+                                } else {
+                                    alert(resData.message || 'Có lỗi xảy ra');
+                                }
+                                submitBtn.textContent = originalText;
+                            }
+                        })
+                        .catch(err => {
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = originalText;
+                            alert('Lỗi kết nối mạng');
+                        });
+                    });
+                });
+
+                reviewModal.show();
+            });
+        });
     });
 </script>
 }

@@ -24,13 +24,29 @@ namespace TechGearShop_V1.Areas.Admin.Controllers
             _notificationQueue = notificationQueue;
         }
 
-        public async Task<IActionResult> Index(int page = 1)
+        public async Task<IActionResult> Index(string searchKeyword, int? categoryId, int page = 1)
         {
             const int pageSize = 10;
-            var allProducts = await _productService.GetAllProductsAsync(); // Note: Cần tối ưu query nếu data lớn
+            var allProducts = await _productService.GetAllProductsAsync(); // Có thể tối ưu lấy IQueryable nếu cần hiệu năng cực cao, tạm thời dùng LINQ to Objects
             
-            // Phân trang đơn giản bằng LINQ (Skip, Take)
-            var pagedProducts = allProducts
+            // Lọc dữ liệu
+            var query = allProducts.AsEnumerable();
+            
+            if (categoryId.HasValue && categoryId.Value > 0)
+            {
+                query = query.Where(p => p.CategoryId == categoryId.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(searchKeyword))
+            {
+                var lowerKw = searchKeyword.ToLower();
+                query = query.Where(p => p.Name.ToLower().Contains(lowerKw) || (p.Brand != null && p.Brand.ToLower().Contains(lowerKw)));
+            }
+
+            var totalItems = query.Count();
+
+            // Phân trang
+            var pagedProducts = query
                 .OrderByDescending(p => p.CreatedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize);
@@ -38,10 +54,13 @@ namespace TechGearShop_V1.Areas.Admin.Controllers
             var model = new ProductListViewModel
             {
                 Products = pagedProducts,
+                Categories = await _categoryService.GetAllCategoriesAsync(),
+                CurrentCategoryId = categoryId,
+                CurrentKeyword = searchKeyword,
                 CurrentPage = page,
                 PageSize = pageSize,
-                TotalItems = allProducts.Count(),
-                TotalPages = (int)Math.Ceiling(allProducts.Count() / (double)pageSize)
+                TotalItems = totalItems,
+                TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize)
             };
 
             return View(model);

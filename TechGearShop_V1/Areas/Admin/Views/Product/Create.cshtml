@@ -158,24 +158,71 @@
             }
         }
 
-        // Script preview nhiều ảnh nhỏ gọn
+        // ── Gallery Preview với nút X xóa từng ảnh ──
+        let galleryFiles = []; // Lưu danh sách File objects hiện tại
+
         document.getElementById('galleryInput').addEventListener('change', function(e) {
-            const previewContainer = document.getElementById('galleryPreview');
-            previewContainer.innerHTML = '';
-            Array.from(e.target.files).forEach(file => {
+            // Merge ảnh mới vào danh sách (tránh trùng tên)
+            const incoming = Array.from(e.target.files);
+            incoming.forEach(newFile => {
+                if (!galleryFiles.some(f => f.name === newFile.name && f.size === newFile.size)) {
+                    galleryFiles.push(newFile);
+                }
+            });
+            syncInputFiles();
+            renderGalleryPreview();
+        });
+
+        function removeGalleryFile(index) {
+            galleryFiles.splice(index, 1);
+            syncInputFiles();
+            renderGalleryPreview();
+        }
+
+        // Đồng bộ mảng galleryFiles → FileList thật của input (dùng DataTransfer)
+        function syncInputFiles() {
+            const dt = new DataTransfer();
+            galleryFiles.forEach(f => dt.items.add(f));
+            document.getElementById('galleryInput').files = dt.files;
+        }
+
+        function renderGalleryPreview() {
+            const container = document.getElementById('galleryPreview');
+            container.innerHTML = '';
+            galleryFiles.forEach((file, index) => {
                 const reader = new FileReader();
                 reader.onload = function(evt) {
+                    const wrap = document.createElement('div');
+                    wrap.style.cssText = 'position:relative; width:80px; height:80px; flex-shrink:0;';
+
                     const img = document.createElement('img');
-                    img.src = evt.target.result;
-                    img.style.width = '80px';
-                    img.style.height = '80px';
-                    img.style.objectFit = 'cover';
-                    img.style.borderRadius = '8px';
-                    img.style.border = '1px solid #ccc';
-                    previewContainer.appendChild(img);
-                }
+                    img.src  = evt.target.result;
+                    img.style.cssText = 'width:100%; height:100%; object-fit:cover; border-radius:10px; border:1.5px solid #e2e8f0; display:block;';
+
+                    const btn = document.createElement('button');
+                    btn.type  = 'button';
+                    btn.title = 'Xóa ảnh này';
+                    btn.innerHTML = '<i class="bi bi-x"></i>';
+                    btn.style.cssText = [
+                        'position:absolute; top:-7px; right:-7px;',
+                        'width:22px; height:22px; padding:0;',
+                        'border-radius:50%; border:none;',
+                        'background:#ef4444; color:#fff;',
+                        'font-size:0.75rem; line-height:1;',
+                        'display:flex; align-items:center; justify-content:center;',
+                        'cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.2);',
+                        'transition: transform 0.15s, background 0.15s;'
+                    ].join('');
+                    btn.onmouseover = () => { btn.style.transform = 'scale(1.15)'; btn.style.background = '#dc2626'; };
+                    btn.onmouseout  = () => { btn.style.transform = 'scale(1)';    btn.style.background = '#ef4444'; };
+                    btn.onclick = () => removeGalleryFile(index);
+
+                    wrap.appendChild(img);
+                    wrap.appendChild(btn);
+                    container.appendChild(wrap);
+                };
                 reader.readAsDataURL(file);
             });
-        });
+        }
     </script>
 }

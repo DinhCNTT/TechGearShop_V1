@@ -127,18 +127,27 @@ namespace TechGearShop_V1.Services
                 orderCounts.Add(entry?.Count ?? 0);
             }
 
-            // ── 5. Top 5 sản phẩm bán chạy (mọi thời gian) ──
-            var topProducts = await _context.OrderDetails
+            // ── 5. Top 10 sản phẩm bán chạy (trong kỳ được chọn và Đã hoàn thành) ──
+            var topProductsQuery = await _context.OrderDetails
                 .Include(od => od.Product)
-                .GroupBy(od => new { od.ProductId, od.Product!.Name })
+                .Include(od => od.Order)
+                .Where(od => od.Order!.Status == OrderStatus.Completed 
+                          && od.Order.OrderDate >= curStart 
+                          && od.Order.OrderDate < curEnd)
+                .GroupBy(od => new { od.ProductId, od.Product!.Name, od.Product.ImagePath })
                 .Select(g => new {
-                    Name    = g.Key.Name,
-                    SoldQty = g.Sum(od => od.Quantity),
-                    Revenue = g.Sum(od => od.Quantity * od.UnitPrice)
+                    Name     = g.Key.Name,
+                    ImageUrl = g.Key.ImagePath,
+                    SoldQty  = g.Sum(od => od.Quantity),
+                    Revenue  = g.Sum(od => od.Quantity * od.UnitPrice)
                 })
                 .OrderByDescending(x => x.SoldQty)
-                .Take(5)
+                .Take(10)
                 .ToListAsync();
+
+            var topProducts = topProductsQuery
+                .Select(x => new TopProductItem(x.Name, x.ImageUrl ?? "/images/no-image.png", x.SoldQty, x.Revenue))
+                .ToList();
 
             // ── 6. 5 đơn hàng mới nhất ──
             var recentOrders = await _context.Orders
@@ -170,7 +179,7 @@ namespace TechGearShop_V1.Services
                 RevenueData    = revenues,
                 OrderCountData = orderCounts,
 
-                TopProducts  = topProducts.Select(x => new TopProductItem(x.Name, x.SoldQty, x.Revenue)).ToList(),
+                TopProducts  = topProducts,
                 RecentOrders = recentOrders.Select(x => new RecentOrderItem(x.Id, x.CustomerName, x.FinalAmount, x.Status.ToString(), x.OrderDate)).ToList()
             };
         }

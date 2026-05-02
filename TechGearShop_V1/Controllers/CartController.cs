@@ -15,11 +15,13 @@ namespace TechGearShop_V1.Controllers
 
         private readonly ICartService    _cartService;
         private readonly IProductService _productService;
+        private readonly IOrderService   _orderService;
 
-        public CartController(ICartService cartService, IProductService productService)
+        public CartController(ICartService cartService, IProductService productService, IOrderService orderService)
         {
             _cartService    = cartService;
             _productService = productService;
+            _orderService   = orderService;
         }
 
         // ── Helper: lấy UserId từ Claims ──
@@ -143,6 +145,62 @@ namespace TechGearShop_V1.Controllers
             }
             HttpContext.Session.Set(SELECTED_KEY, selectedItems);
             return Redirect("/Checkout");
+        }
+
+        // POST /Cart/Reorder
+        [HttpPost]
+        public async Task<IActionResult> Reorder(int orderId)
+        {
+            if (!User.Identity!.IsAuthenticated)
+                return Redirect("/Account/Login");
+
+            var userId = GetUserId()!.Value;
+            var order = await _orderService.GetOrderWithDetailsAsync(orderId);
+            
+            if (order == null || order.UserId != userId)
+            {
+                TempData["UserError"] = "Đơn hàng không tồn tại hoặc bạn không có quyền truy cập.";
+                return RedirectToAction("Orders", "Account");
+            }
+
+            var selectedItems = new List<int>();
+            bool hasAddedItems = false;
+            bool hasOOSItems = false;
+
+            foreach (var detail in order.OrderDetails)
+            {
+                var product = await _productService.GetProductByIdAsync(detail.ProductId);
+                if (product != null && product.IsActive && product.Stock > 0)
+                {
+                    int qtyToAdd = Math.Min(detail.Quantity, product.Stock);
+                    await _cartService.AddItemAsync(userId, detail.ProductId, qtyToAdd);
+                    selectedItems.Add(detail.ProductId);
+                    hasAddedItems = true;
+                }
+                else
+                {
+                    hasOOSItems = true;
+                }
+            }
+
+            if (!hasAddedItems)
+            {
+                TempData["UserError"] = "Tất cả các sản phẩm trong đơn hàng này hiện đã hết hàng hoặc ngừng kinh doanh.";
+                return RedirectToAction("Orders", "Account");
+            }
+
+            if (hasOOSItems)
+            {
+                TempData["UserSuccess"] = "Đã thêm các sản phẩm còn hàng vào giỏ! (Một số món đã hết hàng nên bị loại bỏ).";
+            }
+            else
+            {
+                TempData["UserSuccess"] = "Đã thêm toàn bộ sản phẩm của đơn hàng vào giỏ!";
+            }
+
+            HttpContext.Session.Set(SELECTED_KEY, selectedItems);
+            
+            return RedirectToAction(nameof(Index));
         }
     }
 }
