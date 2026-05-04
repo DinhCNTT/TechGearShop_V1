@@ -163,19 +163,25 @@ namespace TechGearShop_V1.Controllers
                 return RedirectToAction("Orders", "Account");
             }
 
-            var selectedItems = new List<int>();
-            bool hasAddedItems = false;
-            bool hasOOSItems = false;
+            // ✅ Xây dựng danh sách CartItem tạm từ đơn hàng cũ
+            // Không thêm vào giỏ hàng thật — giỏ hàng cũ hoàn toàn không bị ảnh hưởng
+            var reorderItems = new List<CartItem>();
+            var hasOOSItems = false;
 
             foreach (var detail in order.OrderDetails)
             {
                 var product = await _productService.GetProductByIdAsync(detail.ProductId);
                 if (product != null && product.IsActive && product.Stock > 0)
                 {
-                    int qtyToAdd = Math.Min(detail.Quantity, product.Stock);
-                    await _cartService.AddItemAsync(userId, detail.ProductId, qtyToAdd);
-                    selectedItems.Add(detail.ProductId);
-                    hasAddedItems = true;
+                    reorderItems.Add(new CartItem
+                    {
+                        ProductId   = product.Id,
+                        ProductName = product.Name,
+                        ImagePath   = product.ImagePath,
+                        Price       = product.PromotionalPrice ?? product.Price,
+                        Quantity    = Math.Min(detail.Quantity, product.Stock),
+                        IsOutOfStock = false
+                    });
                 }
                 else
                 {
@@ -183,24 +189,20 @@ namespace TechGearShop_V1.Controllers
                 }
             }
 
-            if (!hasAddedItems)
+            if (!reorderItems.Any())
             {
-                TempData["UserError"] = "Tất cả các sản phẩm trong đơn hàng này hiện đã hết hàng hoặc ngừng kinh doanh.";
+                TempData["UserError"] = "Tất cả sản phẩm trong đơn hàng này đã hết hàng hoặc ngừng kinh doanh.";
                 return RedirectToAction("Orders", "Account");
             }
 
-            if (hasOOSItems)
-            {
-                TempData["UserSuccess"] = "Đã thêm các sản phẩm còn hàng vào giỏ! (Một số món đã hết hàng nên bị loại bỏ).";
-            }
-            else
-            {
-                TempData["UserSuccess"] = "Đã thêm toàn bộ sản phẩm của đơn hàng vào giỏ!";
-            }
+            // Lưu vào Session riêng — CheckoutController sẽ đọc từ đây thay vì giỏ thật
+            HttpContext.Session.Set(CheckoutController.REORDER_KEY, reorderItems);
 
-            HttpContext.Session.Set(SELECTED_KEY, selectedItems);
-            
-            return RedirectToAction(nameof(Index));
+            if (hasOOSItems)
+                TempData["UserSuccess"] = "Một số sản phẩm đã hết hàng nên bị loại bỏ. Đơn hàng mới đã được chuẩn bị!";
+
+            // Redirect thẳng đến Checkout — giỏ hàng cũ KHÔNG bị thay đổi
+            return Redirect("/Checkout");
         }
     }
 }

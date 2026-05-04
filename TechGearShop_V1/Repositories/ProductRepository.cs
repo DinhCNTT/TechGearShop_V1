@@ -73,7 +73,7 @@ namespace TechGearShop_V1.Repositories
             }
         }
 
-        public async Task<(IEnumerable<Product> Products, int TotalItems)> FilterProductsAsync(int? categoryId, string? keyword, string? sortOrder, int page = 1, int pageSize = 12, decimal? minPrice = null, decimal? maxPrice = null)
+        public async Task<(IEnumerable<Product> Products, int TotalItems)> FilterProductsAsync(int? categoryId, string? keyword, string? sortOrder, int page = 1, int pageSize = 12, decimal? minPrice = null, decimal? maxPrice = null, bool? isSale = null, bool? isFeatured = null)
         {
             var query = _dbSet.Include(p => p.Category).Where(p => p.IsActive && p.Category.IsActive).AsQueryable();
 
@@ -97,15 +97,37 @@ namespace TechGearShop_V1.Repositories
             {
                 query = query.Where(p => p.Price <= maxPrice.Value);
             }
-
-            query = sortOrder switch
+            
+            if (isSale == true)
             {
-                "price_asc" => query.OrderBy(p => p.Price),
-                "price_desc" => query.OrderByDescending(p => p.Price),
-                "name_asc" => query.OrderBy(p => p.Name),
-                "name_desc" => query.OrderByDescending(p => p.Name),
-                _ => query.OrderByDescending(p => p.CreatedAt) // Mặc định là Mới nhất
-            };
+                query = query.Where(p => p.PromotionalPrice.HasValue && p.PromotionalPrice.Value < p.Price);
+            }
+
+            // Nếu là trang Nổi Bật: sắp xếp ưu tiên IsFeatured → SoldCount → ViewCount (giống logic trang chủ)
+            if (isFeatured == true)
+            {
+                query = sortOrder switch
+                {
+                    "price_asc" => query.OrderBy(p => p.PromotionalPrice ?? p.Price),
+                    "price_desc" => query.OrderByDescending(p => p.PromotionalPrice ?? p.Price),
+                    "name_asc" => query.OrderBy(p => p.Name),
+                    "name_desc" => query.OrderByDescending(p => p.Name),
+                    _ => query.OrderByDescending(p => p.IsFeatured)
+                                .ThenByDescending(p => p.SoldCount)
+                                .ThenByDescending(p => p.ViewCount)
+                };
+            }
+            else
+            {
+                query = sortOrder switch
+                {
+                    "price_asc" => query.OrderBy(p => p.PromotionalPrice ?? p.Price),
+                    "price_desc" => query.OrderByDescending(p => p.PromotionalPrice ?? p.Price),
+                    "name_asc" => query.OrderBy(p => p.Name),
+                    "name_desc" => query.OrderByDescending(p => p.Name),
+                    _ => query.OrderByDescending(p => p.CreatedAt) // Mặc định là Mới nhất
+                };
+            }
             
             var totalItems = await query.CountAsync();
             var products = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();

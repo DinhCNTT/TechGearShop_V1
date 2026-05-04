@@ -1,8 +1,11 @@
-﻿@model TechGearShop_V1.Models.ViewModels.HomeViewModel
+@model TechGearShop_V1.Models.ViewModels.HomeViewModel
 
 @{
     ViewData["Title"] = "Trang Chủ";
 }
+
+<!-- Swiper CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 
 <!-- Hero Banner Section -->
 <div id="heroCarousel" class="carousel slide mb-5 shadow-lg rounded-4 overflow-hidden position-relative" data-bs-ride="carousel" data-bs-interval="3000">
@@ -63,24 +66,36 @@
 
 <!-- Section: Sản phẩm nổi bật -->
 <div class="container mb-5">
-    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
-        <h3 class="fw-bold text-danger"><i class="bi bi-fire"></i> SẢN PHẨM NỔI BẬT</h3>
-        <a href="#" class="text-decoration-none text-primary fw-bold">Xem tất cả ></a>
+    <div class="d-flex justify-content-between align-items-center mb-4 section-header-box p-3 rounded-pill shadow-sm">
+        <h3 class="fw-bold mb-0 text-uppercase d-flex align-items-center">
+            <span class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center me-2 pulse-glow" style="width: 40px; height: 40px;">
+                <i class="bi bi-fire fs-4"></i>
+            </span>
+            <span class="gradient-text-danger">Sản Phẩm Nổi Bật</span>
+        </h3>
+        <a href="/san-pham-noi-bat" class="btn btn-outline-danger rounded-pill px-4 fw-bold hover-lift">Xem tất cả <i class="bi bi-arrow-right ms-1"></i></a>
     </div>
 
     @if (!Model.FeaturedProducts.Any())
     {
-        <div class="alert alert-warning text-center">Đang cập nhật sản phẩm nổi bật...</div>
+        <div class="alert alert-warning text-center rounded-pill">Đang cập nhật sản phẩm nổi bật...</div>
     }
     else
     {
-        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-            @foreach (var p in Model.FeaturedProducts)
-            {
-                <div class="col">
-                    @await Html.PartialAsync("_ProductCard", p)
-                </div>
-            }
+        <div class="swiper product-swiper px-2 pb-5 pt-2">
+            <div class="swiper-wrapper">
+                @foreach (var p in Model.FeaturedProducts)
+                {
+                    <div class="swiper-slide h-auto">
+                        @await Html.PartialAsync("_ProductCard", p)
+                    </div>
+                }
+            </div>
+            <!-- Add Pagination -->
+            <div class="swiper-pagination"></div>
+            <!-- Add Navigation -->
+            <div class="swiper-button-prev"></div>
+            <div class="swiper-button-next"></div>
         </div>
     }
 </div>
@@ -109,24 +124,77 @@
 
 <!-- Section: Sản phẩm mới về -->
 <div class="container mb-5">
-    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
-        <h3 class="fw-bold text-success"><i class="bi bi-box-seam"></i> SẢN PHẨM MỚI VỀ</h3>
-        <a href="#" class="text-decoration-none text-success fw-bold">Xem tất cả ></a>
+    <div class="d-flex justify-content-between align-items-center mb-4 section-header-box p-3 rounded-pill shadow-sm">
+        <h3 class="fw-bold mb-0 text-uppercase d-flex align-items-center">
+            <span class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-2 pulse-glow" style="width: 40px; height: 40px;">
+                <i class="bi bi-stars fs-4"></i>
+            </span>
+            <span class="gradient-text-success">Sản Phẩm Mới Về</span>
+        </h3>
+        <a href="/san-pham-moi-ve" class="btn btn-outline-success rounded-pill px-4 fw-bold hover-lift">Khám phá <i class="bi bi-arrow-right ms-1"></i></a>
     </div>
 
     @if (!Model.NewProducts.Any())
     {
-        <div class="alert alert-secondary text-center">Đang cập nhật sản phẩm mới...</div>
+        <div class="alert alert-secondary text-center rounded-pill">Đang cập nhật sản phẩm mới...</div>
     }
     else
     {
-        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-            @foreach (var p in Model.NewProducts)
-            {
-                <div class="col">
-                    @await Html.PartialAsync("_ProductCard", p)
-                </div>
-            }
+        <div class="swiper product-swiper px-2 pb-5 pt-2">
+            <div class="swiper-wrapper">
+                @foreach (var p in Model.NewProducts)
+                {
+                    <div class="swiper-slide h-auto">
+                        @await Html.PartialAsync("_ProductCard", p)
+                    </div>
+                }
+            </div>
+            <!-- Add Pagination -->
+            <div class="swiper-pagination"></div>
+            <!-- Add Navigation -->
+            <div class="swiper-button-prev"></div>
+            <div class="swiper-button-next"></div>
         </div>
     }
 </div>
+
+@section Scripts {
+    <!-- Swiper JS -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var swipers = new Swiper('.product-swiper', {
+                slidesPerView: 1,
+                spaceBetween: 20,
+                loop: false,
+                pagination: {
+                    el: '.swiper-pagination',
+                    clickable: true,
+                    dynamicBullets: true,
+                },
+                navigation: {
+                    nextEl: '.swiper-button-next',
+                    prevEl: '.swiper-button-prev',
+                },
+                breakpoints: {
+                    576: {
+                        slidesPerView: 2,
+                        spaceBetween: 20,
+                    },
+                    768: {
+                        slidesPerView: 3,
+                        spaceBetween: 20,
+                    },
+                    992: {
+                        slidesPerView: 4,
+                        spaceBetween: 25,
+                    },
+                    1200: {
+                        slidesPerView: 5,
+                        spaceBetween: 25,
+                    }
+                }
+            });
+        });
+    </script>
+}

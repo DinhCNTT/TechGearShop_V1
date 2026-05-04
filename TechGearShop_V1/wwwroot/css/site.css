@@ -338,3 +338,111 @@ html, .custom-scrollbar {
         transform: translate3d(2px, 0, 0);
     }
 }
+
+/* ========================================
+   Modern UI Utilities
+   ======================================== */
+.gradient-text-danger {
+    background: linear-gradient(135deg, #ff416c, #ff4b2b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.gradient-text-success {
+    background: linear-gradient(135deg, #11998e, #38ef7d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.soft-shadow {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
+}
+
+.hover-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1) !important;
+}
+
+.btn-gradient-primary {
+    background: linear-gradient(135deg, #007bff, #00d2ff);
+    color: white;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.btn-gradient-primary:hover {
+    background: linear-gradient(135deg, #0056b3, #00b8e6);
+    transform: scale(1.05);
+    color: white;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+}
+
+.pulse-glow {
+    animation: pulseGlow 2s infinite;
+}
+
+@keyframes pulseGlow {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.section-header-box {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+/* Swiper custom overrides */
+.swiper-button-next, .swiper-button-prev {
+    background: white;
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50%;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    color: #333 !important;
+}
+.swiper-button-next:after, .swiper-button-prev:after {
+    font-size: 18px !important;
+    font-weight: bold;
+}
+.swiper-pagination-bullet-active {
+    background: #007bff !important;
+}
+
+/* Specific product card style overrides for modern look */
+.product-card {
+    border-radius: 1rem !important; /* rounded-4 equivalent but enforced */
+    border: 1px solid rgba(0,0,0,0.03) !important;
+}
+.product-card img {
+    border-top-left-radius: 1rem;
+    border-top-right-radius: 1rem;
+}
+
+/* ========================================
+   Dropdown Hover Support
+   ======================================== */
+@media (min-width: 992px) {
+    .dropdown-hover:hover > .dropdown-menu {
+        display: block;
+        animation: fadeInSlideDown 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    
+    /* Bridge gap to prevent losing hover */
+    .dropdown-hover > .dropdown-menu::before {
+        content: "";
+        position: absolute;
+        top: -15px;
+        left: 0;
+        right: 0;
+        height: 15px;
+        background: transparent;
+    }
+}

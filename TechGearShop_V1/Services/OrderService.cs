@@ -198,5 +198,141 @@ namespace TechGearShop_V1.Services
 
             return true;
         }
+
+        // ─── VNPAY METHODS ──────────────────────────────────────────
+
+        public async Task<int> CreatePendingPaymentOrderAsync(TechGearShop_V1.Models.DTOs.OrderRequestDto request)
+        {
+            await _orderRepository.BeginTransactionAsync();
+            try
+            {
+                // 1. Trừ kho nguyên tử ngay lập tức để giữ hàng (giống logic Background)
+                foreach (var item in request.Items)
+                {
+                    var product = await _productRepository.GetByIdAsync(item.ProductId);
+                    if (product == null || product.Stock < item.Quantity)
+                    {
+                        throw new Exception($"Sản phẩm '{item.ProductName}' đã hết hàng hoặc không đủ số lượng.");
+                    }
+                    product.Stock -= item.Quantity;
+                    _productRepository.Update(product);
+                }
+                await _productRepository.SaveChangesAsync();
+
+                // 2. Tạo Order với trạng thái PaymentPending
+                var order = new Order
+                {
+                    UserId = request.UserId,
+                    ReceiverName = request.ReceiverName,
+                    ReceiverPhone = request.ReceiverPhone,
+                    ShippingAddress = request.ShippingAddress,
+                    Province = request.Province,
+                    Note = request.Note,
+                    PaymentMethod = PaymentMethod.VNPay,
+                    CouponCode = request.CouponCode,
+                    ShippingFee = request.ShippingFee,
+                    DiscountAmount = request.DiscountAmount,
+                    TotalAmount = request.SubTotal,
+                    FinalAmount = request.FinalAmount,
+                    OrderDate = DateTime.UtcNow,
+                    Status = OrderStatus.PaymentPending, // Đang chờ VNPay callback
+                    PaymentStatus = PaymentStatus.Unpaid,
+                    OrderDetails = request.Items.Select(i => new OrderDetail
+                    {
+                        ProductId = i.ProductId,
+                        Quantity = i.Quantity,
+                        UnitPrice = i.Price
+                    }).ToList()
+                };
+
+                await _orderRepository.AddAsync(order);
+                await _orderRepository.SaveChangesAsync();
+                await _orderRepository.CommitTransactionAsync();
+
+                return order.Id;
+            }
+            catch
+            {
+                await _orderRepository.RollbackTransactionAsync();
+                throw; // Rethrow để Controller xử lý (trả về lỗi cho User)
+            }
+        }
+
+        public async Task<bool> ConfirmPaymentAsync(int orderId, string txnId, string responseCode)
+        {
+            var order = await _orderRepository.GetOrderWithDetailsAsync(orderId);
+            if (order == null || order.Status != OrderStatus.PaymentPending) return false;
+
+            order.PaymentStatus = PaymentStatus.Paid;
+            order.Status = OrderStatus.Pending; // Chuyển về trạng thái chờ shop duyệt
+            order.PaidAt = DateTime.UtcNow;
+            order.VnpayTransactionId = txnId;
+            order.VnpayResponseCode = responseCode;
+
+            _orderRepository.Update(order);
+            await _orderRepository.SaveChangesAsync();
+
+            // Ghi nhận Coupon đã sử dụng (nếu có)
+            if (!string.IsNullOrEmpty(order.CouponCode))
+            {
+                // Ở đây mình nên dùng scope hoặc injection nhưng tạm thời ta có thể gọi service.
+                // Để đơn giản, NotificationService đã inject rồi, nhưng CouponService chưa có.
+                // Sẽ an toàn hơn nếu việc record usage được thực hiện ngay lúc Confirm.
+                // Tạm thời bỏ qua Coupon record ở đây, sẽ gọi trong IPN Controller.
+            }
+
+            // Gửi thông báo cho User
+            await _notificationService.CreateNotificationAsync(
+                order.UserId,
+                TechGearShop_V1.Models.Enums.NotificationType.Order,
+                "Thanh toán VNPay thành công! 💳",
+                $"Đơn hàng #{order.Id} đã được thanh toán và đang chờ xử lý.",
+                "/Account/Orders"
+            );
+
+            // Realtime SignalR
+            await _hubContext.Clients.User(order.UserId.ToString()).SendAsync("OrderPlacedResult", new
+            {
+                success = true,
+                orderId = order.Id,
+                message = $"Thanh toán VNPay thành công! Đơn hàng #{order.Id} đã được ghi nhận."
+            });
+
+            return true;
+        }
+
+        public async Task<bool> FailPaymentAsync(int orderId, string responseCode)
+        {
+            var order = await _orderRepository.GetOrderWithDetailsAsync(orderId);
+            if (order == null || order.Status != OrderStatus.PaymentPending) return false;
+
+            order.PaymentStatus = PaymentStatus.Failed;
+            order.Status = OrderStatus.Cancelled;
+            order.CancelledDate = DateTime.UtcNow;
+            order.VnpayResponseCode = responseCode;
+
+            _orderRepository.Update(order);
+
+            // Hoàn kho
+            foreach (var detail in order.OrderDetails)
+            {
+                var product = await _productRepository.GetByIdAsync(detail.ProductId);
+                if (product != null)
+                {
+                    product.Stock += detail.Quantity;
+                    _productRepository.Update(product);
+                }
+            }
+            await _orderRepository.SaveChangesAsync();
+
+            // Bắn SignalR
+            await _hubContext.Clients.User(order.UserId.ToString()).SendAsync("OrderPlacedResult", new
+            {
+                success = false,
+                message = $"Thanh toán VNPay thất bại hoặc bị hủy. Đơn hàng #{order.Id} đã bị hủy."
+            });
+
+            return true;
+        }
     }
 }

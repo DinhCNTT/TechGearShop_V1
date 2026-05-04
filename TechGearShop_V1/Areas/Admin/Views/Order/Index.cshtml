@@ -14,6 +14,7 @@
             <div class="col-md-7">
                 <div class="d-flex flex-wrap gap-2 pb-1">
                     <a href="/Admin/Order" class="btn btn-sm rounded-pill px-3 @(Model.Status == null ? "btn-primary" : "btn-outline-secondary")">Tất cả</a>
+                    <a href="/Admin/Order?status=PaymentPending" class="btn btn-sm rounded-pill px-3 @(Model.Status == TechGearShop_V1.Models.Entities.OrderStatus.PaymentPending ? "btn-warning text-dark" : "btn-outline-secondary")">Chờ thanh toán VNPay</a>
                     <a href="/Admin/Order?status=Pending" class="btn btn-sm rounded-pill px-3 @(Model.Status == TechGearShop_V1.Models.Entities.OrderStatus.Pending ? "btn-warning" : "btn-outline-secondary")">Chờ xử lý</a>
                     <a href="/Admin/Order?status=Processing" class="btn btn-sm rounded-pill px-3 @(Model.Status == TechGearShop_V1.Models.Entities.OrderStatus.Processing ? "btn-info" : "btn-outline-secondary")">Đang chuẩn bị</a>
                     <a href="/Admin/Order?status=Shipping" class="btn btn-sm rounded-pill px-3 @(Model.Status == TechGearShop_V1.Models.Entities.OrderStatus.Shipping ? "btn-primary" : "btn-outline-secondary")">Đang giao</a>
@@ -40,6 +41,7 @@
                 <th style="width:150px">Ngày Đặt</th>
                 <th>Khách Hàng</th>
                 <th style="width:150px">Tổng Tiền</th>
+                <th style="width:150px">Thanh Toán</th>
                 <th style="width:130px">Trạng Thái</th>
                 <th style="width:100px" class="text-end pe-3">Hành Động</th>
             </tr>
@@ -58,8 +60,32 @@
                             </td>
                             <td><span class="text-danger fw-bold">@o.FinalAmount.ToString("N0") ₫</span></td>
                             <td>
+                                @if (o.PaymentMethod == TechGearShop_V1.Models.Entities.PaymentMethod.VNPay)
+                                {
+                                    if (o.PaymentStatus == TechGearShop_V1.Models.Entities.PaymentStatus.Paid)
+                                    {
+                                        <span class="badge bg-success bg-opacity-10 text-success border border-success"><i class="bi bi-credit-card me-1"></i> VNPay (Đã TT)</span>
+                                    }
+                                    else if (o.PaymentStatus == TechGearShop_V1.Models.Entities.PaymentStatus.Failed)
+                                    {
+                                        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger"><i class="bi bi-x-circle me-1"></i> VNPay (Lỗi)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning"><i class="bi bi-clock me-1"></i> VNPay (Chưa TT)</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary"><i class="bi bi-cash me-1"></i> COD</span>
+                                }
+                            </td>
+                            <td>
                                 @switch (o.Status)
                                 {
+                                    case TechGearShop_V1.Models.Entities.OrderStatus.PaymentPending:
+                                        <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i> Chờ TT VNPay</span>
+                                        break;
                                     case TechGearShop_V1.Models.Entities.OrderStatus.Pending:
                                         <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i> Chờ xử lý</span>
                                         break;

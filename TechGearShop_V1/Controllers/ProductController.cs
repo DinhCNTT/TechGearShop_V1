@@ -17,11 +17,11 @@ namespace TechGearShop_V1.Controllers
             _stockSubscriptionService = stockSubscriptionService;
         }
 
-        // GET: /Product?categoryId=1&keyword=abc&sortOrder=price_asc&page=1&minPrice=1000&maxPrice=5000
-        public async Task<IActionResult> Index(int? categoryId, string? keyword, string? sortOrder, int page = 1, decimal? minPrice = null, decimal? maxPrice = null)
+        // GET: /Product?categoryId=1&keyword=abc&sortOrder=price_asc&page=1&minPrice=1000&maxPrice=5000&isSale=true
+        public async Task<IActionResult> Index(int? categoryId, string? keyword, string? sortOrder, int page = 1, decimal? minPrice = null, decimal? maxPrice = null, bool? isSale = null)
         {
             int pageSize = 12; // Mặc định 12 sản phẩm mỗi trang cho giao diện Client
-            var result = await _productService.FilterProductsAsync(categoryId, keyword, sortOrder, page, pageSize, minPrice, maxPrice);
+            var result = await _productService.FilterProductsAsync(categoryId, keyword, sortOrder, page, pageSize, minPrice, maxPrice, isSale);
             var categories = await _categoryService.GetActiveCategoriesAsync();
 
             var model = new ProductListViewModel
@@ -39,12 +39,84 @@ namespace TechGearShop_V1.Controllers
                 TotalPages = (int)Math.Ceiling(result.TotalItems / (double)pageSize)
             };
 
+            ViewBag.IsSale = isSale;
+            ViewBag.FilterUrl = "/Product";
+            ViewBag.PageTitle = isSale == true ? "Sản phẩm khuyến mãi" : "Tất cả sản phẩm";
+
             if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
             {
                 return PartialView("_ProductGrid", model);
             }
 
             return View(model);
+        }
+
+        [Route("san-pham-noi-bat")]
+        public async Task<IActionResult> Featured(int? categoryId, string? keyword, string? sortOrder, int page = 1, decimal? minPrice = null, decimal? maxPrice = null, bool? isSale = null)
+        {
+            int pageSize = 12;
+            var result = await _productService.FilterProductsAsync(categoryId, keyword, sortOrder, page, pageSize, minPrice, maxPrice, isSale, isFeatured: true);
+            var categories = await _categoryService.GetActiveCategoriesAsync();
+
+            var model = new ProductListViewModel
+            {
+                Products = result.Products,
+                Categories = categories,
+                CurrentCategoryId = categoryId,
+                CurrentKeyword = keyword,
+                CurrentSortOrder = sortOrder,
+                MinPrice = minPrice,
+                MaxPrice = maxPrice,
+                CurrentPage = page,
+                PageSize = pageSize,
+                TotalItems = result.TotalItems,
+                TotalPages = (int)Math.Ceiling(result.TotalItems / (double)pageSize)
+            };
+
+            ViewBag.IsSale = isSale;
+            ViewBag.FilterUrl = "/san-pham-noi-bat";
+            ViewBag.PageTitle = "Sản Phẩm Nổi Bật";
+
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return PartialView("_ProductGrid", model);
+            }
+
+            return View("Index", model);
+        }
+
+        [Route("san-pham-moi-ve")]
+        public async Task<IActionResult> NewArrivals(int? categoryId, string? keyword, string? sortOrder, int page = 1, decimal? minPrice = null, decimal? maxPrice = null, bool? isSale = null)
+        {
+            int pageSize = 12;
+            var result = await _productService.FilterProductsAsync(categoryId, keyword, sortOrder, page, pageSize, minPrice, maxPrice, isSale);
+            var categories = await _categoryService.GetActiveCategoriesAsync();
+
+            var model = new ProductListViewModel
+            {
+                Products = result.Products,
+                Categories = categories,
+                CurrentCategoryId = categoryId,
+                CurrentKeyword = keyword,
+                CurrentSortOrder = sortOrder,
+                MinPrice = minPrice,
+                MaxPrice = maxPrice,
+                CurrentPage = page,
+                PageSize = pageSize,
+                TotalItems = result.TotalItems,
+                TotalPages = (int)Math.Ceiling(result.TotalItems / (double)pageSize)
+            };
+
+            ViewBag.IsSale = isSale;
+            ViewBag.FilterUrl = "/san-pham-moi-ve";
+            ViewBag.PageTitle = "Sản Phẩm Mới Về";
+
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return PartialView("_ProductGrid", model);
+            }
+
+            return View("Index", model);
         }
 
         // GET: /Product/Detail/5

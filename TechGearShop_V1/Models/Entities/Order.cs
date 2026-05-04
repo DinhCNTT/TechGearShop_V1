@@ -53,6 +53,17 @@ namespace TechGearShop_V1.Models.Entities
         [MaxLength(1000)]
         public string? Note { get; set; }
 
+        // Các trường mới cho VNPay
+        public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Unpaid;
+        
+        [MaxLength(255)]
+        public string? VnpayTransactionId { get; set; }
+        
+        [MaxLength(50)]
+        public string? VnpayResponseCode { get; set; }
+        
+        public DateTime? PaidAt { get; set; }
+
         // Navigation properties
         public User? User { get; set; }
         public ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();

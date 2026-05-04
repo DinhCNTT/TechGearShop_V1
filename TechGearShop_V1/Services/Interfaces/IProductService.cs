@@ -13,6 +13,6 @@ namespace TechGearShop_V1.Services.Interfaces
         Task<IEnumerable<Product>> GetFeaturedProductsAsync(int count);
         Task<IEnumerable<Product>> GetNewProductsAsync(int count);
         Task<IEnumerable<Product>> GetProductsByCategoryAsync(int categoryId);
-        Task<(IEnumerable<Product> Products, int TotalItems)> FilterProductsAsync(int? categoryId, string? keyword, string? sortOrder, int page = 1, int pageSize = 12, decimal? minPrice = null, decimal? maxPrice = null);
+        Task<(IEnumerable<Product> Products, int TotalItems)> FilterProductsAsync(int? categoryId, string? keyword, string? sortOrder, int page = 1, int pageSize = 12, decimal? minPrice = null, decimal? maxPrice = null, bool? isSale = null, bool? isFeatured = null);
     }
 }

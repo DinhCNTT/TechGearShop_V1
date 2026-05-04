@@ -100,11 +100,28 @@
             {
                 @foreach (var order in displayed)
                 {
-                    var paymentLabel = order.PaymentMethod switch {
-                        TechGearShop_V1.Models.Entities.PaymentMethod.VNPay => ("VNPay", "text-danger"),
-                        TechGearShop_V1.Models.Entities.PaymentMethod.MoMo  => ("MoMo",  "text-danger"),
-                        _                                                    => ("COD",   "text-success")
-                    };
+                    string payLabelText = "COD";
+                    string payLabelColor = "text-success";
+                    
+                    if (order.PaymentMethod == TechGearShop_V1.Models.Entities.PaymentMethod.VNPay)
+                    {
+                        if (order.PaymentStatus == TechGearShop_V1.Models.Entities.PaymentStatus.Paid)
+                        {
+                            payLabelText = "VNPay (Đã thanh toán)";
+                            payLabelColor = "text-success";
+                        }
+                        else if (order.PaymentStatus == TechGearShop_V1.Models.Entities.PaymentStatus.Failed)
+                        {
+                            payLabelText = "VNPay (Lỗi)";
+                            payLabelColor = "text-danger";
+                        }
+                        else
+                        {
+                            payLabelText = "VNPay (Chưa thanh toán)";
+                            payLabelColor = "text-warning";
+                        }
+                    }
+
                     <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 order-card">
 
                         <!-- Order Header -->
@@ -138,13 +155,17 @@
                                 }
 
                                 <span class="text-muted small"><i class="bi bi-clock me-1"></i>@timeLabel @vnTime</span>
-                                <span class="badge @(paymentLabel.Item2 == "text-success" ? "bg-success" : "bg-danger") bg-opacity-10 @(paymentLabel.Item2) border border-opacity-25 fw-normal px-2 py-1" style="font-size: 0.75rem;">
-                                    <i class="bi bi-credit-card me-1"></i>@paymentLabel.Item1
+                                <span class="badge @(payLabelColor == "text-success" ? "bg-success" : (payLabelColor == "text-danger" ? "bg-danger" : "bg-warning")) bg-opacity-10 @(payLabelColor) border border-opacity-25 fw-normal px-2 py-1" style="font-size: 0.75rem;">
+                                    <i class="bi bi-credit-card me-1"></i>@payLabelText
                                 </span>
                             </div>
                             <div>
                                 @switch (order.Status)
                                 {
+                                    case OrderStatus.PaymentPending:
+                                        <span class="badge bg-warning text-dark px-3 py-2 rounded-pill">⏳ Đang chờ thanh toán VNPay</span>
+                                        <a href="/VNPay/Pay?orderId=@order.Id" class="btn btn-sm btn-primary ms-2 rounded-pill">Thanh toán ngay</a>
+                                        break;
                                     case OrderStatus.Pending:
                                         <span class="badge bg-warning text-dark px-3 py-2 rounded-pill">⏳ Chờ xác nhận</span>; break;
                                     case OrderStatus.Processing:

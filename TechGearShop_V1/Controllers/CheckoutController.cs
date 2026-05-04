@@ -9,6 +9,9 @@ namespace TechGearShop_V1.Controllers
 {
     public class CheckoutController : Controller
     {
+        // Session key riêng cho luồng Reorder — không đụng vào giỏ hàng thật
+        public const string REORDER_KEY = "reorder_items";
+
         private readonly IOrderService   _orderService;
         private readonly ICouponService  _couponService;
         private readonly IProductService _productService;
@@ -34,15 +37,22 @@ namespace TechGearShop_V1.Controllers
         }
 
         /// <summary>
-        /// Lấy cart items từ DB (user đã login) hoặc Session (fallback cho guest).
+        /// Lấy cart items để checkout:
+        /// - Ưu tiên đọc từ REORDER_KEY nếu đang ở luồng "Mua lại" (không đụng giỏ hàng thật)
+        /// - Nếu không, đọc từ giỏ hàng thật trong DB / Session
         /// </summary>
         private async Task<List<CartItem>> GetCartItemsAsync()
         {
+            // Ưu tiên 1: Luồng Reorder — đọc từ Session riêng, không ảnh hưởng giỏ hàng thật
+            var reorderItems = HttpContext.Session.Get<List<CartItem>>(REORDER_KEY);
+            if (reorderItems != null && reorderItems.Any())
+                return reorderItems;
+
+            // Ưu tiên 2: Giỏ hàng thật (login hoặc guest)
             var userId = GetUserId();
             if (userId != null)
                 return await _cartService.GetCartItemsAsync(userId.Value);
 
-            // Fallback: đọc từ Session nếu user chưa login
             return HttpContext.Session.Get<List<CartItem>>(CartController.CART_KEY) ?? new List<CartItem>();
         }
 
@@ -177,7 +187,7 @@ namespace TechGearShop_V1.Controllers
                 }
             }
 
-            // ── Đóng gói và đẩy vào Channel ─────────────────────────────────────────
+            // ── Đóng gói Request ─────────────────────────────────────────
             var request = new OrderRequestDto
             {
                 UserId          = userId.Value,
@@ -195,21 +205,57 @@ namespace TechGearShop_V1.Controllers
                 Items           = cart
             };
 
-            await orderChannel.WriteAsync(request);
-
-            // ── Xóa giỏ hàng ngay — vì đơn đã được tiếp nhận vào Queue ─────────────
-            await _cartService.ClearCartAsync(userId.Value);
-            HttpContext.Session.Remove(CartController.CART_KEY);
-            HttpContext.Session.Remove(CartController.SELECTED_KEY);
-
-            // ── Trả về ngay cho Client, không chờ DB ─────────────────────────────────
-            // UI sẽ lắng nghe SignalR event "OrderPlacedResult" để biết kết quả cuối cùng.
-            return Json(new
+            // ── Phân nhánh xử lý theo Phương thức thanh toán ─────────────
+            if (model.PaymentMethod == TechGearShop_V1.Models.Entities.PaymentMethod.VNPay)
             {
-                success = true,
-                queued  = true,
-                message = "Hệ thống đang xử lý đơn hàng của bạn. Vui lòng chờ trong giây lát..."
-            });
+                try
+                {
+                    // 1. Lưu DB ngay lập tức (không qua Channel) để lấy OrderId
+                    int orderId = await _orderService.CreatePendingPaymentOrderAsync(request);
+
+                    // 2. Xóa giỏ hàng
+                    await ClearCartSessionAndDbAsync(userId.Value);
+
+                    // 3. Trả về link Redirect sang VNPay
+                    return Json(new
+                    {
+                        success = true,
+                        redirect = $"/VNPay/Pay?orderId={orderId}"
+                    });
+                }
+                catch (Exception ex)
+                {
+                    return Json(new { success = false, message = ex.Message });
+                }
+            }
+            else
+            {
+                // COD: Đẩy vào Channel xử lý nền
+                await orderChannel.WriteAsync(request);
+                await ClearCartSessionAndDbAsync(userId.Value);
+
+                return Json(new
+                {
+                    success = true,
+                    queued  = true,
+                    message = "Hệ thống đang xử lý đơn hàng của bạn. Vui lòng chờ trong giây lát..."
+                });
+            }
+        }
+
+        private async Task ClearCartSessionAndDbAsync(int userId)
+        {
+            var isReorder = HttpContext.Session.Get<List<CartItem>>(REORDER_KEY) != null;
+            if (isReorder)
+            {
+                HttpContext.Session.Remove(REORDER_KEY);
+            }
+            else
+            {
+                await _cartService.ClearCartAsync(userId);
+                HttpContext.Session.Remove(CartController.CART_KEY);
+                HttpContext.Session.Remove(CartController.SELECTED_KEY);
+            }
         }
 
         public IActionResult Success(int orderId) => View(orderId);

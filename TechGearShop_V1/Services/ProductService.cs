@@ -78,9 +78,9 @@ namespace TechGearShop_V1.Services
             return await _productRepository.GetProductsByCategoryIdAsync(categoryId);
         }
 
-        public async Task<(IEnumerable<Product> Products, int TotalItems)> FilterProductsAsync(int? categoryId, string? keyword, string? sortOrder, int page = 1, int pageSize = 12, decimal? minPrice = null, decimal? maxPrice = null)
+        public async Task<(IEnumerable<Product> Products, int TotalItems)> FilterProductsAsync(int? categoryId, string? keyword, string? sortOrder, int page = 1, int pageSize = 12, decimal? minPrice = null, decimal? maxPrice = null, bool? isSale = null, bool? isFeatured = null)
         {
-            return await _productRepository.FilterProductsAsync(categoryId, keyword, sortOrder, page, pageSize, minPrice, maxPrice);
+            return await _productRepository.FilterProductsAsync(categoryId, keyword, sortOrder, page, pageSize, minPrice, maxPrice, isSale, isFeatured);
         }
     }
 }

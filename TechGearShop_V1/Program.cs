@@ -62,6 +62,9 @@ builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.INotificationServ
 builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.IReviewService, TechGearShop_V1.Services.ReviewService>();
 builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.IProductQuestionService, TechGearShop_V1.Services.ProductQuestionService>();
 
+// VNPay
+builder.Services.Configure<TechGearShop_V1.Models.DTOs.VNPaySettings>(builder.Configuration.GetSection("VNPay"));
+builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.IVNPayService, TechGearShop_V1.Services.VNPayService>();
 // Stock Notification Services
 builder.Services.AddSingleton<TechGearShop_V1.Services.Interfaces.IStockNotificationQueue, TechGearShop_V1.Services.StockNotificationQueue>();
 builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.IStockSubscriptionService, TechGearShop_V1.Services.StockSubscriptionService>();
@@ -97,7 +100,10 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.UseRouting();
 
 app.UseAuthentication(); // Phải đứng trước UseAuthorization

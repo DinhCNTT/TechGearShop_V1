@@ -1,3 +1,20 @@
+@using TechGearShop_V1.Extensions
+@using TechGearShop_V1.Models.ViewModels
+@inject TechGearShop_V1.Services.Interfaces.ICartService CartService
+@inject TechGearShop_V1.Services.Interfaces.ICategoryService CategoryService
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+
+@{
+    int cartCount = 0;
+    var userIdStr = HttpContextAccessor.HttpContext?.User
+        .FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    if (int.TryParse(userIdStr, out var cartUserId))
+        cartCount = await CartService.GetCartCountAsync(cartUserId);
+
+    // Lấy danh sách danh mục cho Dropdown
+    var headerCategories = await CategoryService.GetActiveCategoriesAsync();
+}
+
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
     <div class="container">
         <a class="navbar-brand fw-bold fs-3" asp-area="" asp-controller="Home" asp-action="Index">
@@ -11,11 +28,24 @@
                 <li class="nav-item">
                     <a class="nav-link text-white fw-semibold" asp-area="" asp-controller="Home" asp-action="Index">Trang Chủ</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link text-white fw-semibold" asp-controller="Product" asp-action="Index">Tất Cả Sản Phẩm</a>
+                <li class="nav-item dropdown dropdown-hover">
+                    <a class="nav-link dropdown-toggle text-white fw-semibold" href="#" id="categoryDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Danh Mục Sản Phẩm
+                    </a>
+                    <ul class="dropdown-menu shadow border-0 mt-2" aria-labelledby="categoryDropdown">
+                        <li><a class="dropdown-item fw-bold text-primary" asp-controller="Product" asp-action="Index"><i class="bi bi-grid-fill me-2"></i>Tất Cả Sản Phẩm</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        @if (headerCategories != null)
+                        {
+                            foreach (var cat in headerCategories)
+                            {
+                                <li><a class="dropdown-item" asp-controller="Product" asp-action="Index" asp-route-categoryId="@cat.Id">@cat.Name</a></li>
+                            }
+                        }
+                    </ul>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-white fw-semibold" asp-controller="Product" asp-action="Index" asp-route-sortOrder="price_desc">Khuyến Mãi</a>
+                    <a class="nav-link text-white fw-semibold" asp-controller="Product" asp-action="Index" asp-route-isSale="true">Khuyến Mãi</a>
                 </li>
             </ul>
 
@@ -24,18 +54,7 @@
                 <button class="btn btn-warning rounded-pill px-3 shadow-sm text-dark fw-bold" type="submit"><i class="bi bi-search"></i></button>
             </form>
 
-            @using TechGearShop_V1.Extensions
-@using TechGearShop_V1.Models.ViewModels
-@inject TechGearShop_V1.Services.Interfaces.ICartService CartService
-@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
 
-@{
-    int cartCount = 0;
-    var userIdStr = HttpContextAccessor.HttpContext?.User
-        .FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-    if (int.TryParse(userIdStr, out var cartUserId))
-        cartCount = await CartService.GetCartCountAsync(cartUserId);
-}
 <ul class="navbar-nav d-flex align-items-center">
     <!-- Custom Language Switcher (hides the ugly Google widget off-screen) -->
     <li class="nav-item dropdown me-2" id="lang-switcher">

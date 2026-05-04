@@ -94,10 +94,10 @@
                                 <i class="bi bi-cash-stack text-success"></i> Thanh toán khi nhận hàng (COD)
                             </label>
                         </div>
-                        <div class="form-check p-3 border rounded bg-light opacity-50">
-                            <input class="form-check-input ms-1 me-2" type="radio" asp-for="PaymentMethod" value="@TechGearShop_V1.Models.Entities.PaymentMethod.VNPay" id="payVNPay" disabled>
+                        <div class="form-check p-3 border rounded bg-light">
+                            <input class="form-check-input ms-1 me-2" type="radio" asp-for="PaymentMethod" value="@TechGearShop_V1.Models.Entities.PaymentMethod.VNPay" id="payVNPay">
                             <label class="form-check-label w-100" style="cursor:pointer;" for="payVNPay">
-                                <i class="bi bi-credit-card-2-front text-primary"></i> Chuyển khoản VNPay (Sẽ mở ở Phase sau)
+                                <i class="bi bi-credit-card-2-front text-primary"></i> Thanh toán qua thẻ ATM/Visa (VNPay)
                             </label>
                         </div>
                     </div>
@@ -274,7 +274,11 @@
 
                 const result = await response.json();
 
-                if (result.queued) {
+                if (result.redirect) {
+                    // Chuyển hướng sang cổng thanh toán VNPay
+                    document.getElementById("overlayStatusText").innerText = "Đang chuyển hướng đến cổng thanh toán VNPay...";
+                    window.location.href = result.redirect;
+                } else if (result.queued) {
                     // Đơn vào Queue thành công — chờ SignalR báo kết quả
                     document.getElementById("overlayStatusText").innerText =
                         "Đơn hàng đã được tiếp nhận! Đang kiểm tra tồn kho...";

@@ -11,6 +11,6 @@ namespace TechGearShop_V1.Repositories.Interfaces
         Task<Product?> GetProductWithCategoryAsync(int id);
         Task<ProductImage?> GetProductImageByIdAsync(int imageId);
         Task DeleteProductImageAsync(int imageId);
-        Task<(IEnumerable<Product> Products, int TotalItems)> FilterProductsAsync(int? categoryId, string? keyword, string? sortOrder, int page = 1, int pageSize = 12, decimal? minPrice = null, decimal? maxPrice = null);
+        Task<(IEnumerable<Product> Products, int TotalItems)> FilterProductsAsync(int? categoryId, string? keyword, string? sortOrder, int page = 1, int pageSize = 12, decimal? minPrice = null, decimal? maxPrice = null, bool? isSale = null, bool? isFeatured = null);
     }
 }

@@ -1,7 +1,9 @@
 @model TechGearShop_V1.Models.ViewModels.ProductListViewModel
 
 @{
-    ViewData["Title"] = "Tất cả sản phẩm";
+    bool isSale = ViewBag.IsSale == true;
+    string pageTitle = ViewBag.PageTitle ?? (isSale ? "Sản phẩm khuyến mãi" : "Tất cả sản phẩm");
+    ViewData["Title"] = pageTitle;
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
@@ -94,6 +96,10 @@
                     <!-- Hidden fields -->
                     <input type="hidden" name="sortOrder" id="hiddenSort" value="@Model.CurrentSortOrder" />
                     <input type="hidden" name="page" id="hiddenPage" value="@Model.CurrentPage" />
+                    <input type="hidden" name="isSale" id="hiddenIsSale" value="@(isSale ? "true" : "")" />
+                    
+                    <!-- Nút submit ẩn để cho phép nhấn Enter -->
+                    <button type="submit" class="d-none" aria-hidden="true">Submit</button>
                 </form>
             </div>
         </div>
@@ -104,7 +110,7 @@
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 bg-white p-3 rounded-4 shadow-sm border gap-3 position-relative overflow-hidden">
             <div class="position-relative z-1">
                 <h5 class="mb-1 fw-bold text-dark d-flex align-items-center">
-                    <i class="bi bi-boxes text-primary me-2 fs-4"></i> Danh sách sản phẩm
+                    <i class="bi @(isSale ? "bi-tags-fill text-danger" : "bi-boxes text-primary") me-2 fs-4"></i> @pageTitle
                 </h5>
                 <div id="activeFiltersContainer" class="d-flex flex-wrap gap-2 mt-2">
                     <!-- JS sẽ render các thẻ filter đang chọn ở đây -->
@@ -219,6 +225,7 @@
             // Xóa input hidden
             document.getElementById("hiddenSort").value = "";
             document.getElementById("hiddenPage").value = 1;
+            document.getElementById("hiddenIsSale").value = "";
             // Xóa min max
             document.getElementById('minPriceInput').value = "";
             document.getElementById('maxPriceInput').value = "";
@@ -251,7 +258,8 @@
             }
 
             // Gọi AJAX
-            const url = `/Product?${params.toString()}`;
+            const baseUrl = '@Html.Raw(ViewBag.FilterUrl ?? "/Product")';
+            const url = `${baseUrl}?${params.toString()}`;
             
             fetch(url, {
                 headers: {
@@ -304,6 +312,12 @@
                 container.innerHTML += `<span class="badge bg-white text-dark border shadow-sm px-3 py-2 rounded-pill fs-7 fw-semibold d-flex align-items-center"><i class="bi bi-search text-muted me-2"></i> ${keyword} <i class="bi bi-x-circle-fill ms-2 text-danger fs-6" style="cursor:pointer" onclick="removeFilter('keyword')"></i></span>`;
             }
 
+            // Sale filter (Ẩn badge này đi để tránh trùng lặp với Tiêu đề trang)
+            const saleFilter = formData.get("isSale");
+            if (saleFilter === "true") {
+                hasFilter = true; // Vẫn tính là có filter để ẩn dòng "Đang hiển thị tất cả"
+            }
+
             // Category
             const catRadio = document.querySelector('input[name="categoryId"]:checked');
             if (catRadio && catRadio.value !== "") {
@@ -338,6 +352,8 @@
                 document.querySelectorAll('input[name="keyword"]').forEach(el => el.value = "");
             } else if (type === 'category') {
                 document.getElementById("catAll").checked = true;
+            } else if (type === 'isSale') {
+                document.getElementById('hiddenIsSale').value = "";
             } else if (type === 'price') {
                 document.getElementById('minPriceInput').value = "";
                 document.getElementById('maxPriceInput').value = "";
