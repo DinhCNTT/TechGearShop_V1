@@ -94,6 +94,7 @@ namespace TechGearShop_V1.Areas.Admin.Controllers
                     Brand = model.Brand,
                     CategoryId = model.CategoryId,
                     Price = model.Price,
+                    CostPrice = model.CostPrice,
                     PromotionalPrice = model.PromotionalPrice,
                     Stock = model.Stock,
                     Description = model.Description,
@@ -139,6 +140,7 @@ namespace TechGearShop_V1.Areas.Admin.Controllers
                 Brand = product.Brand ?? "",
                 CategoryId = product.CategoryId,
                 Price = product.Price,
+                CostPrice = product.CostPrice,
                 PromotionalPrice = product.PromotionalPrice,
                 Stock = product.Stock,
                 Description = product.Description,
@@ -172,6 +174,7 @@ namespace TechGearShop_V1.Areas.Admin.Controllers
                 product.Brand = model.Brand;
                 product.CategoryId = model.CategoryId;
                 product.Price = model.Price;
+                product.CostPrice = model.CostPrice;
                 product.PromotionalPrice = model.PromotionalPrice;
                 product.Stock = model.Stock;
                 product.Description = model.Description;

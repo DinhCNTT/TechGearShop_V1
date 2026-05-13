@@ -32,21 +32,30 @@
                     </div>
 
                     <!-- Category & Giá -->
-                    <div class="col-md-4 mt-2">
+                    <div class="col-md-3 mt-2">
                         <label asp-for="CategoryId" class="form-label fw-semibold text-muted small mb-1">Phân loại *</label>
                         <select asp-for="CategoryId" asp-items="@(new SelectList(Model.Categories, "Id", "Name"))" class="form-select bg-light border-0"></select>
                         <span asp-validation-for="CategoryId" class="text-danger small"></span>
                     </div>
-                    <div class="col-md-4 mt-2">
+                    <div class="col-md-3 mt-2">
                         <label asp-for="Price" class="form-label fw-semibold text-muted small mb-1">Giá bán (VNĐ) *</label>
                         <div class="input-group">
                             <input asp-for="Price" type="hidden" id="rawPrice" />
-                            <input type="text" class="form-control bg-light border-0 fw-bold text-danger" id="displayPrice" oninput="formatCurrency(this, 'rawPrice')" value="@(Model?.Price > 0 ? Model.Price.ToString("N0") : "")" placeholder="0" />
+                            <input type="text" class="form-control bg-light border-0 fw-bold text-dark" id="displayPrice" oninput="formatCurrency(this, 'rawPrice')" value="@(Model?.Price > 0 ? Model.Price.ToString("N0") : "")" placeholder="0" />
                             <span class="input-group-text border-0 bg-light py-1 text-muted">đ</span>
                         </div>
                         <span asp-validation-for="Price" class="text-danger small"></span>
                     </div>
-                    <div class="col-md-4 mt-2">
+                    <div class="col-md-3 mt-2">
+                        <label asp-for="CostPrice" class="form-label fw-semibold text-muted small mb-1">Giá vốn (VNĐ) *</label>
+                        <div class="input-group">
+                            <input asp-for="CostPrice" type="hidden" id="rawCostPrice" />
+                            <input type="text" class="form-control bg-light border-0 fw-bold text-success" id="displayCostPrice" oninput="formatCurrency(this, 'rawCostPrice')" value="@(Model?.CostPrice > 0 ? Model.CostPrice.ToString("N0") : "")" placeholder="0" />
+                            <span class="input-group-text border-0 bg-light py-1 text-muted">đ</span>
+                        </div>
+                        <span asp-validation-for="CostPrice" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-3 mt-2">
                         <label asp-for="PromotionalPrice" class="form-label fw-semibold text-muted small mb-1">Giá KM (VNĐ)</label>
                         <div class="input-group">
                             <input asp-for="PromotionalPrice" type="hidden" id="rawPromoPrice" />

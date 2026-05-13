@@ -22,6 +22,10 @@ namespace TechGearShop_V1.Models.Entities
         [Column(TypeName = "decimal(18,2)")]
         public decimal? PromotionalPrice { get; set; }
 
+        // Giá vốn / Giá nhập (dùng để tính lợi nhuận)
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal CostPrice { get; set; } = 0;
+
         public int Stock { get; set; } = 0;
 
         [MaxLength(500)]

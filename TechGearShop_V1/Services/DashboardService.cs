@@ -69,23 +69,25 @@ namespace TechGearShop_V1.Services
             var todayOrders  = await _context.Orders
                 .CountAsync(o => o.OrderDate >= todayVnStart && o.OrderDate < todayVnEnd);
 
-            // Doanh thu kỳ hiện tại
-            var currentRevenue = await _context.Orders
+            // Tính toán Doanh thu & Lợi nhuận kỳ hiện tại
+            var currentOrders = await _context.Orders
+                .Include(o => o.OrderDetails)
                 .Where(o => o.OrderDate >= curStart && o.OrderDate < curEnd && o.Status == OrderStatus.Completed)
-                .SumAsync(o => (decimal?)o.FinalAmount) ?? 0;
+                .ToListAsync();
 
-            // Doanh thu kỳ trước
-            var previousRevenue = await _context.Orders
+            var currentRevenue = currentOrders.Sum(o => o.FinalAmount);
+            var currentProfit = currentOrders.Sum(o => o.FinalAmount - o.OrderDetails.Sum(od => od.UnitCostPrice * od.Quantity));
+            var currentOrderCount = currentOrders.Count;
+
+            // Tính toán Doanh thu & Lợi nhuận kỳ trước
+            var prevOrders = await _context.Orders
+                .Include(o => o.OrderDetails)
                 .Where(o => o.OrderDate >= prevStart && o.OrderDate < prevEnd && o.Status == OrderStatus.Completed)
-                .SumAsync(o => (decimal?)o.FinalAmount) ?? 0;
+                .ToListAsync();
 
-            // Đơn hàng kỳ hiện tại (hoàn thành)
-            var currentOrderCount = await _context.Orders
-                .CountAsync(o => o.OrderDate >= curStart && o.OrderDate < curEnd && o.Status == OrderStatus.Completed);
-
-            // Đơn hàng kỳ trước (hoàn thành)
-            var previousOrderCount = await _context.Orders
-                .CountAsync(o => o.OrderDate >= prevStart && o.OrderDate < prevEnd && o.Status == OrderStatus.Completed);
+            var previousRevenue = prevOrders.Sum(o => o.FinalAmount);
+            var previousProfit = prevOrders.Sum(o => o.FinalAmount - o.OrderDetails.Sum(od => od.UnitCostPrice * od.Quantity));
+            var previousOrderCount = prevOrders.Count;
 
             // Người dùng mới kỳ hiện tại
             var currentNewUsers = await _context.Users
@@ -102,20 +104,31 @@ namespace TechGearShop_V1.Services
             var sixPeriodsAgo = firstDayOfPeriod.AddMonths(-5);
             var chartStartUtc = TimeZoneInfo.ConvertTimeToUtc(sixPeriodsAgo, _vnTz);
 
-            var revenueByMonth = await _context.Orders
+            var revenueByMonthList = await _context.Orders
+                .Include(o => o.OrderDetails)
                 .Where(o => o.OrderDate >= chartStartUtc && o.OrderDate < curEnd && o.Status == OrderStatus.Completed)
+                .Select(o => new {
+                    o.OrderDate,
+                    o.FinalAmount,
+                    TotalCost = o.OrderDetails.Sum(od => od.UnitCostPrice * od.Quantity)
+                })
+                .ToListAsync();
+
+            var revenueByMonth = revenueByMonthList
                 .GroupBy(o => new { o.OrderDate.Year, o.OrderDate.Month })
                 .Select(g => new {
                     g.Key.Year,
                     g.Key.Month,
                     Revenue = g.Sum(o => o.FinalAmount),
+                    Profit  = g.Sum(o => o.FinalAmount - o.TotalCost),
                     Count   = g.Count()
                 })
                 .OrderBy(x => x.Year).ThenBy(x => x.Month)
-                .ToListAsync();
+                .ToList();
 
             var labels      = new List<string>();
             var revenues    = new List<decimal>();
+            var profits     = new List<decimal>();
             var orderCounts = new List<int>();
             for (int i = 5; i >= 0; i--)
             {
@@ -124,6 +137,7 @@ namespace TechGearShop_V1.Services
                 var entry = revenueByMonth.FirstOrDefault(x => x.Year == target.Year && x.Month == target.Month);
                 labels.Add($"T{target.Month}/{target.Year % 100}");
                 revenues.Add(entry?.Revenue ?? 0);
+                profits.Add(entry?.Profit ?? 0);
                 orderCounts.Add(entry?.Count ?? 0);
             }
 
@@ -167,16 +181,19 @@ namespace TechGearShop_V1.Services
 
                 TodayNewOrders       = todayOrders,
                 MonthlyRevenue       = currentRevenue,
+                MonthlyProfit        = currentProfit,
                 LowStockProductCount = lowStock,
                 NewUsersThisMonth    = currentNewUsers,
                 PendingOrders        = pendingOrders,
 
                 RevenueGrowthPercent = CalcGrowth(currentRevenue, previousRevenue),
+                ProfitGrowthPercent  = CalcGrowth(currentProfit, previousProfit),
                 OrderGrowthPercent   = CalcGrowth(currentOrderCount, previousOrderCount),
                 UserGrowthPercent    = CalcGrowth(currentNewUsers, previousNewUsers),
 
                 RevenueLabels  = labels,
                 RevenueData    = revenues,
+                ProfitData     = profits,
                 OrderCountData = orderCounts,
 
                 TopProducts  = topProducts,

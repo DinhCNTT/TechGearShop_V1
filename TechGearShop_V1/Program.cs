@@ -61,6 +61,7 @@ builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.ICartService, Tec
 builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.INotificationService, TechGearShop_V1.Services.NotificationService>();
 builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.IReviewService, TechGearShop_V1.Services.ReviewService>();
 builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.IProductQuestionService, TechGearShop_V1.Services.ProductQuestionService>();
+builder.Services.AddScoped<TechGearShop_V1.Services.Interfaces.IExcelExportService, TechGearShop_V1.Services.ExcelExportService>();
 
 // VNPay
 builder.Services.Configure<TechGearShop_V1.Models.DTOs.VNPaySettings>(builder.Configuration.GetSection("VNPay"));

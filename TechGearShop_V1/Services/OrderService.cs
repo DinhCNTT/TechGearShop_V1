@@ -207,6 +207,7 @@ namespace TechGearShop_V1.Services
             try
             {
                 // 1. Trừ kho nguyên tử ngay lập tức để giữ hàng (giống logic Background)
+                var orderDetailsList = new List<OrderDetail>();
                 foreach (var item in request.Items)
                 {
                     var product = await _productRepository.GetByIdAsync(item.ProductId);
@@ -216,6 +217,14 @@ namespace TechGearShop_V1.Services
                     }
                     product.Stock -= item.Quantity;
                     _productRepository.Update(product);
+
+                    orderDetailsList.Add(new OrderDetail
+                    {
+                        ProductId = item.ProductId,
+                        Quantity = item.Quantity,
+                        UnitPrice = item.Price,
+                        UnitCostPrice = product.CostPrice // Gán Giá vốn
+                    });
                 }
                 await _productRepository.SaveChangesAsync();
 
@@ -237,12 +246,7 @@ namespace TechGearShop_V1.Services
                     OrderDate = DateTime.UtcNow,
                     Status = OrderStatus.PaymentPending, // Đang chờ VNPay callback
                     PaymentStatus = PaymentStatus.Unpaid,
-                    OrderDetails = request.Items.Select(i => new OrderDetail
-                    {
-                        ProductId = i.ProductId,
-                        Quantity = i.Quantity,
-                        UnitPrice = i.Price
-                    }).ToList()
+                    OrderDetails = orderDetailsList
                 };
 
                 await _orderRepository.AddAsync(order);

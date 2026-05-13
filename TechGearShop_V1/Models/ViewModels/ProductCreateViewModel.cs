@@ -26,6 +26,11 @@ namespace TechGearShop_V1.Models.ViewModels
         [Range(0, double.MaxValue, ErrorMessage = "Giá bán phải lớn hơn 0")]
         public decimal Price { get; set; }
 
+        [Required(ErrorMessage = "Vui lòng nhập giá vốn")]
+        [Display(Name = "Giá vốn (VNĐ)")]
+        [Range(0, double.MaxValue, ErrorMessage = "Giá vốn phải lớn hơn hoặc bằng 0")]
+        public decimal CostPrice { get; set; }
+
         [Display(Name = "Giá khuyến mãi (VNĐ)")]
         public decimal? PromotionalPrice { get; set; }
 

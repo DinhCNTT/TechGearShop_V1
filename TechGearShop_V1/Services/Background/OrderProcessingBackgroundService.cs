@@ -96,6 +96,12 @@ namespace TechGearShop_V1.Services.Background
                     }
                 }
 
+                // ── Bước 1.5: Lấy CostPrice của các sản phẩm để lưu vào OrderDetail ───────────
+                var productIds = request.Items.Select(i => i.ProductId).ToList();
+                var costPrices = await db.Products
+                    .Where(p => productIds.Contains(p.Id))
+                    .ToDictionaryAsync(p => p.Id, p => p.CostPrice, ct);
+
                 // ── Bước 2: Lưu Order + OrderDetail vào DB ───────────────────────────────
                 var order = new Order
                 {
@@ -115,9 +121,10 @@ namespace TechGearShop_V1.Services.Background
                     Status          = OrderStatus.Pending,
                     OrderDetails    = request.Items.Select(i => new OrderDetail
                     {
-                        ProductId = i.ProductId,
-                        Quantity  = i.Quantity,
-                        UnitPrice = i.Price
+                        ProductId     = i.ProductId,
+                        Quantity      = i.Quantity,
+                        UnitPrice     = i.Price,
+                        UnitCostPrice = costPrices.GetValueOrDefault(i.ProductId, 0m)
                     }).ToList()
                 };
 

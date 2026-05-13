@@ -18,6 +18,10 @@ namespace TechGearShop_V1.Models.Entities
         [Column(TypeName = "decimal(18,2)")]
         public decimal UnitPrice { get; set; }
 
+        // Giá vốn tại thời điểm đặt hàng (dùng tính lợi nhuận, snapshot từ Product.CostPrice)
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal UnitCostPrice { get; set; } = 0;
+
         // Navigation properties
         public Order? Order { get; set; }
         public Product? Product { get; set; }

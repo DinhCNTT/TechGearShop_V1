@@ -10,18 +10,21 @@ namespace TechGearShop_V1.Models.ViewModels
         // ── KPI Cards ──
         public int TodayNewOrders { get; set; }
         public decimal MonthlyRevenue { get; set; }
+        public decimal MonthlyProfit { get; set; } // Lợi nhuận ròng
         public int LowStockProductCount { get; set; }   // Tồn kho <= 5
         public int NewUsersThisMonth { get; set; }
         public int PendingOrders { get; set; }
 
         // ── Chỉ số Tăng trưởng (%) so với kỳ trước ──
         public double RevenueGrowthPercent { get; set; }    // VD: +12.5 hoặc -3.2
+        public double ProfitGrowthPercent { get; set; }
         public double OrderGrowthPercent { get; set; }
         public double UserGrowthPercent { get; set; }
 
-        // ── Chart: Doanh thu + số đơn 6 tháng gần kỳ chọn ──
+        // ── Chart: Doanh thu + lợi nhuận + số đơn 6 tháng gần kỳ chọn ──
         public List<string> RevenueLabels { get; set; } = new();
         public List<decimal> RevenueData { get; set; } = new();
+        public List<decimal> ProfitData { get; set; } = new();
         public List<int> OrderCountData { get; set; } = new();
 
         // ── Top sản phẩm bán chạy ──
