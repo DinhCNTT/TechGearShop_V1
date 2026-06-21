@@ -1,9 +1,21 @@
 /* Global Styles for TechGear Shop Customer Website */
 
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+:root {
+    --bs-primary: #2563eb; /* Soft Blue (Royal Blue) */
+    --bs-primary-rgb: 37, 99, 235;
+    --bs-warning: #f59e0b; /* Amber 500 */
+    --bs-warning-rgb: 245, 158, 11;
 }
 
+body {
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8fafc !important; /* Premium Slate 50 background */
+}
+
+/* Premium Soft Shadows Override */
+.shadow-sm { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important; }
+.shadow { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025) !important; }
+.shadow-lg { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02) !important; }
 /* Global Custom Scrollbar */
 ::-webkit-scrollbar {
     width: 6px;
@@ -128,6 +140,31 @@ html, .custom-scrollbar {
 .goog-te-gadget {
     color: transparent !important;
     font-size: 0;
+}
+
+/* ========================================
+   Ẩn hoàn toàn thanh toolbar dịch của Google Translate
+   ======================================== */
+
+/* Ẩn thanh banner xanh trên cùng khi dịch trang */
+.goog-te-banner-frame,
+.goog-te-banner-frame.skiptranslate {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+}
+
+/* Đặt lại vị trí body về 0 vì Google Translate đẩy body xuống khi hiện banner */
+body.translated-ltr,
+body.translated-rtl {
+    top: 0 !important;
+    position: static !important;
+}
+
+/* Ẩn thêm iframe của Google Translate nếu có */
+#goog-gt-tt,
+.goog-te-balloon-frame {
+    display: none !important;
 }
 
 .goog-te-gadget .goog-te-combo {
