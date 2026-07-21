@@ -48,3 +48,4 @@ appsettings.*.json
 
 ## Ignore Markdown Docs
 *.md
+!README.md
